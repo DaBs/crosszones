@@ -1,13 +1,26 @@
 use std::str::FromStr;
 
-use tauri::Manager;
+use strum::VariantNames;
 use tauri_plugin_global_shortcut::{GlobalShortcutExt, Shortcut};
+use tauri_plugin_store::{StoreExt, JsonValue};
 use crate::snapping::action::LayoutAction;
+use crate::snapping::snap_window;
 
+const CROSSZONES_STORE_NAME: &str = "crosszones";
 
 pub fn setup_handler(app_handle: tauri::AppHandle) {
-    app_handle.plugin(tauri_plugin_global_shortcut::Builder::new().with_handler(move |app, hotkey, event| {
-        println!("{:?}", hotkey);
+    let _ = app_handle.plugin(tauri_plugin_global_shortcut::Builder::new().with_handler(move |app, hotkey, event| {
+        let store = app.store(CROSSZONES_STORE_NAME).expect("Failed to open store");
+
+        let action = store.get(hotkey.to_string());
+        
+        if let Some(action) = action {
+            let action = action.as_str().expect("Failed to get action");
+
+            let action = LayoutAction::from_str(action).expect("Failed to convert action to LayoutAction");
+            
+            snap_window(action);
+        }
     }).build());
 }
 
@@ -15,31 +28,51 @@ pub fn setup_handler(app_handle: tauri::AppHandle) {
 pub fn register_hotkey(
     app: tauri::AppHandle,
     shortcut: Shortcut,
-    action: String,
+    action: LayoutAction,
 ) -> Result<(), String> {
-    let mut shortcut_manager = app.global_shortcut();
+    let shortcut_manager = app.global_shortcut();
     
-    // Register the hotkey
-    let app_handle = app.clone();
+    let store = app.store(CROSSZONES_STORE_NAME).expect("Failed to open store");
+
+    store.set(shortcut.to_string(), action.as_ref());
+
     shortcut_manager.register(shortcut).map_err(|e| e.to_string())?;
     
     Ok(())
 }
 
 #[tauri::command]
-pub fn unregister_hotkey(app: tauri::AppHandle, shortcut: Shortcut) -> Result<(), String> {
-    let mut shortcut_manager = app.global_shortcut();
-    shortcut_manager
-        .unregister(shortcut)
-        .map_err(|e| e.to_string())?;
-    
+pub fn unregister_hotkey(app: tauri::AppHandle, action: LayoutAction) -> Result<(), String> {
+    let shortcut_manager = app.global_shortcut();
+    let store = app.store(CROSSZONES_STORE_NAME).expect("Failed to open store");
+
+    // Find the shortcut that maps to this action
+    let entries = store.entries();
+    for (shortcut, value) in entries {
+        if let Some(action_str) = value.as_str() {
+            if action_str == action.as_ref() {
+                store.delete(&shortcut);
+                let shortcut = Shortcut::try_from(shortcut).expect("Failed to convert shortcut to Shortcut");
+                shortcut_manager
+                    .unregister(shortcut)
+                    .map_err(|e| e.to_string())?;
+                return Ok(());
+            }
+        }
+    }
+
     Ok(())
 }
 
 #[tauri::command]
-pub fn get_all_hotkeys(app: tauri::AppHandle) -> Result<Vec<Shortcut>, String> {
-    let shortcut_manager = app.global_shortcut();
-    // This is a placeholder - the actual implementation would depend on the API
-    // provided by the global_shortcut_manager
-    Ok(Vec::new())
+pub fn get_all_hotkeys(app: tauri::AppHandle) -> Result<Vec<(String, String)>, String> {
+    let store = app.store(CROSSZONES_STORE_NAME).expect("Failed to open store");
+
+    let shortcuts = store.entries();
+
+    let hotkeys = shortcuts.iter().map(|(shortcut, action)| {
+        (shortcut.to_string(), action.to_string())
+    }).collect();
+
+    Ok(hotkeys)
 } 

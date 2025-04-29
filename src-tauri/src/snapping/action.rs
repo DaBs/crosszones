@@ -1,7 +1,10 @@
 use strum_macros::EnumString;
+use std::convert::AsRef;
+use serde::{Serialize, Deserialize};
 
 // Define the layout action types
-#[derive(Debug, Clone, Copy, PartialEq, Eq, EnumString)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, EnumString, strum_macros::AsRefStr, strum_macros::VariantNames, Serialize, Deserialize)]
+#[serde(rename_all = "kebab-case")]
 #[strum(serialize_all = "kebab-case")]
 pub enum LayoutAction {
     LeftHalf,
