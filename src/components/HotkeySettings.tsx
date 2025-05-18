@@ -156,6 +156,7 @@ export const HotkeySettings: React.FC = () => {
       const existingHotkey = hotkeys.find(h => h.action === action);
       if (existingHotkey) {
         await invoke('unregister_hotkey', { action: existingHotkey.action });
+        console.log(shortcut);
         await invoke('register_hotkey', { shortcut, action });
         updateHotkey(action, shortcut);
       }

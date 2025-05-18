@@ -1,8 +1,11 @@
 import { useState } from "react";
 import HotkeySettings from "./components/HotkeySettings";
+import { PermissionCheck } from "./components/PermissionCheck";
 import "./App.css";
 
 function App() {
+  const [hasPermissions, setHasPermissions] = useState(false);
+
   return (
     <>
       <header>
@@ -13,7 +16,11 @@ function App() {
       </header>
       
       <main className="container">
-        <HotkeySettings />
+        {!hasPermissions ? (
+          <PermissionCheck onPermissionsGranted={() => setHasPermissions(true)} />
+        ) : (
+          <HotkeySettings />
+        )}
       </main>
       
       <footer>

@@ -6,6 +6,7 @@ pub fn run() {
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_store::Builder::new().build())
         .plugin(tauri_plugin_persisted_scope::init())
+        .plugin(tauri_plugin_macos_permissions::init())
         .plugin(tauri_plugin_opener::init())
         .setup(|app| {
             hotkeys::setup_handler(app.handle().clone());

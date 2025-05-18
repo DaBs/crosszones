@@ -27,11 +27,16 @@ pub fn setup_handler(app_handle: tauri::AppHandle) {
 #[tauri::command]
 pub fn register_hotkey(
     app: tauri::AppHandle,
-    shortcut: Shortcut,
+    shortcut: String,
     action: LayoutAction,
 ) -> Result<(), String> {
     let shortcut_manager = app.global_shortcut();
     
+    let shortcut = match Shortcut::try_from(shortcut) {
+        Ok(shortcut) => shortcut,
+        Err(e) => return Err(e.to_string()),
+    };
+
     let store = app.store(CROSSZONES_STORE_NAME).expect("Failed to open store");
 
     store.set(shortcut.to_string(), action.as_ref());

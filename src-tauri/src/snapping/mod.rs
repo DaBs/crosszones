@@ -1,5 +1,7 @@
 pub mod action;
 pub mod common;
+pub mod accessibility;
+pub mod accessibility_helpers;
 
 #[cfg(target_os = "windows")]
 pub mod windows;
