@@ -10,9 +10,9 @@ export const HOTKEY_GROUPS = {
 };
 export const DEFAULT_HOTKEYS: HotkeyConfig[] = [
   // Window Position
-  { name: 'Left Half', action: 'left-half', shortcut: '', icon: '◀', group: HOTKEY_GROUPS.WINDOW_POSITION },
-  { name: 'Right Half', action: 'right-half', shortcut: '', icon: '▶', group: HOTKEY_GROUPS.WINDOW_POSITION },
-  { name: 'Center Half', action: 'center-half', shortcut: '', icon: '◀▶', group: HOTKEY_GROUPS.WINDOW_POSITION },
+  { name: 'Left Half', action: 'left-half', shortcut: '', icon: '++--', group: HOTKEY_GROUPS.WINDOW_POSITION },
+  { name: 'Right Half', action: 'right-half', shortcut: '', icon: '--++', group: HOTKEY_GROUPS.WINDOW_POSITION },
+  { name: 'Center Half', action: 'center-half', shortcut: '', icon: '-++-', group: HOTKEY_GROUPS.WINDOW_POSITION },
   { name: 'Top Half', action: 'top-half', shortcut: '', icon: '▲', group: HOTKEY_GROUPS.WINDOW_POSITION },
   { name: 'Bottom Half', action: 'bottom-half', shortcut: '', icon: '▼', group: HOTKEY_GROUPS.WINDOW_POSITION },
 
@@ -32,21 +32,6 @@ export const DEFAULT_HOTKEYS: HotkeyConfig[] = [
   { name: 'Center Prominently', action: 'center-prominently', shortcut: '', icon: '⊞', group: HOTKEY_GROUPS.WINDOW_SIZING },
   { name: 'Restore', action: 'restore', shortcut: '', icon: '↺', group: HOTKEY_GROUPS.WINDOW_SIZING },
 
-  // Third Controls
-  { name: 'First Third', action: 'first-third', shortcut: '', icon: '+--', group: HOTKEY_GROUPS.THIRD_CONTROLS },
-  { name: 'Center Third', action: 'center-third', shortcut: '', icon: '-+-', group: HOTKEY_GROUPS.THIRD_CONTROLS },
-  { name: 'Last Third', action: 'last-third', shortcut: '', icon: '◯|', group: HOTKEY_GROUPS.THIRD_CONTROLS },
-  { name: 'First Two Thirds', action: 'first-two-thirds', shortcut: '', icon: '||◯', group: HOTKEY_GROUPS.THIRD_CONTROLS },
-  { name: 'Last Two Thirds', action: 'last-two-thirds', shortcut: '', icon: '◯||', group: HOTKEY_GROUPS.THIRD_CONTROLS },
-
-  // Fourth Controls
-  { name: 'First Fourth', action: 'first-fourth', shortcut: '', icon: '|◯◯◯', group: HOTKEY_GROUPS.FOURTH_CONTROLS },
-  { name: 'Second Fourth', action: 'second-fourth', shortcut: '', icon: '◯|◯◯', group: HOTKEY_GROUPS.FOURTH_CONTROLS },
-  { name: 'Third Fourth', action: 'third-fourth', shortcut: '', icon: '◯◯|◯', group: HOTKEY_GROUPS.FOURTH_CONTROLS },
-  { name: 'Last Fourth', action: 'last-fourth', shortcut: '', icon: '◯◯◯|', group: HOTKEY_GROUPS.FOURTH_CONTROLS },
-  { name: 'First Three Fourths', action: 'first-three-fourths', shortcut: '', icon: '|||◯', group: HOTKEY_GROUPS.FOURTH_CONTROLS },
-  { name: 'Last Three Fourths', action: 'last-three-fourths', shortcut: '', icon: '◯|||', group: HOTKEY_GROUPS.FOURTH_CONTROLS },
-
   // Movement Controls
   { name: 'Move Left', action: 'move-left', shortcut: '', icon: '←', group: HOTKEY_GROUPS.MOVEMENT_CONTROLS },
   { name: 'Move Right', action: 'move-right', shortcut: '', icon: '→', group: HOTKEY_GROUPS.MOVEMENT_CONTROLS },
@@ -54,4 +39,19 @@ export const DEFAULT_HOTKEYS: HotkeyConfig[] = [
   { name: 'Move Down', action: 'move-down', shortcut: '', icon: '↓', group: HOTKEY_GROUPS.MOVEMENT_CONTROLS },
   { name: 'Next Display', action: 'next-display', shortcut: '', icon: '⇒', group: HOTKEY_GROUPS.MOVEMENT_CONTROLS },
   { name: 'Previous Display', action: 'previous-display', shortcut: '', icon: '⇐', group: HOTKEY_GROUPS.MOVEMENT_CONTROLS },
+
+  // Third Controls
+  { name: 'First Third', action: 'first-third', shortcut: '', icon: '+--', group: HOTKEY_GROUPS.THIRD_CONTROLS },
+  { name: 'Center Third', action: 'center-third', shortcut: '', icon: '-+-', group: HOTKEY_GROUPS.THIRD_CONTROLS },
+  { name: 'Last Third', action: 'last-third', shortcut: '', icon: '--+', group: HOTKEY_GROUPS.THIRD_CONTROLS },
+  { name: 'First Two Thirds', action: 'first-two-thirds', shortcut: '', icon: '++-', group: HOTKEY_GROUPS.THIRD_CONTROLS },
+  { name: 'Last Two Thirds', action: 'last-two-thirds', shortcut: '', icon: '-++', group: HOTKEY_GROUPS.THIRD_CONTROLS },
+
+  // Fourth Controls
+  { name: 'First Fourth', action: 'first-fourth', shortcut: '', icon: '+---', group: HOTKEY_GROUPS.FOURTH_CONTROLS },
+  { name: 'Second Fourth', action: 'second-fourth', shortcut: '', icon: '-+--', group: HOTKEY_GROUPS.FOURTH_CONTROLS },
+  { name: 'Third Fourth', action: 'third-fourth', shortcut: '', icon: '--+-', group: HOTKEY_GROUPS.FOURTH_CONTROLS },
+  { name: 'Last Fourth', action: 'last-fourth', shortcut: '', icon: '---+', group: HOTKEY_GROUPS.FOURTH_CONTROLS },
+  { name: 'First Three Fourths', action: 'first-three-fourths', shortcut: '', icon: '+++-', group: HOTKEY_GROUPS.FOURTH_CONTROLS },
+  { name: 'Last Three Fourths', action: 'last-three-fourths', shortcut: '', icon: '-+++', group: HOTKEY_GROUPS.FOURTH_CONTROLS },
 ];
