@@ -1,13 +1,8 @@
-use core_graphics::display::{CGDisplay, CGMainDisplayID};
+use core_graphics::display::{CGDisplay};
 use core_graphics::geometry::{CGRect, CGSize, CGPoint};
-use objc::runtime::{Class, Object, Sel};
-use objc::{msg_send, sel, sel_impl};
-use objc_id::Id;
-use objc_foundation::{INSString, NSString};
-use thiserror::Error;
 
 use super::action::LayoutAction;
-use super::common::{WindowRect, ScreenDimensions, calculate_window_rect};
+use super::common::{calculate_window_rect, ScreenDimensions, WindowRect};
 use super::accessibility::AccessibilityElement;
 
 // Function to snap a window according to the specified layout action

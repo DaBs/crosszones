@@ -1,20 +1,10 @@
 .hotkey-settings {
   max-width: 800px;
   margin: 0 auto;
-  padding: 20px;
+  padding: 0px;
+  display: flex;
+  flex-wrap: wrap;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
-}
-
-.hotkey-settings h2 {
-  color: #333;
-  margin-bottom: 10px;
-  font-size: 24px;
-}
-
-.hotkey-settings p {
-  color: #666;
-  margin-bottom: 20px;
-  font-size: 14px;
 }
 
 .hotkey-group {
@@ -22,6 +12,8 @@
   background-color: #f9f9f9;
   border-radius: 8px;
   padding: 15px;
+  margin: 10px;
+  flex: 1;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
@@ -29,7 +21,7 @@
   color: #444;
   margin-top: 0;
   margin-bottom: 15px;
-  font-size: 18px;
+  font-size: 14px;
   border-bottom: 1px solid #eee;
   padding-bottom: 8px;
 }
@@ -38,7 +30,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 8px 0;
+  padding: 4px 0;
   border-bottom: 1px solid #eee;
 }
 
@@ -49,15 +41,15 @@
 .hotkey-label {
   display: flex;
   align-items: center;
-  font-size: 14px;
+  font-size: 10px;
   color: #333;
 }
 
 .hotkey-icon {
   margin-right: 10px;
-  font-size: 16px;
+  font-size: 14px;
   color: #555;
-  width: 20px;
+  width: 40px;
   text-align: center;
 }
 
@@ -69,10 +61,10 @@
 
 .hotkey-input {
   width: 150px;
-  padding: 6px 10px;
   border: 1px solid #ddd;
   border-radius: 4px;
-  font-size: 14px;
+  font-size: 10px;
+  height: 20px;
   background-color: #fff;
   color: #333;
   text-align: center;
@@ -94,21 +86,19 @@
 
 .clear-button {
   position: absolute;
-  right: 8px;
-  top: 50%;
-  transform: translateY(-50%);
+  right: 0;
+  top: 0;
   background: none;
   border: none;
   color: #999;
-  font-size: 16px;
+  font-size: 12px;
   cursor: pointer;
   padding: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
+  width: 14px;
+  height: 100%;
   transition: all 0.2s ease;
 }
 

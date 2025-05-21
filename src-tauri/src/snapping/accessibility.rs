@@ -7,149 +7,186 @@ use core_foundation::number::CFNumber;
 use core_foundation::string::CFString;
 use core_graphics::geometry::{CGRect, CGPoint, CGSize};
 use objc::runtime::{Class, Object};
-use objc::{msg_send, sel, sel_impl};
+use objc::{msg_send, sel, sel_impl, class};
 use objc_foundation::{INSString, NSString};
-
-use crate::snapping::accessibility_helpers::{
-    AXUIElement, AXUIElementAttributes, AXUIElementActions, Error,
-    AXAttribute, ElementFinder, TreeWalker, TreeVisitor, TreeWalkerFlow,
+use cocoa::{
+    base::{id, nil},
+    foundation::NSAutoreleasePool,
 };
+use objc::rc::autoreleasepool;
+
+use crate::snapping::accessibility_helpers::Error;
+
+pub enum EnhancedUI {
+    DisableEnable = 1,
+    DisableOnly = 2,
+    FrontmostDisable = 3,
+}
 
 #[derive(Debug, Clone)]
 pub struct AccessibilityElement {
-    element: AXUIElement,
+    element: id,
 }
 
 impl AccessibilityElement {
-    pub fn new(element: AXUIElement) -> Self {
+    pub fn new(element: id) -> Self {
         Self { element }
     }
 
     pub fn from_pid(pid: i32) -> Self {
-        Self::new(AXUIElement::application(pid))
+        unsafe {
+            autoreleasepool(|| {
+                let workspace = class!(NSWorkspace);
+                let shared_workspace: id = msg_send![workspace, sharedWorkspace];
+                let app: id = msg_send![shared_workspace, runningApplicationWithProcessIdentifier: pid];
+                Self::new(app)
+            })
+        }
     }
 
     pub fn from_bundle_identifier(bundle_id: &str) -> Option<Self> {
-        AXUIElement::application_with_bundle(bundle_id)
-            .ok()
-            .map(Self::new)
+        unsafe {
+            autoreleasepool(|| {
+                let bundle_id_str = NSString::from_str(bundle_id);
+                let workspace = class!(NSWorkspace);
+                let shared_workspace: id = msg_send![workspace, sharedWorkspace];
+                let apps: id = msg_send![
+                    shared_workspace,
+                    runningApplicationsWithBundleIdentifier: bundle_id_str
+                ];
+                
+                let count: usize = msg_send![apps, count];
+                if count > 0 {
+                    let app: id = msg_send![apps, objectAtIndex: 0];
+                    Some(Self::new(app))
+                } else {
+                    None
+                }
+            })
+        }
     }
 
-    pub fn is_application(&self) -> Result<bool, Error> {
-        self.element.attribute(&AXAttribute::role())
-            .map(|role| role.to_string() == "AXApplication")
+    pub fn is_application(&self) -> bool {
+        unsafe {
+            let bundle_id: id = msg_send![self.element, bundleIdentifier];
+            !bundle_id.is_null()
+        }
     }
 
-    pub fn is_window(&self) -> Result<bool, Error> {
-        self.element.attribute(&AXAttribute::role())
-            .map(|role| role.to_string() == "AXWindow")
-    }
-
-    pub fn is_sheet(&self) -> Result<bool, Error> {
-        self.element.attribute(&AXAttribute::role())
-            .map(|role| role.to_string() == "AXSheet")
-    }
-
-    pub fn is_toolbar(&self) -> Result<bool, Error> {
-        self.element.attribute(&AXAttribute::role())
-            .map(|role| role.to_string() == "AXToolbar")
-    }
-
-    pub fn is_group(&self) -> Result<bool, Error> {
-        self.element.attribute(&AXAttribute::role())
-            .map(|role| role.to_string() == "AXGroup")
-    }
-
-    pub fn is_tab_group(&self) -> Result<bool, Error> {
-        self.element.attribute(&AXAttribute::role())
-            .map(|role| role.to_string() == "AXTabGroup")
-    }
-
-    pub fn is_static_text(&self) -> Result<bool, Error> {
-        self.element.attribute(&AXAttribute::role())
-            .map(|role| role.to_string() == "AXStaticText")
-    }
-
-    pub fn is_system_dialog(&self) -> Result<bool, Error> {
-        self.element.attribute(&AXAttribute::subrole())
-            .map(|subrole| subrole.to_string() == "AXSystemDialog")
+    pub fn is_window(&self) -> bool {
+        unsafe {
+            let window: id = msg_send![self.element, window];
+            !window.is_null()
+        }
     }
 
     pub fn get_position(&self) -> Result<CGPoint, Error> {
-        let position = self.element.attribute(&AXAttribute::position())?;
-        let x = position.get(0).expect("Failed to get x position").downcast::<CFNumber>().unwrap().to_f64().expect("Failed to convert x position to f64");
-        let y = position.get(1).expect("Failed to get y position").downcast::<CFNumber>().unwrap().to_f64().expect("Failed to convert y position to f64");
-        Ok(CGPoint::new(x, y))
+        unsafe {
+            let frame: CGRect = msg_send![self.element, frame];
+            Ok(CGPoint::new(frame.origin.x, frame.origin.y))
+        }
     }
 
     pub fn set_position(&self, position: CGPoint) -> Result<(), Error> {
-        // TODO: Implement position setter using AXAttribute
-        Err(Error::NotFound)
+        unsafe {
+            let frame: CGRect = msg_send![self.element, frame];
+            let new_frame = CGRect::new(&position, &frame.size);
+            let _: () = msg_send![self.element, setFrame: new_frame];
+            Ok(())
+        }
     }
 
-    pub fn is_resizable(&self) -> Result<bool, Error> {
-        self.element.is_settable(&AXAttribute::size())
+    pub fn is_resizable(&self) -> bool {
+        unsafe {
+            let style_mask: usize = msg_send![self.element, styleMask];
+            style_mask & 0x8 != 0 // NSWindowStyleMaskResizable
+        }
     }
 
     pub fn get_size(&self) -> Result<CGSize, Error> {
-        // TODO: Implement size getter using AXAttribute
-        Err(Error::NotFound)
+        unsafe {
+            let frame: CGRect = msg_send![self.element, frame];
+            Ok(frame.size)
+        }
     }
 
     pub fn set_size(&self, size: CGSize) -> Result<(), Error> {
-        // TODO: Implement size setter using AXAttribute
-        Err(Error::NotFound)
+        unsafe {
+            let frame: CGRect = msg_send![self.element, frame];
+            let new_frame = CGRect::new(&frame.origin, &size);
+            let _: () = msg_send![self.element, setFrame: new_frame];
+            Ok(())
+        }
     }
 
     pub fn get_frame(&self) -> Result<CGRect, Error> {
-        match (self.get_position(), self.get_size()) {
-            (Ok(position), Ok(size)) => Ok(CGRect::new(&position, &size)),
-            _ => Err(Error::NotFound),
+        unsafe {
+            let frame: CGRect = msg_send![self.element, frame];
+            Ok(frame)
         }
     }
 
-    pub fn set_frame(&self, frame: CGRect, adjust_size_first: bool) -> Result<(), Error> {
-        if adjust_size_first {
-            self.set_size(frame.size)?;
+    pub fn set_frame(&self, frame: CGRect, _adjust_size_first: bool) -> Result<(), Error> {
+        unsafe {
+            let _: () = msg_send![self.element, setFrame: frame];
+            Ok(())
         }
-        self.set_position(frame.origin)?;
-        self.set_size(frame.size)
     }
 
     pub fn get_window_id(&self) -> Option<u32> {
-        // Implementation depends on WindowUtil functionality
-        None // TODO: Implement window ID retrieval
-    }
-
-    pub fn get_pid(&self) -> Option<i32> {
-        // TODO: Implement PID retrieval
-        None
-    }
-
-    pub fn window_element(&self) -> Result<Self, Error> {
-        if self.is_window()? {
-            Ok(self.clone())
-        } else {
-            self.element.window().map(Self::new)
+        unsafe {
+            let window_number: i32 = msg_send![self.element, windowNumber];
+            Some(window_number as u32)
         }
     }
 
-    pub fn is_main_window(&self) -> Result<bool, Error> {
-        self.element.attribute(&AXAttribute::main())
-            .map(|main| main == CFBoolean::true_value())
+    pub fn get_pid(&self) -> Option<i32> {
+        unsafe {
+            let pid: i32 = msg_send![self.element, processIdentifier];
+            Some(pid)
+        }
+    }
+
+    pub fn window_element(&self) -> Result<Self, Error> {
+        if self.is_window() {
+            Ok(self.clone())
+        } else {
+            unsafe {
+                let window: id = msg_send![self.element, window];
+                if window.is_null() {
+                    Err(Error::NotFound)
+                } else {
+                    Ok(Self::new(window))
+                }
+            }
+        }
+    }
+
+    pub fn is_main_window(&self) -> bool {
+        unsafe {
+            let is_main: bool = msg_send![self.element, isMainWindow];
+            is_main
+        }
     }
 
     pub fn set_main_window(&self, is_main: bool) -> Result<(), Error> {
-        self.element.set_main(is_main)
+        unsafe {
+            if is_main {
+                let _: () = msg_send![self.element, makeMainWindow];
+            }
+            Ok(())
+        }
     }
 
-    pub fn is_minimized(&self) -> Result<bool, Error> {
-        self.element.attribute(&AXAttribute::minimized())
-            .map(|minimized| minimized == CFBoolean::true_value())
+    pub fn is_minimized(&self) -> bool {
+        unsafe {
+            let is_minimized: bool = msg_send![self.element, isMiniaturized];
+            is_minimized
+        }
     }
 
     pub fn application_element(&self) -> Result<Self, Error> {
-        if self.is_application()? {
+        if self.is_application() {
             Ok(self.clone())
         } else {
             self.get_pid()
@@ -159,50 +196,51 @@ impl AccessibilityElement {
     }
 
     pub fn focused_window_element(&self) -> Result<Self, Error> {
-        self.application_element()?
-            .element.focused_window()
-            .map(Self::new)
+        unsafe {
+            let workspace = class!(NSWorkspace);
+            let shared_workspace: id = msg_send![workspace, sharedWorkspace];
+            let frontmost_app: id = msg_send![shared_workspace, frontmostApplication];
+            
+            if frontmost_app.is_null() {
+                return Err(Error::NotFound);
+            }
+
+            let key_window: id = msg_send![frontmost_app, window];
+            if key_window.is_null() {
+                Err(Error::NotFound)
+            } else {
+                Ok(Self::new(key_window))
+            }
+        }
     }
 
-    pub fn is_hidden(&self) -> Result<bool, Error> {
-        self.application_element()?
-            .element.attribute(&AXAttribute::enabled())
-            .map(|enabled| enabled == CFBoolean::false_value())
+    pub fn is_hidden(&self) -> bool {
+        unsafe {
+            let is_hidden: bool = msg_send![self.element, isHidden];
+            is_hidden
+        }
     }
 
     pub fn bring_to_front(&self, force: bool) -> Result<(), Error> {
-        if self.is_main_window()? {
-            self.set_main_window(true)?;
-        }
-
-        if let Some(pid) = self.get_pid() {
-            unsafe {
-                let workspace = Class::get("NSWorkspace").unwrap();
-                let shared_workspace: *mut Object = msg_send![workspace, sharedWorkspace];
-                let app: *mut Object = msg_send![shared_workspace, runningApplicationWithProcessIdentifier: pid];
-                
-                if !app.is_null() {
-                    let is_active: bool = msg_send![app, isActive];
-                    if !is_active || force {
-                        let _: () = msg_send![app, activateWithOptions: 1]; // NSApplicationActivateIgnoringOtherApps
-                    }
-                }
+        unsafe {
+            let is_active: bool = msg_send![self.element, isActive];
+            if !is_active || force {
+                let _: () = msg_send![self.element, activateWithOptions: 1]; // NSApplicationActivateIgnoringOtherApps
             }
+            Ok(())
         }
-        Ok(())
     }
 
     pub fn get_front_application_element() -> Option<Self> {
         unsafe {
-            let workspace = Class::get("NSWorkspace").unwrap();
-            let shared_workspace: *mut Object = msg_send![workspace, sharedWorkspace];
-            let frontmost_app: *mut Object = msg_send![shared_workspace, frontmostApplication];
+            let workspace = class!(NSWorkspace);
+            let shared_workspace: id = msg_send![workspace, sharedWorkspace];
+            let frontmost_app: id = msg_send![shared_workspace, frontmostApplication];
             
-            if !frontmost_app.is_null() {
-                let pid: i32 = msg_send![frontmost_app, processIdentifier];
-                Some(Self::from_pid(pid))
-            } else {
+            if frontmost_app.is_null() {
                 None
+            } else {
+                Some(Self::new(frontmost_app))
             }
         }
     }
@@ -211,26 +249,59 @@ impl AccessibilityElement {
         let app_element = Self::get_front_application_element()
             .ok_or(Error::NotFound)?;
         
-        if let Ok(focused_window) = app_element.focused_window_element() {
-            Ok(focused_window)
-        } else {
-            Err(Error::NotFound)
+        unsafe {
+            let key_window: id = msg_send![app_element.element, window];
+            if key_window.is_null() {
+                Err(Error::NotFound)
+            } else {
+                Ok(Self::new(key_window))
+            }
         }
     }
 
     pub fn get_window_element_under_cursor() -> Option<Self> {
-        // TODO: Implement window element under cursor detection
-        None
+        unsafe {
+            let workspace = class!(NSWorkspace);
+            let shared_workspace: id = msg_send![workspace, sharedWorkspace];
+            let frontmost_app: id = msg_send![shared_workspace, frontmostApplication];
+            
+            if frontmost_app.is_null() {
+                return None;
+            }
+
+            let mouse_location: CGPoint = msg_send![class!(NSEvent), mouseLocation];
+            let window: id = msg_send![frontmost_app, windowAtPoint: mouse_location];
+            
+            if window.is_null() {
+                None
+            } else {
+                Some(Self::new(window))
+            }
+        }
     }
 
     pub fn get_window_element(window_id: u32) -> Option<Self> {
-        // TODO: Implement window element retrieval by ID
-        None
+        unsafe {
+            let workspace = class!(NSWorkspace);
+            let shared_workspace: id = msg_send![workspace, sharedWorkspace];
+            let apps: id = msg_send![shared_workspace, runningApplications];
+            
+            let count: usize = msg_send![apps, count];
+            for i in 0..count {
+                let app: id = msg_send![apps, objectAtIndex: i];
+                let windows: id = msg_send![app, windows];
+                let window_count: usize = msg_send![windows, count];
+                
+                for j in 0..window_count {
+                    let window: id = msg_send![windows, objectAtIndex: j];
+                    let window_number: i32 = msg_send![window, windowNumber];
+                    
+                    if window_number as u32 == window_id {
+                        return Some(Self::new(window));
+                    }
+                }
+            }
+            None
+        }
     }
-}
-
-pub enum EnhancedUI {
-    DisableEnable = 1,
-    DisableOnly = 2,
-    FrontmostDisable = 3,
 } 

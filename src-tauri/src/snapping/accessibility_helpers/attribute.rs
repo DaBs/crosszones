@@ -7,6 +7,7 @@ use core_foundation::{
   boolean::CFBoolean,
   string::CFString,
 };
+use core_graphics::display::{CGPoint, CGSize};
 use std::marker::PhantomData;
 
 use crate::snapping::accessibility_helpers::{AXUIElement, ElementFinder, Error};
@@ -100,8 +101,6 @@ define_attributes![
   (minimized, CFBoolean, kAXMinimizedAttribute),
   (parent, AXUIElement, kAXParentAttribute),
   (placeholder_value, CFString, kAXPlaceholderValueAttribute),
-  (position, CFArray<CFType>, kAXPositionAttribute),
-  (size, CFArray<CFType>, kAXSizeAttribute),
   (role, CFString, kAXRoleAttribute),
   (role_description, CFString, kAXRoleDescriptionAttribute),
   (

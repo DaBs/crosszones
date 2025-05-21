@@ -1,20 +1,13 @@
 import { useState } from "react";
-import HotkeySettings from "./components/HotkeySettings";
-import { PermissionCheck } from "./components/PermissionCheck";
+import HotkeySettings from "./components/HotkeySettings/HotkeySettings";
+import { PermissionCheck } from "./components/PermissionCheck/PermissionCheck";
 import "./App.css";
 
 function App() {
   const [hasPermissions, setHasPermissions] = useState(false);
 
   return (
-    <>
-      <header>
-        <h1>CrossZones</h1>
-        <p style={{ textAlign: 'center', color: 'var(--text-light)', fontSize: '14px' }}>
-          Window Management with Global Hotkeys
-        </p>
-      </header>
-      
+    <>      
       <main className="container">
         {!hasPermissions ? (
           <PermissionCheck onPermissionsGranted={() => setHasPermissions(true)} />
@@ -22,10 +15,6 @@ function App() {
           <HotkeySettings />
         )}
       </main>
-      
-      <footer>
-        <p>CrossZones &copy; {new Date().getFullYear()} | A powerful window management tool</p>
-      </footer>
     </>
   );
 }
