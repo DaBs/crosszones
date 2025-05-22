@@ -2,14 +2,14 @@ use std::str::FromStr;
 
 use strum::VariantNames;
 use tauri_plugin_global_shortcut::{GlobalShortcutExt, Shortcut};
-use tauri_plugin_store::{StoreExt, JsonValue};
+use tauri_plugin_store::StoreExt;
 use crate::snapping::action::LayoutAction;
 use crate::snapping::snap_window;
 
 const CROSSZONES_STORE_NAME: &str = "crosszones";
 
 pub fn setup_handler(app_handle: tauri::AppHandle) {
-    let _ = app_handle.plugin(tauri_plugin_global_shortcut::Builder::new().with_handler(move |app, hotkey, event| {
+    let _ = app_handle.plugin(tauri_plugin_global_shortcut::Builder::new().with_handler(move |app, hotkey, _event| {
         let store = app.store(CROSSZONES_STORE_NAME).expect("Failed to open store");
 
         let action = store.get(hotkey.to_string());
@@ -19,7 +19,7 @@ pub fn setup_handler(app_handle: tauri::AppHandle) {
 
             let action = LayoutAction::from_str(action).expect("Failed to convert action to LayoutAction");
             
-            snap_window(action);
+            let _ = snap_window(action);
         }
     }).build());
 }

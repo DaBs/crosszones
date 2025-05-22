@@ -1,9 +1,12 @@
+mod accessibility;
+pub mod accessibility_helpers;
+
+use accessibility::AccessibilityElement;
 use core_graphics::display::{CGDisplay};
 use core_graphics::geometry::{CGRect, CGSize, CGPoint};
 
 use super::action::LayoutAction;
 use super::common::{calculate_window_rect, ScreenDimensions, WindowRect};
-use super::accessibility::AccessibilityElement;
 
 // Function to snap a window according to the specified layout action
 pub fn snap_window(action: LayoutAction) -> Result<(), String> {

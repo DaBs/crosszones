@@ -1,8 +1,8 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "crosszones",
+  "productName": "CrossZones",
   "version": "0.1.0",
-  "identifier": "com.bjerremose.crosszones",
+  "identifier": "com.davidbjerremose.crosszones",
   "build": {
     "beforeDevCommand": "npm run dev",
     "devUrl": "http://localhost:1420",

@@ -1,10 +1,3 @@
-use std::collections::HashSet;
-use std::hash::{Hash, Hasher};
-use core_foundation::array::CFArray;
-use core_foundation::base::TCFType;
-use core_foundation::boolean::CFBoolean;
-use core_foundation::number::CFNumber;
-use core_foundation::string::CFString;
 use core_graphics::geometry::{CGRect, CGPoint, CGSize};
 use objc::runtime::{Class, Object};
 use objc::{msg_send, sel, sel_impl, class};
@@ -15,13 +8,7 @@ use cocoa::{
 };
 use objc::rc::autoreleasepool;
 
-use crate::snapping::accessibility_helpers::Error;
-
-pub enum EnhancedUI {
-    DisableEnable = 1,
-    DisableOnly = 2,
-    FrontmostDisable = 3,
-}
+use super::accessibility_helpers::Error;
 
 #[derive(Debug, Clone)]
 pub struct AccessibilityElement {
