@@ -1,8 +1,8 @@
-# CrossZones
+<p>
+<img src="./assets/crosszones.png" alt="CrossZones" />
+</p>
 
-![CrossZones Icon](assets/icon.png)
-
-A modern, cross-platform desktop application built with Tauri, React, and TypeScript.
+Simple cross-platform window moving and resizing utility using shortcuts.
 
 ## 🌟 Features
 
