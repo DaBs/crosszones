@@ -65,9 +65,4 @@ export const DEFAULT_HOTKEYS: HotkeyConfig[] = [
   { name: 'Bottom Left Sixth', shortcut: '', layoutAction: LayoutAction.BottomLeftSixth, group: HOTKEY_GROUPS.SIXTH_CONTROLS },
   { name: 'Bottom Middle Sixth', shortcut: '', layoutAction: LayoutAction.BottomCenterSixth, group: HOTKEY_GROUPS.SIXTH_CONTROLS },
   { name: 'Bottom Right Sixth', shortcut: '', layoutAction: LayoutAction.BottomRightSixth, group: HOTKEY_GROUPS.SIXTH_CONTROLS },
-  { name: 'Left Two Sixths', shortcut: '', layoutAction: null, group: HOTKEY_GROUPS.SIXTH_CONTROLS },
-  { name: 'Middle Two Sixths', shortcut: '', layoutAction: null, group: HOTKEY_GROUPS.SIXTH_CONTROLS },
-  { name: 'Right Two Sixths', shortcut: '', layoutAction: null, group: HOTKEY_GROUPS.SIXTH_CONTROLS },
-  { name: 'Top Three Sixths', shortcut: '', layoutAction: null, group: HOTKEY_GROUPS.SIXTH_CONTROLS },
-  { name: 'Bottom Three Sixths', shortcut: '', layoutAction: null, group: HOTKEY_GROUPS.SIXTH_CONTROLS },
 ];
