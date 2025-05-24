@@ -12,7 +12,7 @@
   "app": {
     "windows": [
       {
-        "title": "Cross Zones",
+        "title": "CrossZones",
         "width": 800,
         "minWidth": 800,
         "height": 600,
