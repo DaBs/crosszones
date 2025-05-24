@@ -2,8 +2,11 @@ use windows::core::BOOL;
 use windows::Win32::Foundation::{HWND, LPARAM, RECT, TRUE};
 use windows::Win32::UI::WindowsAndMessaging::{
     EnumWindows, GetWindowRect, GetWindowThreadProcessId, GetSystemMetrics, IsWindowVisible,
-    GetForegroundWindow, SetWindowPos, SWP_FRAMECHANGED, SM_CXSCREEN, SM_CYSCREEN, SM_CYFULLSCREEN,
+    GetForegroundWindow, SetWindowPos, SWP_FRAMECHANGED, SM_CXSCREEN, SM_CYSCREEN,
+    SWP_NOZORDER, SWP_NOACTIVATE
 };
+use windows::Win32::Graphics::Gdi::{GetMonitorInfoW, MONITORINFO, MONITOR_DEFAULTTONEAREST, MonitorFromWindow};
+use windows::Win32::Graphics::Dwm::{DwmGetWindowAttribute, DWMWA_EXTENDED_FRAME_BOUNDS};
 use windows::Win32::System::Threading::GetCurrentProcessId;
 
 use super::action::LayoutAction;
@@ -23,24 +26,68 @@ pub fn snap_window(action: LayoutAction) -> Result<(), String> {
         return Err("Failed to get window rectangle".to_string());
     }
 
-    // Get screen dimensions
-    let screen_width = unsafe { GetSystemMetrics(SM_CXSCREEN) };
-    let screen_height = unsafe { GetSystemMetrics(SM_CYFULLSCREEN) };
+    // Get the monitor info to account for taskbar
+    let mut monitor_info = MONITORINFO {
+        cbSize: std::mem::size_of::<MONITORINFO>() as u32,
+        ..Default::default()
+    };
+    unsafe {
+        let monitor = MonitorFromWindow(hwnd, MONITOR_DEFAULTTONEAREST);
+        if !GetMonitorInfoW(monitor, &mut monitor_info).as_bool() {
+            return Err("Failed to get monitor info".to_string());
+        }
+    }
+
+    // Get the frame without the windows borders
+    let mut frame_rect = RECT::default();
+    let result = unsafe { 
+        DwmGetWindowAttribute(
+            hwnd,
+            DWMWA_EXTENDED_FRAME_BOUNDS,
+            &mut frame_rect as *mut _ as *mut std::ffi::c_void,
+            std::mem::size_of::<RECT>() as u32
+        )
+    };
+    if result.is_err() {
+        return Err("Failed to get window frame".to_string());
+    }
+
+    // TODO: Something about the math and frame sizing is weird here - specifically the * 2 feels like either the offset 
+
+    // Get the extra offset for the position and size due to windows 10 invisible borders
+    let x_position_offset = frame_rect.left - rect.left;
+    let y_position_offset = frame_rect.top - rect.top;
+    let width_addition = (-frame_rect.right + rect.right) * 2;
+    let height_addition = -frame_rect.bottom + rect.bottom;
 
     let screen_dimensions = ScreenDimensions {
-        width: screen_width,
-        height: screen_height,
+        width: monitor_info.rcWork.right - monitor_info.rcWork.left,
+        height: monitor_info.rcWork.bottom - monitor_info.rcWork.top,
     };
 
     let current_rect = WindowRect {
         x: rect.left,
         y: rect.top,
-        width: rect.right - rect.left,
-        height: rect.bottom - rect.top,
+        width: rect.right,
+        height: rect.bottom,
     };
 
     // Calculate new position and size based on the action
     let new_rect = calculate_window_rect(action, screen_dimensions, Some(current_rect));
+
+    let new_rect = WindowRect {
+        x: new_rect.x - x_position_offset,
+        y: new_rect.y - y_position_offset,
+        width: new_rect.width + width_addition,
+        height: new_rect.height + height_addition,
+    };
+
+    println!("new_rect: {:?}", new_rect);
+    println!("current_rect: {:?}", current_rect);
+    println!("x_position_offset: {:?}", x_position_offset);
+    println!("y_position_offset: {:?}", y_position_offset);
+    println!("width_addition: {:?}", width_addition);
+    println!("height_addition: {:?}", height_addition);
 
     // Apply the new position and size
     let result = unsafe {
@@ -51,7 +98,7 @@ pub fn snap_window(action: LayoutAction) -> Result<(), String> {
             new_rect.y,
             new_rect.width,
             new_rect.height,
-            SWP_FRAMECHANGED,
+            SWP_NOZORDER | SWP_NOACTIVATE,
         )
     };
 
