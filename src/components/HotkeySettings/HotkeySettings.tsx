@@ -54,7 +54,7 @@ const HotkeyGroup: React.FC<HotkeyGroupProps> = ({
           <div className="hotkey-label">
             {config.layoutAction && (
               <div className="hotkey-label-icon">
-                <WindowSnapIcon action={config.layoutAction} width={30} />
+                <WindowSnapIcon action={config.layoutAction} width={20} height={15} />
               </div>
             )}
             <span className="hotkey-label-text">{config.name}</span>
