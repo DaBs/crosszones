@@ -1,13 +1,19 @@
-use windows::core::BOOL;
-use windows::Win32::Foundation::{HWND, LPARAM, RECT, TRUE};
-use windows::Win32::UI::WindowsAndMessaging::{
-    EnumWindows, GetWindowRect, GetWindowThreadProcessId, GetSystemMetrics, IsWindowVisible,
-    GetForegroundWindow, SetWindowPos, SWP_FRAMECHANGED, SM_CXSCREEN, SM_CYSCREEN,
-    SWP_NOZORDER, SWP_NOACTIVATE
+use windows::{
+    core::BOOL,
+    Win32::{
+        Foundation::{HWND, LPARAM, RECT, TRUE},
+        Graphics::Gdi::{GetMonitorInfoW, MONITORINFO, MONITOR_DEFAULTTONEAREST, MonitorFromWindow},
+        Graphics::Dwm::{DwmGetWindowAttribute, DWMWA_EXTENDED_FRAME_BOUNDS},
+        System::Threading::GetCurrentProcessId,
+        UI::{
+            HiDpi::GetDpiForWindow,
+            WindowsAndMessaging::{
+                EnumWindows, GetWindowRect, GetWindowThreadProcessId, GetSystemMetrics, IsWindowVisible,
+                GetForegroundWindow, SetWindowPos, SWP_FRAMECHANGED, SM_CXSCREEN, SM_CYSCREEN, SWP_NOZORDER, SWP_NOACTIVATE
+            }
+        }
+    }
 };
-use windows::Win32::Graphics::Gdi::{GetMonitorInfoW, MONITORINFO, MONITOR_DEFAULTTONEAREST, MonitorFromWindow};
-use windows::Win32::Graphics::Dwm::{DwmGetWindowAttribute, DWMWA_EXTENDED_FRAME_BOUNDS};
-use windows::Win32::System::Threading::GetCurrentProcessId;
 
 use super::action::LayoutAction;
 use super::common::{WindowRect, ScreenDimensions, calculate_window_rect};
@@ -52,13 +58,16 @@ pub fn snap_window(action: LayoutAction) -> Result<(), String> {
         return Err("Failed to get window frame".to_string());
     }
 
-    // TODO: Something about the math and frame sizing is weird here - specifically the * 2 feels like either the offset 
+    // Get the DPI for the window
+    let dpi = unsafe { GetDpiForWindow(hwnd) };
+    let dpi_scale = dpi as f32 / 96.0; // 96 is the default DPI
 
     // Get the extra offset for the position and size due to windows 10 invisible borders
-    let x_position_offset = frame_rect.left - rect.left;
-    let y_position_offset = frame_rect.top - rect.top;
-    let width_addition = (-frame_rect.right + rect.right) * 2;
-    let height_addition = -frame_rect.bottom + rect.bottom;
+    // Scale the offsets by the DPI
+    let x_position_offset = ((frame_rect.left - rect.left) as f32 * dpi_scale) as i32;
+    let y_position_offset = ((frame_rect.top - rect.top) as f32 * dpi_scale) as i32;
+    let width_addition = ((-frame_rect.right + rect.right) as f32 * dpi_scale * 2.0) as i32;
+    let height_addition = ((-frame_rect.bottom + rect.bottom) as f32 * dpi_scale) as i32;
 
     let screen_dimensions = ScreenDimensions {
         width: monitor_info.rcWork.right - monitor_info.rcWork.left,
