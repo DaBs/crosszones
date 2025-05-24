@@ -19,7 +19,7 @@ Download the latest release installer for your OS in the [Release](https://githu
   - macOS: Xcode Command Line Tools
   - Linux: Build essentials and WebKit development libraries
 
-### Installation
+### Local development
 
 1. Clone the repository:
    ```bash
