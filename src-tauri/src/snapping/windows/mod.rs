@@ -2,7 +2,7 @@ use windows::core::BOOL;
 use windows::Win32::Foundation::{HWND, LPARAM, RECT, TRUE};
 use windows::Win32::UI::WindowsAndMessaging::{
     EnumWindows, GetWindowRect, GetWindowThreadProcessId, GetSystemMetrics, IsWindowVisible,
-    GetForegroundWindow, SetWindowPos, SWP_FRAMECHANGED, SM_CXSCREEN, SM_CYSCREEN,
+    GetForegroundWindow, SetWindowPos, SWP_FRAMECHANGED, SM_CXSCREEN, SM_CYSCREEN, SM_CYFULLSCREEN,
 };
 use windows::Win32::System::Threading::GetCurrentProcessId;
 
@@ -25,7 +25,7 @@ pub fn snap_window(action: LayoutAction) -> Result<(), String> {
 
     // Get screen dimensions
     let screen_width = unsafe { GetSystemMetrics(SM_CXSCREEN) };
-    let screen_height = unsafe { GetSystemMetrics(SM_CYSCREEN) };
+    let screen_height = unsafe { GetSystemMetrics(SM_CYFULLSCREEN) };
 
     let screen_dimensions = ScreenDimensions {
         width: screen_width,
