@@ -4,7 +4,11 @@
 
 Simple cross-platform window moving and resizing utility using shortcuts.
 
-## 🚀 Getting Started
+## Installation
+
+Download the latest release installer for your OS in the [Release](https://github.com/DaBs/crosszones/releases)
+
+## 🚀 Development
 
 ### Prerequisites
 
