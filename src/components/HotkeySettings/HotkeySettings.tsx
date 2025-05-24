@@ -3,12 +3,14 @@ import './HotkeySettings.css';
 import { invoke } from '@tauri-apps/api/core';
 import { DEFAULT_HOTKEYS, HOTKEY_GROUPS } from './constants';
 import { HotkeyConfig } from './types';
+import { WindowSnapIcon } from '../WindowSnapIcon';
+import { LayoutAction } from '../../types/snapping';
 
 interface HotkeyGroupProps {
   title: string;
   configs: HotkeyConfig[];
-  onShortcutChange: (action: string, shortcut: string) => void;
-  onShortcutClear: (action: string) => void;
+  onShortcutChange: (action: LayoutAction, shortcut: string) => void;
+  onShortcutClear: (action: LayoutAction) => void;
 }
 
 const HotkeyGroup: React.FC<HotkeyGroupProps> = ({ 
@@ -17,9 +19,9 @@ const HotkeyGroup: React.FC<HotkeyGroupProps> = ({
   onShortcutChange, 
   onShortcutClear 
 }) => {
-  const [recording, setRecording] = useState<string | null>(null);
+  const [recording, setRecording] = useState<LayoutAction | null>(null);
 
-  const handleKeyDown = (e: React.KeyboardEvent, action: string) => {
+  const handleKeyDown = (e: React.KeyboardEvent, action: LayoutAction) => {
     e.preventDefault();
     
     if (e.key === 'Escape') {
@@ -50,24 +52,28 @@ const HotkeyGroup: React.FC<HotkeyGroupProps> = ({
       {configs.map((config, index) => (
         <div key={index} className="hotkey-row">
           <div className="hotkey-label">
-            {config.icon && <span className="hotkey-icon">{config.icon}</span>}
-            <span>{config.name}</span>
+            {config.layoutAction && (
+              <div className="hotkey-label-icon">
+                <WindowSnapIcon action={config.layoutAction} width={30} />
+              </div>
+            )}
+            <span className="hotkey-label-text">{config.name}</span>
           </div>
           <div className="hotkey-input-wrapper">
             <input
               type="text"
-              value={recording === config.action ? 'Press keys...' : config.shortcut}
-              className={`hotkey-input ${recording === config.action ? 'recording' : ''}`}
+              value={recording === config.layoutAction ? 'Press keys...' : config.shortcut}
+              className={`hotkey-input ${recording === config.layoutAction ? 'recording' : ''}`}
               readOnly
               placeholder="Record Shortcut"
-              onFocus={() => setRecording(config.action)}
+              onFocus={() => config.layoutAction && setRecording(config.layoutAction)}
               onBlur={() => setRecording(null)}
-              onKeyDown={(e) => handleKeyDown(e, config.action)}
+              onKeyDown={(e) => config.layoutAction && handleKeyDown(e, config.layoutAction)}
             />
             {config.shortcut && (
               <button 
                 className="clear-button"
-                onClick={() => onShortcutClear(config.action)}
+                onClick={() => config.layoutAction && onShortcutClear(config.layoutAction)}
               >
                 x
               </button>
@@ -82,18 +88,17 @@ const HotkeyGroup: React.FC<HotkeyGroupProps> = ({
 export const HotkeySettings: React.FC = () => {
   const [hotkeys, setHotkeys] = useState<HotkeyConfig[]>(DEFAULT_HOTKEYS);
 
-  const updateHotkey = (action: string, shortcut: string) => {
+  const updateHotkey = (action: LayoutAction, shortcut: string) => {
     setHotkeys(prev => prev.map(hotkey => 
-      hotkey.action === action ? { ...hotkey, shortcut } : hotkey
+      hotkey.layoutAction === action ? { ...hotkey, shortcut } : hotkey
     ));
   };
 
-  const handleShortcutChange = async (action: string, shortcut: string) => {
+  const handleShortcutChange = async (action: LayoutAction, shortcut: string) => {
     try {
-      const existingHotkey = hotkeys.find(h => h.action === action);
+      const existingHotkey = hotkeys.find(h => h.layoutAction === action);
       if (existingHotkey) {
-        await invoke('unregister_hotkey', { action: existingHotkey.action });
-        console.log(shortcut);
+        await invoke('unregister_hotkey', { action });
         await invoke('register_hotkey', { shortcut, action });
         updateHotkey(action, shortcut);
       }
@@ -102,11 +107,11 @@ export const HotkeySettings: React.FC = () => {
     }
   };
 
-  const handleShortcutClear = async (action: string) => {
+  const handleShortcutClear = async (action: LayoutAction) => {
     try {
-      const existingHotkey = hotkeys.find(h => h.action === action);
+      const existingHotkey = hotkeys.find(h => h.layoutAction === action);
       if (existingHotkey) {
-        await invoke('unregister_hotkey', { action: existingHotkey.action });
+        await invoke('unregister_hotkey', { action });
         updateHotkey(action, '');
       }
     } catch (error) {

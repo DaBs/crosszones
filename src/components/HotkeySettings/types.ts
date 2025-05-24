@@ -1,8 +1,8 @@
+import { LayoutAction } from '../../types/snapping';
 
 export interface HotkeyConfig {
   name: string;
-  action: string;
   shortcut: string;
-  icon?: string;
+  layoutAction: LayoutAction | null;
   group: string;
-}
+} 
