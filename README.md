@@ -23,7 +23,7 @@ Download the latest release installer for your OS in the [Release](https://githu
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/yourusername/crosszones.git
+   git clone https://github.com/DaBs/crosszones.git
    cd crosszones
    ```
 
