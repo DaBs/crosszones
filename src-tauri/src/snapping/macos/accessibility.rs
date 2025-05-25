@@ -1,12 +1,12 @@
-use core_graphics::geometry::{CGRect, CGPoint, CGSize};
-use objc::runtime::{Class, Object};
-use objc::{msg_send, sel, sel_impl, class};
-use objc_foundation::{INSString, NSString};
 use cocoa::{
     base::{id, nil},
     foundation::NSAutoreleasePool,
 };
+use core_graphics::geometry::{CGPoint, CGRect, CGSize};
 use objc::rc::autoreleasepool;
+use objc::runtime::{Class, Object};
+use objc::{class, msg_send, sel, sel_impl};
+use objc_foundation::{INSString, NSString};
 
 use super::accessibility_helpers::Error;
 
@@ -25,7 +25,8 @@ impl AccessibilityElement {
             autoreleasepool(|| {
                 let workspace = class!(NSWorkspace);
                 let shared_workspace: id = msg_send![workspace, sharedWorkspace];
-                let app: id = msg_send![shared_workspace, runningApplicationWithProcessIdentifier: pid];
+                let app: id =
+                    msg_send![shared_workspace, runningApplicationWithProcessIdentifier: pid];
                 Self::new(app)
             })
         }
@@ -41,7 +42,7 @@ impl AccessibilityElement {
                     shared_workspace,
                     runningApplicationsWithBundleIdentifier: bundle_id_str
                 ];
-                
+
                 let count: usize = msg_send![apps, count];
                 if count > 0 {
                     let app: id = msg_send![apps, objectAtIndex: 0];
@@ -176,9 +177,7 @@ impl AccessibilityElement {
         if self.is_application() {
             Ok(self.clone())
         } else {
-            self.get_pid()
-                .ok_or(Error::NotFound)
-                .map(Self::from_pid)
+            self.get_pid().ok_or(Error::NotFound).map(Self::from_pid)
         }
     }
 
@@ -187,7 +186,7 @@ impl AccessibilityElement {
             let workspace = class!(NSWorkspace);
             let shared_workspace: id = msg_send![workspace, sharedWorkspace];
             let frontmost_app: id = msg_send![shared_workspace, frontmostApplication];
-            
+
             if frontmost_app.is_null() {
                 return Err(Error::NotFound);
             }
@@ -223,7 +222,7 @@ impl AccessibilityElement {
             let workspace = class!(NSWorkspace);
             let shared_workspace: id = msg_send![workspace, sharedWorkspace];
             let frontmost_app: id = msg_send![shared_workspace, frontmostApplication];
-            
+
             if frontmost_app.is_null() {
                 None
             } else {
@@ -233,9 +232,8 @@ impl AccessibilityElement {
     }
 
     pub fn get_front_window_element() -> Result<Self, Error> {
-        let app_element = Self::get_front_application_element()
-            .ok_or(Error::NotFound)?;
-        
+        let app_element = Self::get_front_application_element().ok_or(Error::NotFound)?;
+
         unsafe {
             let key_window: id = msg_send![app_element.element, window];
             if key_window.is_null() {
@@ -251,14 +249,14 @@ impl AccessibilityElement {
             let workspace = class!(NSWorkspace);
             let shared_workspace: id = msg_send![workspace, sharedWorkspace];
             let frontmost_app: id = msg_send![shared_workspace, frontmostApplication];
-            
+
             if frontmost_app.is_null() {
                 return None;
             }
 
             let mouse_location: CGPoint = msg_send![class!(NSEvent), mouseLocation];
             let window: id = msg_send![frontmost_app, windowAtPoint: mouse_location];
-            
+
             if window.is_null() {
                 None
             } else {
@@ -272,17 +270,17 @@ impl AccessibilityElement {
             let workspace = class!(NSWorkspace);
             let shared_workspace: id = msg_send![workspace, sharedWorkspace];
             let apps: id = msg_send![shared_workspace, runningApplications];
-            
+
             let count: usize = msg_send![apps, count];
             for i in 0..count {
                 let app: id = msg_send![apps, objectAtIndex: i];
                 let windows: id = msg_send![app, windows];
                 let window_count: usize = msg_send![windows, count];
-                
+
                 for j in 0..window_count {
                     let window: id = msg_send![windows, objectAtIndex: j];
                     let window_number: i32 = msg_send![window, windowNumber];
-                    
+
                     if window_number as u32 == window_id {
                         return Some(Self::new(window));
                     }
@@ -291,4 +289,4 @@ impl AccessibilityElement {
             None
         }
     }
-} 
+}

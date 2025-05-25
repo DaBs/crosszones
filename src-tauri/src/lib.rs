@@ -1,5 +1,9 @@
 mod hotkeys;
 mod snapping;
+mod store;
+mod tray;
+mod window_manager;
+mod autostart;
 
 pub fn run() {
     tauri::Builder::default()
@@ -11,6 +15,8 @@ pub fn run() {
         .plugin(tauri_plugin_opener::init())
         .setup(|app| {
             hotkeys::setup_handler(app.handle().clone());
+            tray::setup_tray(app.handle().clone());
+            autostart::setup_autostart(app.handle().clone());
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
@@ -18,6 +24,7 @@ pub fn run() {
             hotkeys::unregister_hotkey,
             hotkeys::get_all_hotkeys,
         ])
+        .on_window_event(window_manager::on_window_event)
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

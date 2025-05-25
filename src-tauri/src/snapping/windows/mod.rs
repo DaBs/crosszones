@@ -2,21 +2,24 @@ use windows::{
     core::BOOL,
     Win32::{
         Foundation::{HWND, LPARAM, RECT, TRUE},
-        Graphics::Gdi::{GetMonitorInfoW, MONITORINFO, MONITOR_DEFAULTTONEAREST, MonitorFromWindow},
         Graphics::Dwm::{DwmGetWindowAttribute, DWMWA_EXTENDED_FRAME_BOUNDS},
+        Graphics::Gdi::{
+            GetMonitorInfoW, MonitorFromWindow, MONITORINFO, MONITOR_DEFAULTTONEAREST,
+        },
         System::Threading::GetCurrentProcessId,
         UI::{
             HiDpi::GetDpiForWindow,
             WindowsAndMessaging::{
-                EnumWindows, GetWindowRect, GetWindowThreadProcessId, GetSystemMetrics, IsWindowVisible,
-                GetForegroundWindow, SetWindowPos, SWP_FRAMECHANGED, SM_CXSCREEN, SM_CYSCREEN, SWP_NOZORDER, SWP_NOACTIVATE
-            }
-        }
-    }
+                EnumWindows, GetForegroundWindow, GetSystemMetrics, GetWindowRect,
+                GetWindowThreadProcessId, IsWindowVisible, SetWindowPos, SM_CXSCREEN, SM_CYSCREEN,
+                SWP_FRAMECHANGED, SWP_NOACTIVATE, SWP_NOZORDER,
+            },
+        },
+    },
 };
 
 use super::action::LayoutAction;
-use super::common::{WindowRect, ScreenDimensions, calculate_window_rect};
+use super::common::{calculate_window_rect, ScreenDimensions, WindowRect};
 
 // Function to snap a window according to the specified layout action
 pub fn snap_window(action: LayoutAction) -> Result<(), String> {
@@ -46,12 +49,12 @@ pub fn snap_window(action: LayoutAction) -> Result<(), String> {
 
     // Get the frame without the windows borders
     let mut frame_rect = RECT::default();
-    let result = unsafe { 
+    let result = unsafe {
         DwmGetWindowAttribute(
             hwnd,
             DWMWA_EXTENDED_FRAME_BOUNDS,
             &mut frame_rect as *mut _ as *mut std::ffi::c_void,
-            std::mem::size_of::<RECT>() as u32
+            std::mem::size_of::<RECT>() as u32,
         )
     };
     if result.is_err() {
@@ -121,29 +124,32 @@ pub fn snap_window(action: LayoutAction) -> Result<(), String> {
 // Helper function to get all visible windows
 pub fn get_visible_windows() -> Vec<HWND> {
     let mut windows = Vec::new();
-    
+
     unsafe {
-        EnumWindows(Some(enum_window_callback), LPARAM(&mut windows as *mut _ as isize));
+        EnumWindows(
+            Some(enum_window_callback),
+            LPARAM(&mut windows as *mut _ as isize),
+        );
     }
-    
+
     windows
 }
 
 // Callback function for EnumWindows
 extern "system" fn enum_window_callback(hwnd: HWND, lparam: LPARAM) -> BOOL {
     let windows = unsafe { &mut *(lparam.0 as *mut Vec<HWND>) };
-    
+
     // Check if the window is visible
     if unsafe { IsWindowVisible(hwnd).as_bool() } {
         // Get the process ID of the window
         let mut process_id = 0u32;
         unsafe { GetWindowThreadProcessId(hwnd, Some(&mut process_id)) };
-        
+
         // Skip windows from our own process
         if process_id != unsafe { GetCurrentProcessId() } {
             windows.push(hwnd);
         }
     }
-    
+
     TRUE
 }

@@ -1,20 +1,20 @@
 use accessibility_sys::{
-  kAXConfirmAction, kAXDecrementAction, kAXIncrementAction, kAXPickAction, kAXPressAction,
-  kAXRaiseAction, kAXShowAlternateUIAction, kAXShowDefaultUIAction, kAXShowMenuAction,
+    kAXConfirmAction, kAXDecrementAction, kAXIncrementAction, kAXPickAction, kAXPressAction,
+    kAXRaiseAction, kAXShowAlternateUIAction, kAXShowDefaultUIAction, kAXShowMenuAction,
 };
 use core_foundation::string::CFString;
 
 use crate::snapping::accessibility_helpers::{AXUIElement, ElementFinder, Error};
 
 macro_rules! performer {
-  (@decl $name:ident, $const:ident) => {
-      fn $name(&self) -> Result<(), Error>;
-  };
-  (@impl $name:ident, $const:ident) => {
-      fn $name(&self) -> Result<(), Error> {
-          self.perform_action(&CFString::from_static_string($const))
-      }
-  };
+    (@decl $name:ident, $const:ident) => {
+        fn $name(&self) -> Result<(), Error>;
+    };
+    (@impl $name:ident, $const:ident) => {
+        fn $name(&self) -> Result<(), Error> {
+            self.perform_action(&CFString::from_static_string($const))
+        }
+    };
 }
 
 macro_rules! define_actions {
@@ -34,13 +34,13 @@ macro_rules! define_actions {
 }
 
 define_actions![
-  (press, kAXPressAction),
-  (increment, kAXIncrementAction),
-  (decrement, kAXDecrementAction),
-  (confirm, kAXConfirmAction),
-  (show_alternate_ui, kAXShowAlternateUIAction),
-  (show_default_ui, kAXShowDefaultUIAction),
-  (raise, kAXRaiseAction),
-  (show_menu, kAXShowMenuAction),
-  (pick, kAXPickAction),
+    (press, kAXPressAction),
+    (increment, kAXIncrementAction),
+    (decrement, kAXDecrementAction),
+    (confirm, kAXConfirmAction),
+    (show_alternate_ui, kAXShowAlternateUIAction),
+    (show_default_ui, kAXShowDefaultUIAction),
+    (raise, kAXRaiseAction),
+    (show_menu, kAXShowMenuAction),
+    (pick, kAXPickAction),
 ];

@@ -1,4 +1,3 @@
-
 use accessibility_sys::{kAXErrorSuccess, AXError};
 use std::mem::MaybeUninit;
 

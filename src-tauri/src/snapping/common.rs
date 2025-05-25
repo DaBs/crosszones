@@ -281,6 +281,8 @@ pub fn calculate_window_rect(
             width: screen.width / 3,
             height: screen.height,
         },
-        LayoutAction::TileAll | LayoutAction::CascadeAll | LayoutAction::CascadeActiveApp => current,
+        LayoutAction::TileAll | LayoutAction::CascadeAll | LayoutAction::CascadeActiveApp => {
+            current
+        }
     }
-} 
+}

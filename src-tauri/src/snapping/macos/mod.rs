@@ -2,8 +2,8 @@ mod accessibility;
 pub mod accessibility_helpers;
 
 use accessibility::AccessibilityElement;
-use core_graphics::display::{CGDisplay};
-use core_graphics::geometry::{CGRect, CGSize, CGPoint};
+use core_graphics::display::CGDisplay;
+use core_graphics::geometry::{CGPoint, CGRect, CGSize};
 
 use super::action::LayoutAction;
 use super::common::{calculate_window_rect, ScreenDimensions, WindowRect};
@@ -12,16 +12,16 @@ use super::common::{calculate_window_rect, ScreenDimensions, WindowRect};
 pub fn snap_window(action: LayoutAction) -> Result<(), String> {
     // Get the frontmost window
     let window = get_frontmost_window()?;
-    
+
     // Get the current window position and size
     let current_rect = get_window_rect(&window)?;
-    
+
     // Get screen dimensions
     let screen_dimensions = get_screen_dimensions()?;
-    
+
     // Calculate new position and size based on the action
     let new_rect = calculate_window_rect(action, screen_dimensions, Some(current_rect));
-    
+
     // Apply the new position and size
     set_window_rect(&window, new_rect)?;
 
@@ -32,7 +32,7 @@ pub fn snap_window(action: LayoutAction) -> Result<(), String> {
 fn get_frontmost_window() -> Result<AccessibilityElement, String> {
     match AccessibilityElement::get_front_window_element() {
         Ok(window) => Ok(window),
-        Err(e) => Err(e.to_string())
+        Err(e) => Err(e.to_string()),
     }
 }
 
@@ -45,7 +45,7 @@ fn get_window_rect(window: &AccessibilityElement) -> Result<WindowRect, String> 
             width: frame.size.width as i32,
             height: frame.size.height as i32,
         }),
-        Err(e) => Err(e.to_string())
+        Err(e) => Err(e.to_string()),
     }
 }
 
@@ -64,7 +64,7 @@ fn set_window_rect(window: &AccessibilityElement, rect: WindowRect) -> Result<()
 fn get_screen_dimensions() -> Result<ScreenDimensions, String> {
     let main_display = CGDisplay::main();
     let bounds = main_display.bounds();
-    
+
     Ok(ScreenDimensions {
         width: bounds.size.width as i32,
         height: bounds.size.height as i32,
