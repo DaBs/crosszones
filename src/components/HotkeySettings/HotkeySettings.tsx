@@ -129,18 +129,13 @@ export const HotkeySettings: React.FC = () => {
     const loadHotkeys = async () => {
       const existingHotkeys = await invoke('get_all_hotkeys') as [string, string][];
 
-      console.log(existingHotkeys);
-
       const mappedHotkeys = AVAILABLE_HOTKEYS.map(hotkey => {
-        console.log(hotkey.layoutAction?.toString());
         const existingHotkey = existingHotkeys.find(h => h[1] === hotkey.layoutAction?.toString());
         return {
           ...hotkey,
           shortcut: existingHotkey?.[0] || ''
         };
       });
-
-      console.log(mappedHotkeys);
 
       setHotkeys(mappedHotkeys);
       setIsLoading(false);
@@ -150,7 +145,8 @@ export const HotkeySettings: React.FC = () => {
   }, []);
 
   return (
-    <div className="hotkey-settings">      
+    <div className="hotkey-settings">
+      {isLoading && <div className="hotkey-settings-loading-overlay">Loading...</div>}
       {groupedHotkeys.map(({ title, configs }) => (
         <HotkeyGroup
           key={title}
