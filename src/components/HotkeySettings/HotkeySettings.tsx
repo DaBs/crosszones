@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import './HotkeySettings.css';
 import { invoke } from '@tauri-apps/api/core';
-import { DEFAULT_HOTKEYS, HOTKEY_GROUPS } from './constants';
+import { AVAILABLE_HOTKEYS, HOTKEY_GROUPS } from './constants';
 import { HotkeyConfig } from './types';
 import { WindowSnapIcon } from '../WindowSnapIcon';
 import { LayoutAction } from '../../types/snapping';
@@ -30,12 +30,12 @@ const HotkeyGroup: React.FC<HotkeyGroupProps> = ({
     }
     
     const modifiers = [];
-    if (e.ctrlKey) modifiers.push('Ctrl');
-    if (e.altKey) modifiers.push('Alt');
-    if (e.shiftKey) modifiers.push('Shift');
-    if (e.metaKey) modifiers.push('Meta');
+    if (e.ctrlKey) modifiers.push('control');
+    if (e.altKey) modifiers.push('alt');
+    if (e.shiftKey) modifiers.push('shift');
+    if (e.metaKey) modifiers.push('meta');
     
-    if (!['Control', 'Alt', 'Shift', 'Meta'].includes(e.key)) {
+    if (!['control', 'alt', 'shift', 'meta'].includes(e.key)) {
       modifiers.push(e.key);
     }
     
@@ -86,7 +86,8 @@ const HotkeyGroup: React.FC<HotkeyGroupProps> = ({
 };
 
 export const HotkeySettings: React.FC = () => {
-  const [hotkeys, setHotkeys] = useState<HotkeyConfig[]>(DEFAULT_HOTKEYS);
+  const [hotkeys, setHotkeys] = useState<HotkeyConfig[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   const updateHotkey = (action: LayoutAction, shortcut: string) => {
     setHotkeys(prev => prev.map(hotkey => 
@@ -98,8 +99,8 @@ export const HotkeySettings: React.FC = () => {
     try {
       const existingHotkey = hotkeys.find(h => h.layoutAction === action);
       if (existingHotkey) {
-        await invoke('unregister_hotkey', { action });
-        await invoke('register_hotkey', { shortcut, action });
+        await invoke('unregister_hotkey_action', { action });
+        await invoke('register_hotkey_action', { shortcut, action });
         updateHotkey(action, shortcut);
       }
     } catch (error) {
@@ -111,7 +112,7 @@ export const HotkeySettings: React.FC = () => {
     try {
       const existingHotkey = hotkeys.find(h => h.layoutAction === action);
       if (existingHotkey) {
-        await invoke('unregister_hotkey', { action });
+        await invoke('unregister_hotkey_action', { action });
         updateHotkey(action, '');
       }
     } catch (error) {
@@ -123,6 +124,30 @@ export const HotkeySettings: React.FC = () => {
     title: group,
     configs: hotkeys.filter(hotkey => hotkey.group === group)
   }));
+
+  useEffect(() => {
+    const loadHotkeys = async () => {
+      const existingHotkeys = await invoke('get_all_hotkeys') as [string, string][];
+
+      console.log(existingHotkeys);
+
+      const mappedHotkeys = AVAILABLE_HOTKEYS.map(hotkey => {
+        console.log(hotkey.layoutAction?.toString());
+        const existingHotkey = existingHotkeys.find(h => h[1] === hotkey.layoutAction?.toString());
+        return {
+          ...hotkey,
+          shortcut: existingHotkey?.[0] || ''
+        };
+      });
+
+      console.log(mappedHotkeys);
+
+      setHotkeys(mappedHotkeys);
+      setIsLoading(false);
+    };
+
+    loadHotkeys();
+  }, []);
 
   return (
     <div className="hotkey-settings">      

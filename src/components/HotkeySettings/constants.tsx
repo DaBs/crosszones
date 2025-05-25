@@ -11,7 +11,7 @@ export const HOTKEY_GROUPS = {
   MOVEMENT_CONTROLS: 'Movement Controls',
 };
 
-export const DEFAULT_HOTKEYS: HotkeyConfig[] = [
+export const AVAILABLE_HOTKEYS: HotkeyConfig[] = [
   // Window Position
   { name: 'Left Half', shortcut: '', layoutAction: LayoutAction.LeftHalf, group: HOTKEY_GROUPS.WINDOW_POSITION },
   { name: 'Right Half', shortcut: '', layoutAction: LayoutAction.RightHalf, group: HOTKEY_GROUPS.WINDOW_POSITION },
