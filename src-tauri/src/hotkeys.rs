@@ -4,7 +4,7 @@ use crate::snapping::action::LayoutAction;
 use crate::snapping::snap_window;
 use crate::store::CROSSZONES_STORE_NAME;
 use strum::VariantNames;
-use tauri_plugin_global_shortcut::{GlobalShortcutExt, Shortcut};
+use tauri_plugin_global_shortcut::{GlobalShortcutExt, Shortcut, ShortcutState};
 use tauri_plugin_store::StoreExt;
 
 fn register_hotkey(app: &tauri::AppHandle, shortcut: Shortcut) -> Result<(), String> {
@@ -50,7 +50,7 @@ pub fn load_hotkeys(app: tauri::AppHandle) {
 pub fn setup(app_handle: tauri::AppHandle) {
     let _ = app_handle.plugin(
         tauri_plugin_global_shortcut::Builder::new()
-            .with_handler(move |app, hotkey, _event| {
+            .with_handler(move |app, hotkey, event| {
                 let store = app
                     .store(CROSSZONES_STORE_NAME)
                     .expect("Failed to open store");
@@ -58,12 +58,18 @@ pub fn setup(app_handle: tauri::AppHandle) {
                 let action = store.get(hotkey.to_string());
 
                 if let Some(action) = action {
-                    let action = action.as_str().expect("Failed to get action");
+                    match event.state() {
+                        ShortcutState::Pressed => {
+                            println!("Pressed");
+                            let action = action.as_str().expect("Failed to get action");
 
-                    let action = LayoutAction::from_str(action)
-                        .expect("Failed to convert action to LayoutAction");
-
-                    let _ = snap_window(action);
+                            let action = LayoutAction::from_str(action)
+                                .expect("Failed to convert action to LayoutAction");
+        
+                            let _ = snap_window(action);
+                        }
+                        _ => {}
+                    }
                 }
             })
             .build(),
