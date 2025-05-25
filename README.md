@@ -1,5 +1,10 @@
-<p>
-<img src="./assets/crosszones.png" alt="CrossZones" />
+<p align="center" dir="auto">
+<picture>
+    <source media="(prefers-color-scheme: dark)" srcset="/DaBs/crosszones/raw/main/assets/logo-white.png">
+    <source media="(prefers-color-scheme: light)" srcset="/DaBs/crosszones/raw/main/assets/logo-black.png">
+    <img src="/DaBs/crosszones/raw/main/assets/logo-black.png">
+  </picture>
+<img src="./assets/screenshot.png" alt="CrossZones" />
 </p>
 
 Simple cross-platform window moving and resizing utility using shortcuts.
