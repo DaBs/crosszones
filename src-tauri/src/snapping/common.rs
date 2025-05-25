@@ -16,6 +16,16 @@ pub struct ScreenDimensions {
     pub height: i32,
 }
 
+/// Ensures a window stays within screen boundaries
+fn constrain_to_screen(rect: WindowRect, screen: ScreenDimensions) -> WindowRect {
+    WindowRect {
+        x: rect.x.max(0).min(screen.width - rect.width),
+        y: rect.y.max(0).min(screen.height - rect.height),
+        width: rect.width,
+        height: rect.height,
+    }
+}
+
 /// Calculate the window position and size based on the layout action and screen dimensions
 pub fn calculate_window_rect(
     action: LayoutAction,
@@ -30,7 +40,7 @@ pub fn calculate_window_rect(
         height: screen.height,
     });
 
-    match action {
+    let result = match action {
         LayoutAction::LeftHalf => WindowRect {
             x: 0,
             y: 0,
@@ -122,10 +132,10 @@ pub fn calculate_window_rect(
             height: screen.height,
         },
         LayoutAction::AlmostMaximize => WindowRect {
-            x: screen.width / 20,
-            y: screen.height / 20,
-            width: 18 * screen.width / 20,
-            height: 18 * screen.height / 20,
+            x: (screen.width as f32 * 0.01) as i32,
+            y: (screen.height as f32 * 0.01) as i32,
+            width: (screen.width as f32 * 0.98) as i32,
+            height: (screen.height as f32 * 0.98) as i32,
         },
         LayoutAction::MaximizeHeight => WindowRect {
             x: current.x,
@@ -134,16 +144,16 @@ pub fn calculate_window_rect(
             height: screen.height,
         },
         LayoutAction::Smaller => WindowRect {
-            x: current.x + current.width / 20,
-            y: current.y + current.height / 20,
-            width: 18 * current.width / 20,
-            height: 18 * current.height / 20,
+            x: current.x + current.width / 10,
+            y: current.y + current.height / 10,
+            width: current.width * 8 / 10,
+            height: current.height * 8 / 10,
         },
         LayoutAction::Larger => WindowRect {
-            x: current.x - current.width / 20,
-            y: current.y - current.height / 20,
-            width: 22 * current.width / 20,
-            height: 22 * current.height / 20,
+            x: current.x - current.width / 10,
+            y: current.y - current.height / 10,
+            width: current.width * 12 / 10,
+            height: current.height * 12 / 10,
         },
         LayoutAction::Center => WindowRect {
             x: (screen.width - current.width) / 2,
@@ -284,5 +294,8 @@ pub fn calculate_window_rect(
         LayoutAction::TileAll | LayoutAction::CascadeAll | LayoutAction::CascadeActiveApp => {
             current
         }
-    }
+    };
+
+    // Apply screen boundary constraints to all layout actions
+    constrain_to_screen(result, screen)
 }
