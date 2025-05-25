@@ -51,37 +51,36 @@ const HotkeyGroup: React.FC<HotkeyGroupProps> = ({
   };
 
   return (
-    <Card className="max-w-md w-full">
-      <CardHeader className="p-4 pb-2">
-        <CardTitle className="text-base">{title}</CardTitle>
+    <Card className="w-full">
+      <CardHeader className="p-3 pb-1">
+        <CardTitle className="text-sm font-medium">{title}</CardTitle>
       </CardHeader>
-      <CardContent className="p-4 pt-2">
-        <div className="space-y-1">
+      <CardContent className="p-3 pt-1">
+        <div className="grid grid-cols-2 gap-2">
           {configs.map((config, index) => (
-            <div key={index} className="flex items-center justify-between gap-2">
-              <div className="flex items-center gap-2">
-                {config.layoutAction && (
-                  <div className="flex items-center justify-center w-6 h-6 rounded-md bg-muted">
-                    <WindowSnapIcon action={config.layoutAction} width={16} height={12} />
-                  </div>
-                )}
-                <span className="font-medium text-sm">{config.name}</span>
-              </div>
-              <div className="flex items-center gap-1">
+            <div key={index} className="flex items-center gap-2">
+              {config.layoutAction && (
+                <div className="flex items-center justify-center w-5 h-5 rounded bg-muted shrink-0">
+                  <WindowSnapIcon action={config.layoutAction} width={14} height={10} />
+                </div>
+              )}
+              <span className="text-xs">{config.name}</span>
+              <div className="flex items-center gap-1 ml-auto">
                 <Input
                   type="text"
                   value={recording === config.layoutAction ? 'Press keys...' : config.shortcut}
-                  className={`w-40 h-8 text-sm ${recording === config.layoutAction ? 'ring-2 ring-primary' : ''}`}
+                  className={`w-32 h-7 text-xs ${recording === config.layoutAction ? 'ring-2 ring-primary' : ''}`}
                   readOnly
-                  placeholder="Record Shortcut"
+                  placeholder="Record shortcut"
                   onFocus={() => config.layoutAction && setRecording(config.layoutAction)}
                   onBlur={() => setRecording(null)}
                   onKeyDown={(e) => config.layoutAction && handleKeyDown(e, config.layoutAction)}
                 />
                 <Button
-                  variant="ghost"
+                  variant="outline"
+                  disabled={!config.shortcut}
                   size="icon"
-                  className="h-8 w-8"
+                  className={`h-7 w-7 ${!config.shortcut ? 'invisible' : ''}`}
                   onClick={() => config.layoutAction && onShortcutClear(config.layoutAction)}
                 >
                   <X className="h-3 w-3" />
@@ -156,18 +155,19 @@ export const HotkeySettings: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="flex flex-wrap justify-center gap-4">
-        {[1, 2, 3, 4, 5, 6].map((i) => (
-          <Card key={i} className="w-[300px]">
-            <CardHeader className="p-4 pb-2">
-              <Skeleton className="h-5 w-24" />
+      <div className="grid grid-cols-2 gap-4">
+        {[1, 2, 3, 4].map((i) => (
+          <Card key={i} className="w-full">
+            <CardHeader className="p-3 pb-1">
+              <Skeleton className="h-4 w-24" />
             </CardHeader>
-            <CardContent className="p-4 pt-2">
-              <div className="space-y-2">
-                {[1, 2, 3].map((j) => (
-                  <div key={j} className="flex items-center justify-between gap-2">
-                    <Skeleton className="h-6 w-24" />
-                    <Skeleton className="h-8 w-40" />
+            <CardContent className="p-3 pt-1">
+              <div className="grid grid-cols-2 gap-2">
+                {[1, 2, 3, 4].map((j) => (
+                  <div key={j} className="flex items-center gap-2">
+                    <Skeleton className="h-5 w-5 rounded" />
+                    <Skeleton className="h-4 w-24" />
+                    <Skeleton className="h-7 w-32 ml-auto" />
                   </div>
                 ))}
               </div>
@@ -179,7 +179,7 @@ export const HotkeySettings: React.FC = () => {
   }
 
   return (
-    <div className="flex flex-wrap justify-center gap-4">
+    <div className="grid grid-cols-2 gap-4">
       {groupedHotkeys.map(({ title, configs }) => (
         <HotkeyGroup
           key={title}
