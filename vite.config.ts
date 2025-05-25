@@ -1,4 +1,6 @@
 import { defineConfig } from "vite";
+import path from "node:path"
+import tailwindcss from "@tailwindcss/vite"
 import react from "@vitejs/plugin-react";
 import svgr from 'vite-plugin-svgr';
 
@@ -10,6 +12,7 @@ export default defineConfig(async () => ({
   plugins: [
     react(),
     svgr(),
+    tailwindcss(),
   ],
 
   // Vite options tailored for Tauri development and only applied in `tauri dev` or `tauri build`
@@ -31,6 +34,12 @@ export default defineConfig(async () => ({
     watch: {
       // 3. tell vite to ignore watching `src-tauri`
       ignored: ["**/src-tauri/**"],
+    },
+  },
+
+  resolve: {
+    alias: {
+      "@": path.resolve(__dirname, "./src"),
     },
   },
 }));

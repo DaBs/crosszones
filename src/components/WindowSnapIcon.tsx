@@ -107,7 +107,7 @@ export const WindowSnapIcon: React.FC<WindowSnapIconProps> = ({
       <style>
         {`
           .s0 { fill: #e0e0e0; stroke: #ababab; stroke-miterlimit: 10 }
-          .s1 { fill: #a8a8a8; stroke: #ababab; stroke-miterlimit: 10; stroke-width: 0 }
+          .s1 { fill: #1e90ff; stroke: #1e90ff; stroke-miterlimit: 10; stroke-width: 0 }
         `}
       </style>
       <g id="Layer 1">

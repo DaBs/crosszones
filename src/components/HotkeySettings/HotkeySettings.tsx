@@ -1,10 +1,14 @@
 import React, { useEffect, useState } from 'react';
-import './HotkeySettings.css';
 import { invoke } from '@tauri-apps/api/core';
 import { AVAILABLE_HOTKEYS, HOTKEY_GROUPS } from './constants';
 import { HotkeyConfig } from './types';
 import { WindowSnapIcon } from '../WindowSnapIcon';
 import { LayoutAction } from '../../types/snapping';
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Skeleton } from "@/components/ui/skeleton";
+import { X } from "lucide-react";
 
 interface HotkeyGroupProps {
   title: string;
@@ -47,41 +51,47 @@ const HotkeyGroup: React.FC<HotkeyGroupProps> = ({
   };
 
   return (
-    <div className="hotkey-group">
-      <h3>{title}</h3>
-      {configs.map((config, index) => (
-        <div key={index} className="hotkey-row">
-          <div className="hotkey-label">
-            {config.layoutAction && (
-              <div className="hotkey-label-icon">
-                <WindowSnapIcon action={config.layoutAction} width={20} height={15} />
+    <Card className="max-w-md w-full">
+      <CardHeader className="p-4 pb-2">
+        <CardTitle className="text-base">{title}</CardTitle>
+      </CardHeader>
+      <CardContent className="p-4 pt-2">
+        <div className="space-y-1">
+          {configs.map((config, index) => (
+            <div key={index} className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2">
+                {config.layoutAction && (
+                  <div className="flex items-center justify-center w-6 h-6 rounded-md bg-muted">
+                    <WindowSnapIcon action={config.layoutAction} width={16} height={12} />
+                  </div>
+                )}
+                <span className="font-medium text-sm">{config.name}</span>
               </div>
-            )}
-            <span className="hotkey-label-text">{config.name}</span>
-          </div>
-          <div className="hotkey-input-wrapper">
-            <input
-              type="text"
-              value={recording === config.layoutAction ? 'Press keys...' : config.shortcut}
-              className={`hotkey-input ${recording === config.layoutAction ? 'recording' : ''}`}
-              readOnly
-              placeholder="Record Shortcut"
-              onFocus={() => config.layoutAction && setRecording(config.layoutAction)}
-              onBlur={() => setRecording(null)}
-              onKeyDown={(e) => config.layoutAction && handleKeyDown(e, config.layoutAction)}
-            />
-            {config.shortcut && (
-              <button 
-                className="clear-button"
-                onClick={() => config.layoutAction && onShortcutClear(config.layoutAction)}
-              >
-                x
-              </button>
-            )}
-          </div>
+              <div className="flex items-center gap-1">
+                <Input
+                  type="text"
+                  value={recording === config.layoutAction ? 'Press keys...' : config.shortcut}
+                  className={`w-40 h-8 text-sm ${recording === config.layoutAction ? 'ring-2 ring-primary' : ''}`}
+                  readOnly
+                  placeholder="Record Shortcut"
+                  onFocus={() => config.layoutAction && setRecording(config.layoutAction)}
+                  onBlur={() => setRecording(null)}
+                  onKeyDown={(e) => config.layoutAction && handleKeyDown(e, config.layoutAction)}
+                />
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8"
+                  onClick={() => config.layoutAction && onShortcutClear(config.layoutAction)}
+                >
+                  <X className="h-3 w-3" />
+                </Button>
+              </div>
+            </div>
+          ))}
         </div>
-      ))}
-    </div>
+      </CardContent>
+    </Card>
   );
 };
 
@@ -144,9 +154,32 @@ export const HotkeySettings: React.FC = () => {
     loadHotkeys();
   }, []);
 
+  if (isLoading) {
+    return (
+      <div className="flex flex-wrap justify-center gap-4">
+        {[1, 2, 3, 4, 5, 6].map((i) => (
+          <Card key={i} className="w-[300px]">
+            <CardHeader className="p-4 pb-2">
+              <Skeleton className="h-5 w-24" />
+            </CardHeader>
+            <CardContent className="p-4 pt-2">
+              <div className="space-y-2">
+                {[1, 2, 3].map((j) => (
+                  <div key={j} className="flex items-center justify-between gap-2">
+                    <Skeleton className="h-6 w-24" />
+                    <Skeleton className="h-8 w-40" />
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    );
+  }
+
   return (
-    <div className="hotkey-settings">
-      {isLoading && <div className="hotkey-settings-loading-overlay">Loading...</div>}
+    <div className="flex flex-wrap justify-center gap-4">
       {groupedHotkeys.map(({ title, configs }) => (
         <HotkeyGroup
           key={title}
