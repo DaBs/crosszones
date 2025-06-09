@@ -1,6 +1,6 @@
 use tauri::{
     menu::{Menu, MenuItem},
-    tray::TrayIconBuilder,
+    tray::{TrayIconBuilder, TrayIconEvent},
     Manager,
 };
 
@@ -13,6 +13,12 @@ pub fn setup_tray(app: tauri::AppHandle) {
         .icon(app.default_window_icon().unwrap().clone())
         .tooltip("CrossZones")
         .menu(&menu)
+        .on_tray_icon_event(|tray, event| {
+            if let TrayIconEvent::Click { .. } = event {
+                let app = tray.app_handle();
+                app.get_webview_window("main").unwrap().show().unwrap();
+            }
+        })
         .on_menu_event(|app, event| match event.id.as_ref() {
             "open" => {
                 app.get_webview_window("main").unwrap().show().unwrap();
