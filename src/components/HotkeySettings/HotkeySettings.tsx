@@ -53,7 +53,7 @@ const HotkeyGroup: React.FC<HotkeyGroupProps> = ({
   return (
     <Card className="w-full">
       <CardHeader className="p-3 pb-1">
-        <CardTitle className="text-sm font-medium">{title}</CardTitle>
+        <CardTitle className="text-sm font-medium select-none">{title}</CardTitle>
       </CardHeader>
       <CardContent className="p-3 pt-1">
         <div className="grid grid-cols-2 gap-2">
@@ -64,12 +64,12 @@ const HotkeyGroup: React.FC<HotkeyGroupProps> = ({
                   <WindowSnapIcon action={config.layoutAction} width={14} height={10} />
                 </div>
               )}
-              <span className="text-xs">{config.name}</span>
+              <span className="text-xs select-none">{config.name}</span>
               <div className="flex items-center gap-1 ml-auto">
                 <Input
                   type="text"
                   value={recording === config.layoutAction ? 'Press keys...' : config.shortcut}
-                  className={`w-32 h-7 text-xs ${recording === config.layoutAction ? 'ring-2 ring-primary' : ''}`}
+                  className={`w-32 h-7 text-xs select-none ${recording === config.layoutAction ? 'ring-2 ring-primary' : ''}`}
                   readOnly
                   placeholder="Record shortcut"
                   onFocus={() => config.layoutAction && setRecording(config.layoutAction)}

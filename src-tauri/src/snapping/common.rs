@@ -19,8 +19,8 @@ pub struct ScreenDimensions {
 /// Ensures a window stays within screen boundaries
 fn constrain_to_screen(rect: WindowRect, screen: ScreenDimensions) -> WindowRect {
     WindowRect {
-        x: rect.x.max(0).min(screen.width - rect.width),
-        y: rect.y.max(0).min(screen.height - rect.height),
+        x: rect.x.max(0).min(screen.width),
+        y: rect.y.max(0).min(screen.height),
         width: rect.width,
         height: rect.height,
     }
@@ -170,26 +170,26 @@ pub fn calculate_window_rect(
         LayoutAction::Restore => current,
         LayoutAction::NextDisplay | LayoutAction::PreviousDisplay => current,
         LayoutAction::MoveLeft => WindowRect {
-            x: current.x - screen.width / 10,
+            x: current.x - current.width,
             y: current.y,
             width: current.width,
             height: current.height,
         },
         LayoutAction::MoveRight => WindowRect {
-            x: current.x + screen.width / 10,
+            x: current.x + current.width,
             y: current.y,
             width: current.width,
             height: current.height,
         },
         LayoutAction::MoveUp => WindowRect {
             x: current.x,
-            y: current.y - screen.height / 10,
+            y: current.y - current.height,
             width: current.width,
             height: current.height,
         },
         LayoutAction::MoveDown => WindowRect {
             x: current.x,
-            y: current.y + screen.height / 10,
+            y: current.y + current.height,
             width: current.width,
             height: current.height,
         },
@@ -296,6 +296,13 @@ pub fn calculate_window_rect(
         }
     };
 
+    println!("current: {:?}", current);
+    println!("result: {:?}", result);
+
     // Apply screen boundary constraints to all layout actions
-    constrain_to_screen(result, screen)
+    let result = constrain_to_screen(result, screen);
+
+    println!("bounded result: {:?}", result);
+
+    result
 }

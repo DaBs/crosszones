@@ -1,4 +1,5 @@
 import { cn } from "@/lib/utils"
+import { TitleBar } from "./TitleBar"
 
 interface LayoutProps extends React.HTMLAttributes<HTMLDivElement> {
   children: React.ReactNode
@@ -13,7 +14,8 @@ export function Layout({ children, className, ...props }: LayoutProps) {
       )}
       {...props}
     >
-      <div className="relative flex min-h-screen flex-col">
+      <div className="relative flex min-h-screen flex-col pt-8">
+        <TitleBar />
         <div className="flex-1">{children}</div>
       </div>
     </div>
