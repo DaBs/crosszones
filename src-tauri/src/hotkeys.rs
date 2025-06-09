@@ -2,7 +2,7 @@ use std::str::FromStr;
 
 use crate::snapping::action::LayoutAction;
 use crate::snapping::snap_window;
-use crate::store::CROSSZONES_STORE_NAME;
+use crate::store::hotkeys::HOTKEYS_STORE_NAME;
 use strum::VariantNames;
 use tauri_plugin_global_shortcut::{GlobalShortcutExt, Shortcut, ShortcutState};
 use tauri_plugin_store::StoreExt;
@@ -24,7 +24,7 @@ fn persist_hotkey_action(app: &tauri::AppHandle, shortcut: Shortcut, action: Lay
     };
 
     let store = app
-        .store(CROSSZONES_STORE_NAME)
+        .store(HOTKEYS_STORE_NAME)
         .expect("Failed to open store");
 
     store.set(shortcut.to_string(), action.as_ref());
@@ -36,7 +36,7 @@ fn persist_hotkey_action(app: &tauri::AppHandle, shortcut: Shortcut, action: Lay
 
 pub fn load_hotkeys(app: tauri::AppHandle) {
     let store = app
-        .store(CROSSZONES_STORE_NAME)
+        .store(HOTKEYS_STORE_NAME)
         .expect("Failed to open store");
 
     let entries = store.entries();
@@ -52,7 +52,7 @@ pub fn setup(app_handle: tauri::AppHandle) {
         tauri_plugin_global_shortcut::Builder::new()
             .with_handler(move |app, hotkey, event| {
                 let store = app
-                    .store(CROSSZONES_STORE_NAME)
+                    .store(HOTKEYS_STORE_NAME)
                     .expect("Failed to open store");
 
                 let action = store.get(hotkey.to_string());
@@ -95,7 +95,7 @@ pub fn register_hotkey_action(
 pub fn unregister_hotkey_action(app: tauri::AppHandle, action: LayoutAction) -> Result<(), String> {
     let shortcut_manager = app.global_shortcut();
     let store = app
-        .store(CROSSZONES_STORE_NAME)
+        .store(HOTKEYS_STORE_NAME)
         .expect("Failed to open store");
 
     // Find the shortcut that maps to this action
@@ -121,7 +121,7 @@ pub fn unregister_hotkey_action(app: tauri::AppHandle, action: LayoutAction) -> 
 #[tauri::command]
 pub fn get_all_hotkeys(app: tauri::AppHandle) -> Result<Vec<(String, String)>, String> {
     let store = app
-        .store(CROSSZONES_STORE_NAME)
+        .store(HOTKEYS_STORE_NAME)
         .expect("Failed to open store");
 
     let shortcuts = store.entries();
