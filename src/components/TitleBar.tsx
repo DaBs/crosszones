@@ -3,6 +3,12 @@ import { useState, useEffect } from 'react';
 import { Settings, X, Minus, Maximize2, Minimize2 } from 'lucide-react';
 import { Button } from './ui/button';
 
+/*
+Fundamentally, having to completely replace the window's title bar is kind of off-putting.
+Ideally, Tauri would have some kind of variant of what e.g. Electron's title bar is.
+But, it is what it is for now.
+*/
+
 interface TitleBarProps {
   isSettingsOpen: boolean
   setIsSettingsOpen: (isSettingsOpen: boolean) => void
