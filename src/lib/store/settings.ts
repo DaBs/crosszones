@@ -1,3 +1,4 @@
+import { invoke } from '@tauri-apps/api/core';
 import { LazyStore } from '@tauri-apps/plugin-store';
 
 export type SettingsSchema = {
@@ -8,8 +9,8 @@ export type SettingsSchema = {
 
 export const store = new LazyStore('settings.json');
 
-export const setSetting = async (key: keyof SettingsSchema, value: SettingsSchema[keyof SettingsSchema]) => {
-  await store.set(key, value);
+export const setSettings = async (settings: SettingsSchema) => {
+  await invoke('set_settings', { settings });
 };
 
 export const getSetting = async (key: keyof SettingsSchema) => {

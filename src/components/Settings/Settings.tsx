@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Button } from '../ui/button';
 import { X } from 'lucide-react';
-import { getSetting, setSetting } from '../../lib/store/settings';
+import { getSetting, setSettings as setSettingsStore } from '../../lib/store/settings';
 import { Checkbox } from '../ui/checkbox';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 
@@ -59,7 +59,8 @@ export const SettingsOverlay: React.FC<SettingsOverlayProps> = ({ open, onClose 
   }, [open]);
 
   const handleToggle = async (key: SettingKey, value: boolean) => {
-    await setSetting(key, value);
+    const newSettings = { ...settings, [key]: value };
+    await setSettingsStore(newSettings);
     setSettings(prev => ({ ...prev, [key]: value }));
   };
 

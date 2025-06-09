@@ -23,7 +23,7 @@ pub fn run() {
             hotkeys::register_hotkey_action,
             hotkeys::unregister_hotkey_action,
             hotkeys::get_all_hotkeys,
-            autostart::set_autostart,
+            store::settings::set_settings,
         ])
         .on_window_event(window_manager::on_window_event)
         .run(tauri::generate_context!())

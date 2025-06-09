@@ -1,8 +1,8 @@
+use serde_json::Value;
 use tauri_plugin_autostart::MacosLauncher;
 use tauri_plugin_autostart::ManagerExt;
-use tauri_plugin_store::StoreExt;
 
-use crate::store::settings::SETTINGS_STORE_NAME;
+use crate::store::settings::SettingsStore;
 
 pub fn setup_autostart(app: tauri::AppHandle) {
     let _ = app.plugin(tauri_plugin_autostart::init(
@@ -10,25 +10,15 @@ pub fn setup_autostart(app: tauri::AppHandle) {
         None,
     ));
 
-    let autostart_manager = app.autolaunch();
-    let _ = autostart_manager.enable();
-}
+    let settings = SettingsStore::new(&app).unwrap();
 
-
-#[tauri::command]
-pub fn set_autostart(app: tauri::AppHandle, enabled: bool) -> Result<(), String> {
     let autostart_manager = app.autolaunch();
 
-    let store = app.store(SETTINGS_STORE_NAME).expect("Failed to open store");
-
-    if enabled {
-        let _ = autostart_manager.enable();
-    } else {
-        let _ = autostart_manager.disable();
+    if let Ok(auto_start) = settings.get_auto_start() {
+        if auto_start {
+            let _ = autostart_manager.enable();
+        } else {
+            let _ = autostart_manager.disable();
+        }
     }
-
-    store.set("autostart", enabled);
-    store.save().map_err(|e| e.to_string())?;
-
-    Ok(())
 }
