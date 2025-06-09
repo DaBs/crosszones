@@ -1,0 +1,1 @@
+pub const SETTINGS_STORE_NAME: &str = "settings";

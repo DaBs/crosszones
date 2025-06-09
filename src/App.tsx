@@ -5,6 +5,7 @@ import { PermissionCheck } from "./components/PermissionCheck/PermissionCheck";
 import { Layout } from "./components/layout";
 import { ThemeProvider } from "./components/theme-provider";
 import "./App.css";
+import { SettingsOverlay } from "./components/Settings/Settings";
 
 const HAS_PERMISSIONS_DEFAULT: Record<OsType, boolean> = {
   "windows": true,
@@ -15,11 +16,12 @@ const HAS_PERMISSIONS_DEFAULT: Record<OsType, boolean> = {
 }
 
 function App() {
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [hasPermissions, setHasPermissions] = useState(HAS_PERMISSIONS_DEFAULT[type()]);
 
   return (
     <ThemeProvider defaultTheme="system" storageKey="crosszones-theme">
-      <Layout>
+      <Layout isSettingsOpen={isSettingsOpen} setIsSettingsOpen={setIsSettingsOpen}>
         <main className="container mx-auto p-4">
           {!hasPermissions ? (
             <PermissionCheck onPermissionsGranted={() => setHasPermissions(true)} />
@@ -27,6 +29,7 @@ function App() {
             <HotkeySettings />
           )}
         </main>
+        <SettingsOverlay open={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />
       </Layout>
     </ThemeProvider>
   );

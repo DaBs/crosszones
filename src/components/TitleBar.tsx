@@ -1,12 +1,15 @@
 import { getCurrentWindow } from '@tauri-apps/api/window';
 import { useState, useEffect } from 'react';
-import { Settings, X, Minimize, Maximize } from 'lucide-react';
+import { Settings, X, Minus, Maximize2, Minimize2 } from 'lucide-react';
 import { Button } from './ui/button';
-import { useTheme } from './theme-provider';
 
-export function TitleBar() {
+interface TitleBarProps {
+  isSettingsOpen: boolean
+  setIsSettingsOpen: (isSettingsOpen: boolean) => void
+}
+
+export function TitleBar({ isSettingsOpen, setIsSettingsOpen }: TitleBarProps) {
   const [isMaximized, setIsMaximized] = useState(false);
-  const { theme } = useTheme();
 
   useEffect(() => {
     const unlisten = getCurrentWindow().onResized(() => {
@@ -25,11 +28,9 @@ export function TitleBar() {
   return (
     <div
       data-tauri-drag-region
-      className={`fixed top-0 left-0 right-0 h-8 flex items-center justify-between px-2 select-none ${
-        theme === 'dark' ? 'bg-zinc-900' : 'bg-zinc-100'
-      }`}
+      className="fixed top-0 left-0 right-0 h-8 flex items-center justify-between select-none bg-accent"
     >
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 pl-4">
         <img src="/assets/icon.png" alt="App Icon" className="w-4 h-4" />
         <span className="text-sm font-medium">CrossZones</span>
       </div>
@@ -38,8 +39,8 @@ export function TitleBar() {
         <Button
           variant="ghost"
           size="icon"
-          className="h-6 w-6"
-          onClick={() => {/* TODO: Open settings */}}
+          className="h-8 w-12 hover:bg-zinc-200 dark:hover:bg-zinc-800"
+          onClick={() => setIsSettingsOpen(true)}
         >
           <Settings className="h-4 w-4" />
         </Button>
@@ -51,7 +52,7 @@ export function TitleBar() {
             className="h-8 w-12 hover:bg-zinc-200 dark:hover:bg-zinc-800"
             onClick={handleMinimize}
           >
-            <Minimize className="h-4 w-4" />
+            <Minus className="h-4 w-4" />
           </Button>
           <Button
             variant="ghost"
@@ -59,7 +60,7 @@ export function TitleBar() {
             className="h-8 w-12 hover:bg-zinc-200 dark:hover:bg-zinc-800"
             onClick={handleMaximize}
           >
-            <Maximize className="h-4 w-4" />
+            {isMaximized ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
           </Button>
           <Button
             variant="ghost"
