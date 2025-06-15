@@ -14,7 +14,7 @@ interface TitleBarProps {
   setIsSettingsOpen: (isSettingsOpen: boolean) => void
 }
 
-export function TitleBar({ isSettingsOpen, setIsSettingsOpen }: TitleBarProps) {
+export function TitleBar({ setIsSettingsOpen }: TitleBarProps) {
   const [isMaximized, setIsMaximized] = useState(false);
 
   useEffect(() => {
