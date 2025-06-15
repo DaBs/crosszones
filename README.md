@@ -13,6 +13,18 @@ Simple cross-platform window moving and resizing utility using shortcuts.
 
 Download the latest release installer for your OS in the [Release](https://github.com/DaBs/crosszones/releases)
 
+## Features and development
+
+|                    | Windows   | macOS  | Linux   |
+|--------------------|-----------|--------|---------|
+| Window Positioning | ✅       | ❌     | ❌     |
+| Corner Controls    | ✅       | ❌     | ❌     |
+| Window Sizing      | ❌       | ❌     | ❌     |
+| Third Controls     | ✅       | ❌     | ❌     |
+| Fourth Controls    | ✅       | ❌     | ❌     |
+| Sixth Controls     | ✅       | ❌     | ❌     |
+| Movement Controls  | ❌       | ❌     | ❌     |
+
 ## 🚀 Development
 
 ### Prerequisites
