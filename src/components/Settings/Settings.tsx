@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { Button } from '../ui/button';
 import { X } from 'lucide-react';
-import { getSetting, setSettings as setSettingsStore } from '../../lib/store/settings';
+import { getSetting, setSettings as setSettingsStore, SettingsKey } from '../../lib/store/settings';
+import { Settings } from '../../../src-tauri/bindings/Settings';
 import { Checkbox } from '../ui/checkbox';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 
@@ -10,10 +11,8 @@ interface SettingsOverlayProps {
   onClose: () => void;
 }
 
-type SettingKey = 'startAtStartup' | 'startMinimized' | 'closeToSystemTray';
-
 interface SettingDefinition {
-  key: SettingKey;
+  key: SettingsKey;
   label: string;
   description: string;
   category: string;
@@ -21,19 +20,19 @@ interface SettingDefinition {
 
 const SETTINGS_SCHEMA: SettingDefinition[] = [
   {
-    key: 'startAtStartup',
+    key: 'auto_start',
     label: 'Start at startup',
     description: 'Launch CrossZones when you start your computer',
     category: 'Application'
   },
   {
-    key: 'startMinimized',
+    key: 'start_minimized',
     label: 'Start minimized',
     description: 'Start CrossZones in the system tray',
     category: 'Application'
   },
   {
-    key: 'closeToSystemTray',
+    key: 'close_to_system_tray',
     label: 'Close to system tray',
     description: 'Close CrossZones to the system tray',
     category: 'Application'
@@ -41,7 +40,7 @@ const SETTINGS_SCHEMA: SettingDefinition[] = [
 ];
 
 export const SettingsOverlay: React.FC<SettingsOverlayProps> = ({ open, onClose }) => {
-  const [settings, setSettings] = useState<Record<SettingKey, boolean>>({} as Record<SettingKey, boolean>);
+  const [settings, setSettings] = useState<Settings>({} as Settings);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -52,13 +51,13 @@ export const SettingsOverlay: React.FC<SettingsOverlayProps> = ({ open, onClose 
           getSetting(setting.key).then(value => [setting.key, value as boolean])
         )
       ).then(results => {
-        setSettings(Object.fromEntries(results) as Record<SettingKey, boolean>);
+        setSettings(Object.fromEntries(results) as Settings);
         setLoading(false);
       });
     }
   }, [open]);
 
-  const handleToggle = async (key: SettingKey, value: boolean) => {
+  const handleToggle = async (key: SettingsKey, value: boolean) => {
     const newSettings = { ...settings, [key]: value };
     await setSettingsStore(newSettings);
     setSettings(prev => ({ ...prev, [key]: value }));

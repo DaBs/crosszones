@@ -33,6 +33,7 @@ tauri-plugin-fs = "2"
 thiserror = "2.0.12"
 tauri-plugin-os = "2"
 lazy_static = "1.5.0"
+ts-rs = "11.0.1"
 
 [target.'cfg(any(target_os = "windows"))'.dependencies]
 windows = { version = "0.61.1", features = ["Graphics", "Win32_Graphics_Gdi", "Win32_Graphics_Dwm"] }

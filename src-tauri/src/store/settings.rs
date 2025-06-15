@@ -4,10 +4,12 @@ use serde::{Serialize, Deserialize};
 use tauri::Manager;
 use tauri_plugin_store::{Store, StoreExt};
 use serde_json::Value as JsonValue;
+use ts_rs::TS;
 
 pub const SETTINGS_STORE_NAME: &str = "settings";
 
-#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default, TS)]
+#[ts(export)]
 pub struct Settings {
     #[serde(default)]
     pub auto_start: bool,
@@ -52,8 +54,10 @@ impl SettingsStore {
     /// Save all settings
     pub fn save_all(&self, settings: &Settings) -> Result<(), SettingsError> {
         let store = self.app_handle.store(SETTINGS_STORE_NAME)?;
-        let value = serde_json::to_value(settings)?;
-        store.set(SETTINGS_STORE_NAME, value);
+        // TODO: Actually iterate instead of this   
+        store.set("auto_start", settings.auto_start);
+        store.set("start_minimized", settings.start_minimized);
+        store.set("close_to_system_tray", settings.close_to_system_tray);
         store.save()?;
         Ok(())
     }
