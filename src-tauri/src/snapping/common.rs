@@ -1,17 +1,13 @@
-use crate::snapping::action::LayoutAction;
+use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 
-/// Represents a window's position and size
-#[derive(Debug, Clone, Copy)]
-pub struct WindowRect {
-    pub x: i32,
-    pub y: i32,
-    pub width: i32,
-    pub height: i32,
-}
+use crate::snapping::action::LayoutAction;
+use crate::snapping::window_rect::WindowRect;
+use crate::snapping::window_state::{get_window_state, insert_window_state, WindowState};
 
 /// Represents screen dimensions
-#[derive(Debug, Clone, Copy)]
-pub struct ScreenDimensions {
+#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
+    pub struct ScreenDimensions {
     pub width: i32,
     pub height: i32,
 }
@@ -28,6 +24,7 @@ fn constrain_to_screen(rect: WindowRect, screen: ScreenDimensions) -> WindowRect
 
 /// Calculate the window position and size based on the layout action and screen dimensions
 pub fn calculate_window_rect(
+    window_id: &str,
     action: LayoutAction,
     screen: ScreenDimensions,
     current_rect: Option<WindowRect>,
@@ -39,6 +36,15 @@ pub fn calculate_window_rect(
         width: screen.width,
         height: screen.height,
     });
+
+    let mut current_state = WindowState::new(window_id, current);
+
+    let previous_state = if get_window_state(window_id).is_none() {
+        insert_window_state(window_id, current_state.clone());
+        get_window_state(window_id).unwrap()
+    } else {
+        get_window_state(window_id).unwrap()
+    };
 
     let result = match action {
         LayoutAction::LeftHalf => WindowRect {
@@ -167,7 +173,9 @@ pub fn calculate_window_rect(
             width: 9 * current.width / 10,
             height: 9 * current.height / 10,
         },
-        LayoutAction::Restore => current,
+        LayoutAction::Restore => {
+            previous_state.window_rect
+        },
         LayoutAction::NextDisplay | LayoutAction::PreviousDisplay => current,
         LayoutAction::MoveLeft => WindowRect {
             x: current.x - current.width,
@@ -303,6 +311,9 @@ pub fn calculate_window_rect(
     let result = constrain_to_screen(result, screen);
 
     println!("bounded result: {:?}", result);
+
+    current_state.window_rect = result;
+    insert_window_state(window_id, current_state);
 
     result
 }

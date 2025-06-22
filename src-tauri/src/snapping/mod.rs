@@ -1,5 +1,7 @@
 pub mod action;
 pub mod common;
+pub mod window_rect;
+pub mod window_state;
 
 #[cfg(target_os = "windows")]
 pub mod windows;

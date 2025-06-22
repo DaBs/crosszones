@@ -10,7 +10,6 @@ pub fn on_window_event(window: &Window, _event: &WindowEvent) {
 
     match _event {
         WindowEvent::CloseRequested { api, .. } => {
-
             let should_close_to_system_tray = settings.get_close_to_system_tray().unwrap_or(false);
 
             if should_close_to_system_tray {

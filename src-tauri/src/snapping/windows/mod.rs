@@ -9,16 +9,17 @@ use windows::{
         UI::{
             HiDpi::GetDpiForWindow,
             WindowsAndMessaging::{
-                EnumWindows, GetForegroundWindow, GetSystemMetrics, GetWindowRect,
-                GetWindowThreadProcessId, IsWindowVisible, SetWindowPos, SM_CXSCREEN, SM_CYSCREEN,
-                SWP_FRAMECHANGED, SWP_NOACTIVATE, SWP_NOZORDER,
+                EnumWindows, GetForegroundWindow, GetWindowRect,
+                GetWindowThreadProcessId, IsWindowVisible, SetWindowPos,
+                SWP_NOACTIVATE, SWP_NOZORDER
             },
         },
     },
 };
 
 use super::action::LayoutAction;
-use super::common::{calculate_window_rect, ScreenDimensions, WindowRect};
+use super::common::{calculate_window_rect, ScreenDimensions};
+use super::window_rect::WindowRect;
 
 // Function to snap a window according to the specified layout action
 pub fn snap_window(action: LayoutAction) -> Result<(), String> {
@@ -87,8 +88,10 @@ pub fn snap_window(action: LayoutAction) -> Result<(), String> {
         height: rect.bottom - rect.top,
     };
 
+    let window_id = format!("{:?}", hwnd.0);
+
     // Calculate new position and size based on the action
-    let new_rect = calculate_window_rect(action, screen_dimensions, Some(current_rect));
+    let new_rect = calculate_window_rect(&window_id, action, screen_dimensions, Some(current_rect));
 
     let new_rect = WindowRect {
         x: new_rect.x - x_position_offset,
