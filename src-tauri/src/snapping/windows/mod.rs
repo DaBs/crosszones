@@ -83,8 +83,8 @@ pub fn snap_window(action: LayoutAction) -> Result<(), String> {
     let current_rect = WindowRect {
         x: rect.left,
         y: rect.top,
-        width: rect.right,
-        height: rect.bottom,
+        width: rect.right - rect.left,
+        height: rect.bottom - rect.top,
     };
 
     // Calculate new position and size based on the action
