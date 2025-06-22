@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { getVersion } from '@tauri-apps/api/app';
 import { Button } from '../ui/button';
 import { X } from 'lucide-react';
 import { getSetting, setSettings as setSettingsStore, SettingsKey } from '../../lib/store/settings';
@@ -42,6 +43,7 @@ const SETTINGS_SCHEMA: SettingDefinition[] = [
 export const SettingsOverlay: React.FC<SettingsOverlayProps> = ({ open, onClose }) => {
   const [settings, setSettings] = useState<Settings>({} as Settings);
   const [loading, setLoading] = useState(true);
+  const [version, setVersion] = useState('');
 
   useEffect(() => {
     if (open) {
@@ -54,6 +56,7 @@ export const SettingsOverlay: React.FC<SettingsOverlayProps> = ({ open, onClose 
         setSettings(Object.fromEntries(results) as Settings);
         setLoading(false);
       });
+      getVersion().then(setVersion);  
     }
   }, [open]);
 
@@ -118,6 +121,19 @@ export const SettingsOverlay: React.FC<SettingsOverlayProps> = ({ open, onClose 
             ))}
           </div>
         )}
+      </div>
+      <div className="container mx-auto p-6 max-w-2xl pt-16">
+        <Button variant="outline" onClick={async () => {
+          setSettings(prev => ({ ...prev, auto_start: false, start_minimized: false, close_to_system_tray: false }));
+          await setSettingsStore({
+            auto_start: false,
+            start_minimized: false,
+            close_to_system_tray: false,
+          });
+        }}>Reset settings</Button>
+      </div>
+      <div className="container mx-auto p-6 max-w-2xl pt-16">
+        <label className="text-sm font-medium leading-none">Version: {version}</label>
       </div>
     </div>
   );

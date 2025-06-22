@@ -6,7 +6,7 @@ use tauri_plugin_store::{Store, StoreExt};
 use serde_json::Value as JsonValue;
 use ts_rs::TS;
 
-pub const SETTINGS_STORE_NAME: &str = "settings";
+pub const SETTINGS_STORE_NAME: &str = "settings.json";
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default, TS)]
 #[ts(export)]
