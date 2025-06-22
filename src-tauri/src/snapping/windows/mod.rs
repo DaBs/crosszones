@@ -2,10 +2,9 @@ use windows::{
     core::BOOL,
     Win32::{
         Foundation::{HWND, LPARAM, RECT, TRUE},
-        Graphics::Dwm::{DwmGetWindowAttribute, DWMWA_EXTENDED_FRAME_BOUNDS},
-        Graphics::Gdi::{
-            GetMonitorInfoW, MonitorFromWindow, MONITORINFO, MONITOR_DEFAULTTONEAREST,
-        },
+        Graphics::{Dwm::{DwmGetWindowAttribute, DWMWA_EXTENDED_FRAME_BOUNDS}, Gdi::{
+            GetDC, GetDeviceCaps, GetMonitorInfoW, MonitorFromWindow, MONITORINFO, MONITOR_DEFAULTTONEAREST, LOGPIXELSY
+        }},
         System::Threading::GetCurrentProcessId,
         UI::{
             HiDpi::GetDpiForWindow,
@@ -61,9 +60,13 @@ pub fn snap_window(action: LayoutAction) -> Result<(), String> {
         return Err("Failed to get window frame".to_string());
     }
 
+    // Get the DPI for the monitor
+    let monitor_dc = unsafe { GetDC(Some(hwnd)) };
+    let monitor_dpi = unsafe { GetDeviceCaps(Some(monitor_dc), LOGPIXELSY) };
+
     // Get the DPI for the window
     let dpi = unsafe { GetDpiForWindow(hwnd) };
-    let dpi_scale = dpi as f32 / 96.0; // 96 is the default DPI
+    let dpi_scale = dpi as f32 / monitor_dpi as f32;
 
     // Get the extra offset for the position and size due to windows 10 invisible borders
     // Scale the offsets by the DPI
