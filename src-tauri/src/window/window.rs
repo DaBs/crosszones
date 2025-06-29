@@ -1,7 +1,9 @@
 use tauri::{TitleBarStyle, WebviewUrl, WebviewWindow, WebviewWindowBuilder};
 
+use crate::window::WINDOW_NAME;
+
 pub fn setup(app: &tauri::App) -> WebviewWindow {
-    let window_builder = WebviewWindowBuilder::new(app, "crosszones", WebviewUrl::default())
+    let window_builder = WebviewWindowBuilder::new(app, WINDOW_NAME, WebviewUrl::default())
       .title("")
       .visible(false)
       .inner_size(1300.0, 820.0)
