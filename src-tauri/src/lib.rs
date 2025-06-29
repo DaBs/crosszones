@@ -4,7 +4,6 @@ mod snapping;
 mod store;
 mod tray;
 mod window;
-mod window_manager;
 
 pub fn run() {
     tauri::Builder::default()
@@ -21,7 +20,7 @@ pub fn run() {
             store::settings::set_settings,
         ])
         .setup(move |app| {
-            let window = window::setup(app);
+            let window = window::window::setup(app);
             hotkeys::setup(app.handle());
             tray::setup_tray(app.handle());
             autostart::setup_autostart(app.handle());
@@ -29,7 +28,7 @@ pub fn run() {
             window.show().unwrap();
             Ok(())
         })
-        .on_window_event(window_manager::on_window_event)
+        .on_window_event(window::window_manager::on_window_event)
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
