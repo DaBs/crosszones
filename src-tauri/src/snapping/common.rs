@@ -39,12 +39,7 @@ pub fn calculate_window_rect(
 
     let mut current_state = WindowState::new(window_id, current);
 
-    let previous_state = if get_window_state(window_id).is_none() {
-        insert_window_state(window_id, current_state.clone());
-        get_window_state(window_id).unwrap()
-    } else {
-        get_window_state(window_id).unwrap()
-    };
+    let previous_state = current_state.clone();
 
     let result = match action {
         LayoutAction::LeftHalf => WindowRect {
