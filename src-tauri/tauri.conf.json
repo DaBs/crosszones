@@ -10,15 +10,6 @@
     "frontendDist": "../dist"
   },
   "app": {
-    "windows": [
-      {
-        "title": "CrossZones",
-        "width": 1300,
-        "minWidth": 1300,
-        "height": 760,
-        "minHeight": 760
-      }
-    ],
     "security": {
       "csp": null
     }

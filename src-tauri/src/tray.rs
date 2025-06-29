@@ -4,13 +4,13 @@ use tauri::{
     Manager,
 };
 
-pub fn setup_tray(app: tauri::AppHandle) {
-    let open_i = MenuItem::with_id(&app, "open", "Open", true, None::<&str>).unwrap();
-    let quit_i = MenuItem::with_id(&app, "quit", "Quit", true, None::<&str>).unwrap();
-    let menu = Menu::with_items(&app, &[&open_i, &quit_i]).unwrap();
+pub fn setup_tray(app_handle: &tauri::AppHandle) {
+    let open_i = MenuItem::with_id(app_handle, "open", "Open", true, None::<&str>).unwrap();
+    let quit_i = MenuItem::with_id(app_handle, "quit", "Quit", true, None::<&str>).unwrap();
+    let menu = Menu::with_items(app_handle, &[&open_i, &quit_i]).unwrap();
 
     let tray = TrayIconBuilder::new()
-        .icon(app.default_window_icon().unwrap().clone())
+        .icon(app_handle.default_window_icon().unwrap().clone())
         .tooltip("CrossZones")
         .menu(&menu)
         .on_tray_icon_event(|tray, event| {
@@ -28,6 +28,6 @@ pub fn setup_tray(app: tauri::AppHandle) {
             }
             _ => {}
         })
-        .build(&app)
+        .build(app_handle)
         .unwrap();
 }

@@ -8,15 +8,12 @@ pub fn on_window_event(window: &Window, _event: &WindowEvent) {
 
     let settings = SettingsStore::new(&app_handle).unwrap();
 
-    match _event {
-        WindowEvent::CloseRequested { api, .. } => {
-            let should_close_to_system_tray = settings.get_close_to_system_tray().unwrap_or(false);
+    if let WindowEvent::CloseRequested { api, .. } = _event {
+        let should_close_to_system_tray = settings.get_close_to_system_tray().unwrap_or(false);
 
-            if should_close_to_system_tray {
-                window.hide().unwrap();
-                api.prevent_close();
-            }
+        if should_close_to_system_tray {
+            window.hide().unwrap();
+            api.prevent_close();
         }
-        _ => {}
     }
 }

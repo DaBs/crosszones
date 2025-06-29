@@ -47,7 +47,7 @@ pub fn load_hotkeys(app: tauri::AppHandle) {
     }
 }
 
-pub fn setup(app_handle: tauri::AppHandle) {
+pub fn setup(app_handle: &tauri::AppHandle) {
     let _ = app_handle.plugin(
         tauri_plugin_global_shortcut::Builder::new()
             .with_handler(move |app, hotkey, event| {
