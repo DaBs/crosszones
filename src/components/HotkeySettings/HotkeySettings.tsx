@@ -37,10 +37,10 @@ const HotkeyGroup: React.FC<HotkeyGroupProps> = ({
     if (e.ctrlKey) modifiers.push('control');
     if (e.altKey) modifiers.push('alt');
     if (e.shiftKey) modifiers.push('shift');
-    if (e.metaKey) modifiers.push('meta');
-    
-    if (!['control', 'alt', 'shift', 'meta'].includes(e.key)) {
-      modifiers.push(e.key);
+    if (e.metaKey) modifiers.push('command');
+
+    if (!['control', 'alt', 'shift', 'command'].includes(e.key)) {
+      modifiers.push(e.code);
     }
     
     if (modifiers.length > 0) {
