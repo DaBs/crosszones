@@ -9,17 +9,9 @@ interface LayoutProps extends React.HTMLAttributes<HTMLDivElement> {
 
 export function Layout({ children, className, isSettingsOpen, setIsSettingsOpen, ...props }: LayoutProps) {
   return (
-    <div
-      className={cn(
-        "min-h-screen bg-background font-sans antialiased",
-        className
-      )}
-      {...props}
-    >
-      <div className="relative flex min-h-screen flex-col pt-8">
-        <TitleBar isSettingsOpen={isSettingsOpen} setIsSettingsOpen={setIsSettingsOpen} />
-        <div className="flex-1">{children}</div>
-      </div>
+    <div>
+      <TitleBar isSettingsOpen={isSettingsOpen} setIsSettingsOpen={setIsSettingsOpen} />
+      <main className="flex-1">{children}</main>
     </div>
   )
 } 

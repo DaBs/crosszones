@@ -22,13 +22,13 @@ function App() {
   return (
     <ThemeProvider defaultTheme="system" storageKey="crosszones-theme">
       <Layout isSettingsOpen={isSettingsOpen} setIsSettingsOpen={setIsSettingsOpen}>
-        <main className="container mx-auto p-4">
+        <div className="container mx-auto p-4">
           {!hasPermissions ? (
             <PermissionCheck onPermissionsGranted={() => setHasPermissions(true)} />
           ) : (
             <HotkeySettings />
           )}
-        </main>
+        </div>
         <SettingsOverlay open={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />
       </Layout>
     </ThemeProvider>
