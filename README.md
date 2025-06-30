@@ -16,12 +16,12 @@ Download the latest release installer for your OS in the [Release](https://githu
 ## 📋 Features
 |                    | Windows   | macOS  | Linux   |
 |--------------------|-----------|--------|---------|
-| Window Positioning | ✅       | ❌     | ❌     |
-| Corner Controls    | ✅       | ❌     | ❌     |
+| Window Positioning | ✅       | ✅     | ❌     |
+| Corner Controls    | ✅       | ✅     | ❌     |
 | Window Sizing      | ❌       | ❌     | ❌     |
-| Third Controls     | ✅       | ❌     | ❌     |
-| Fourth Controls    | ✅       | ❌     | ❌     |
-| Sixth Controls     | ✅       | ❌     | ❌     |
+| Third Controls     | ✅       | ✅     | ❌     |
+| Fourth Controls    | ✅       | ✅     | ❌     |
+| Sixth Controls     | ✅       | ✅     | ❌     |
 | Movement Controls  | ❌       | ❌     | ❌     |
 
 ## 🚀 Development
