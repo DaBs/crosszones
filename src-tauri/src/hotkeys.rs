@@ -3,7 +3,6 @@ use std::str::FromStr;
 use crate::snapping::action::LayoutAction;
 use crate::snapping::snap_window;
 use crate::store::hotkeys::HOTKEYS_STORE_NAME;
-use strum::VariantNames;
 use tauri_plugin_global_shortcut::{GlobalShortcutExt, Shortcut, ShortcutState};
 use tauri_plugin_store::StoreExt;
 
@@ -18,11 +17,6 @@ fn register_hotkey(app: &tauri::AppHandle, shortcut: Shortcut) -> Result<(), Str
 }
 
 fn persist_hotkey_action(app: &tauri::AppHandle, shortcut: Shortcut, action: LayoutAction) -> Result<(), String> {
-    let shortcut = match Shortcut::try_from(shortcut) {
-        Ok(shortcut) => shortcut,
-        Err(e) => return Err(e.to_string()),
-    };
-
     let store = app
         .store(HOTKEYS_STORE_NAME)
         .expect("Failed to open store");
@@ -58,18 +52,14 @@ pub fn setup(app_handle: &tauri::AppHandle) {
                 let action = store.get(hotkey.to_string());
 
                 if let Some(action) = action {
-                    match event.state() {
-                        ShortcutState::Pressed => {
-                            println!("Pressed");
-                            let action = action.as_str().expect("Failed to get action");
+                    if event.state() == ShortcutState::Pressed {
+                                        let action = action.as_str().expect("Failed to get action");
 
-                            let action = LayoutAction::from_str(action)
-                                .expect("Failed to convert action to LayoutAction");
-        
-                            let _ = snap_window(action);
-                        }
-                        _ => {}
-                    }
+                                        let action = LayoutAction::from_str(action)
+                                            .expect("Failed to convert action to LayoutAction");
+                    
+                                        let _ = snap_window(action);
+                                    }
                 }
             })
             .build(),
