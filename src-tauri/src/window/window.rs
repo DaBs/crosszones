@@ -10,12 +10,12 @@ pub fn setup(app: &tauri::App) -> WebviewWindow {
       .title("CrossZones")
       .visible(false)
       .inner_size(1300.0, 820.0)
-      .min_inner_size(1300.0, 820.0)
-      .transparent(true);
+      .min_inner_size(1300.0, 820.0);
 
     #[cfg(target_os = "windows")]
     {
         window_builder = window_builder.decorations(false);
+        window_builder = window_builder.transparent(true);
     }
 
     #[cfg(target_os = "macos")]

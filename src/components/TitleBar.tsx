@@ -1,3 +1,5 @@
+
+import { platform } from '@tauri-apps/plugin-os';
 import { Settings, X } from 'lucide-react';
 import { Button } from './ui/button';
 import { WindowTitlebar } from "tauri-controls"
@@ -8,8 +10,14 @@ interface TitleBarProps {
 }
 
 export function TitleBar({ isSettingsOpen, setIsSettingsOpen }: TitleBarProps) {
+
+  const currentPlatform = platform() as "macos" | "windows" | "gnome";
+  
+  // TODO: Just update / import tauri-controls to avoid this
+  const WindowTitlebarWrapper = currentPlatform === "windows" ? WindowTitlebar : "div";
+
   return (
-    <WindowTitlebar className="bg-sidebar">
+    <WindowTitlebarWrapper windowControlsProps={{ platform: currentPlatform }} className="bg-sidebar" controlsOrder="left">
       <div className="flex w-full justify-end" data-tauri-drag-region>
         <Button
           variant="default"
@@ -20,6 +28,6 @@ export function TitleBar({ isSettingsOpen, setIsSettingsOpen }: TitleBarProps) {
           <Settings className="h-4 w-4" />
         </Button>
       </div>
-    </WindowTitlebar>
+    </WindowTitlebarWrapper>
   );
 } 
