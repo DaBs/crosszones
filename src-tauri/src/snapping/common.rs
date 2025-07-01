@@ -39,7 +39,15 @@ pub fn calculate_window_rect(
 
     let mut current_state = WindowState::new(window_id, current);
 
-    let previous_state = current_state.clone();
+    let mut previous_state = get_window_state(window_id);
+
+    if previous_state.is_none() {
+        insert_window_state(window_id, current_state.clone());
+        previous_state = Some(current_state.clone());
+    }
+
+    current_state.window_rect = current;
+    insert_window_state(window_id, current_state);
 
     let result = match action {
         LayoutAction::LeftHalf => WindowRect {
@@ -169,7 +177,7 @@ pub fn calculate_window_rect(
             height: 9 * current.height / 10,
         },
         LayoutAction::Restore => {
-            previous_state.window_rect
+            previous_state.unwrap().window_rect
         },
         // TODO: Implement next and previous display
         LayoutAction::NextDisplay | LayoutAction::PreviousDisplay => current,
@@ -303,9 +311,6 @@ pub fn calculate_window_rect(
     let result = constrain_to_screen(result, screen);
 
     println!("bounded result: {:?}", result);
-
-    current_state.window_rect = result;
-    insert_window_state(window_id, current_state);
 
     result
 }

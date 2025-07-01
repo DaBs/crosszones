@@ -707,7 +707,6 @@ dependencies = [
  "accessibility-sys",
  "core-graphics-types 0.1.3",
  "display-info",
- "lazy_static",
  "objc2 0.6.1",
  "objc2-app-kit",
  "objc2-core-foundation",

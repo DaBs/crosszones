@@ -32,7 +32,6 @@ tauri-plugin-store = "2"
 tauri-plugin-fs = "2"
 thiserror = "2.0.12"
 tauri-plugin-os = "2"
-lazy_static = "1.5.0"
 ts-rs = "11.0.1"
 display-info = "0.5.4"
 
