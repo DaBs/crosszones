@@ -19,12 +19,8 @@ pub struct Settings {
     pub close_to_system_tray: bool,
 }
 
-/// A hook that will be called when a setting changes
-pub type SettingChangeHook = Box<dyn Fn(&str, &serde_json::Value) + Send + Sync>;
-
 /// The main settings store
 pub struct SettingsStore {
-    hooks: Mutex<HashMap<String, Vec<SettingChangeHook>>>,
     app_handle: tauri::AppHandle,
 }
 
@@ -39,16 +35,8 @@ pub enum SettingsError {
 impl SettingsStore {
     pub fn new(app_handle: &tauri::AppHandle) -> Result<Self, SettingsError> {
         Ok(Self {
-            hooks: Mutex::new(HashMap::new()),
             app_handle: app_handle.clone(),
         })
-    }
-
-    /// Get all settings
-    pub fn get_all(&self) -> Result<Settings, SettingsError> {
-        let store = self.app_handle.store(SETTINGS_STORE_NAME)?;
-        let value = store.get(SETTINGS_STORE_NAME).unwrap_or_else(|| serde_json::json!({}));
-        Ok(serde_json::from_value(value.clone())?)
     }
 
     /// Save all settings
@@ -64,46 +52,18 @@ impl SettingsStore {
 
     /// Get a specific setting
     pub fn get<T: for<'de> serde::Deserialize<'de>>(&self, field: &str) -> Result<Option<T>, SettingsError> {
-        let settings = self.get_all()?;
-        let value = serde_json::to_value(settings)?;
-        Ok(value.get(field).and_then(|v| serde_json::from_value(v.clone()).ok()))
+        let store = self.app_handle.store(SETTINGS_STORE_NAME)?;
+        let value = store.get(field).unwrap_or(serde_json::Value::Null);
+        Ok(serde_json::from_value(value).ok())
     }
 
     /// Set a specific setting
     pub fn set<T: Serialize>(&self, field: &str, value: T) -> Result<(), SettingsError> {
-        let mut settings = self.get_all()?;
-        let value = serde_json::to_value(value)?;
-        
-        // Update the settings struct
-        let mut json = serde_json::to_value(&settings)?;
-        json[field] = value.clone();
-        settings = serde_json::from_value(json)?;
-        
-        // Save the updated settings
-        self.save_all(&settings)?;
-
-        // Notify hooks
-        if let Ok(hooks) = self.hooks.lock() {
-            if let Some(hooks) = hooks.get(field) {
-                for hook in hooks {
-                    hook(field, &value);
-                }
-            }
-        }
-
+        let store = self.app_handle.store(SETTINGS_STORE_NAME)?;
+        let json_value = serde_json::to_value(value)?;
+        store.set(field, json_value);
+        store.save()?;
         Ok(())
-    }
-
-    /// Register a hook to be called when a setting changes
-    pub fn register_hook(&self, field: &str, hook: SettingChangeHook) {
-        let mut hooks = self.hooks.lock().unwrap();
-        hooks.entry(field.to_string()).or_insert_with(Vec::new).push(hook);
-    }
-
-    /// Remove all hooks for a specific setting
-    pub fn clear_hooks(&self, field: &str) {
-        let mut hooks = self.hooks.lock().unwrap();
-        hooks.remove(field);
     }
 }
 
