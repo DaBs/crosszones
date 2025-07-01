@@ -32,8 +32,8 @@ pub fn create_window(app: &tauri::App) -> WebviewWindow {
 
     let start_minimized = SettingsStore::new(&app.handle()).unwrap().get_start_minimized().unwrap_or(false);
 
-    if start_minimized {
-        window.hide().unwrap();
+    if !start_minimized {
+        window.show().unwrap();
     }
 
     window
