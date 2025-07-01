@@ -58,13 +58,8 @@ pub enum LayoutAction {
     BottomLeftSixth,
     BottomCenterSixth,
     BottomRightSixth,
-    Specified,
-    ReverseAll,
     TopLeftThird,
     TopRightThird,
     BottomLeftThird,
     BottomRightThird,
-    TileAll,
-    CascadeAll,
-    CascadeActiveApp,
 }

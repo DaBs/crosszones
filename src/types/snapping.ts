@@ -41,13 +41,8 @@ export enum LayoutAction {
   BottomLeftSixth = 'bottom-left-sixth',
   BottomCenterSixth = 'bottom-center-sixth',
   BottomRightSixth = 'bottom-right-sixth',
-  Specified = 'specified',
-  ReverseAll = 'reverse-all',
   TopLeftThird = 'top-left-third',
   TopRightThird = 'top-right-third',
   BottomLeftThird = 'bottom-left-third',
   BottomRightThird = 'bottom-right-third',
-  TileAll = 'tile-all',
-  CascadeAll = 'cascade-all',
-  CascadeActiveApp = 'cascade-active-app',
 } 

@@ -171,6 +171,7 @@ pub fn calculate_window_rect(
         LayoutAction::Restore => {
             previous_state.window_rect
         },
+        // TODO: Implement next and previous display
         LayoutAction::NextDisplay | LayoutAction::PreviousDisplay => current,
         LayoutAction::MoveLeft => WindowRect {
             x: current.x - current.width,
@@ -268,8 +269,6 @@ pub fn calculate_window_rect(
             width: screen.width / 3,
             height: screen.height / 2,
         },
-        LayoutAction::Specified => current,
-        LayoutAction::ReverseAll => current,
         LayoutAction::TopLeftThird => WindowRect {
             x: 0,
             y: 0,
@@ -294,9 +293,7 @@ pub fn calculate_window_rect(
             width: screen.width / 3,
             height: screen.height,
         },
-        LayoutAction::TileAll | LayoutAction::CascadeAll | LayoutAction::CascadeActiveApp => {
-            current
-        }
+        _ => current,
     };
 
     println!("current: {:?}", current);
