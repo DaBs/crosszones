@@ -78,16 +78,6 @@ export const SettingsOverlay: React.FC<SettingsOverlayProps> = ({ open, onClose 
 
   return (
     <div className="fixed mt-8 inset-0 z-50 bg-background">
-      <Button
-        variant="ghost"
-        size="icon"
-        className="absolute top-4 right-4"
-        onClick={onClose}
-        aria-label="Close settings"
-      >
-        <X className="w-4 h-4" />
-      </Button>
-
       {/* Content */}
       <div className="container mx-auto p-6 max-w-2xl pt-16">
         {loading ? (
