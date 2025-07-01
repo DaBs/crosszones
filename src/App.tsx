@@ -29,7 +29,7 @@ function App() {
             <HotkeySettings />
           )}
         </div>
-        <SettingsOverlay open={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />
+        <SettingsOverlay open={isSettingsOpen} />
       </Layout>
     </ThemeProvider>
   );

@@ -1,4 +1,3 @@
-import { cn } from "@/lib/utils"
 import { TitleBar } from "./TitleBar"
 
 interface LayoutProps extends React.HTMLAttributes<HTMLDivElement> {
@@ -7,7 +6,7 @@ interface LayoutProps extends React.HTMLAttributes<HTMLDivElement> {
   setIsSettingsOpen: (isSettingsOpen: boolean) => void
 }
 
-export function Layout({ children, className, isSettingsOpen, setIsSettingsOpen, ...props }: LayoutProps) {
+export function Layout({ children, isSettingsOpen, setIsSettingsOpen }: LayoutProps) {
   return (
     <div>
       <TitleBar isSettingsOpen={isSettingsOpen} setIsSettingsOpen={setIsSettingsOpen} />

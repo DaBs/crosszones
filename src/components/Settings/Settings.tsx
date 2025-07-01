@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { getVersion } from '@tauri-apps/api/app';
 import { Button } from '../ui/button';
-import { X } from 'lucide-react';
 import { getSetting, setSettings as setSettingsStore, SettingsKey } from '../../lib/store/settings';
 import { Settings } from '../../../src-tauri/bindings/Settings';
 import { Checkbox } from '../ui/checkbox';
@@ -9,7 +8,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 
 interface SettingsOverlayProps {
   open: boolean;
-  onClose: () => void;
 }
 
 interface SettingDefinition {
@@ -40,7 +38,7 @@ const SETTINGS_SCHEMA: SettingDefinition[] = [
   }
 ];
 
-export const SettingsOverlay: React.FC<SettingsOverlayProps> = ({ open, onClose }) => {
+export const SettingsOverlay: React.FC<SettingsOverlayProps> = ({ open }) => {
   const [settings, setSettings] = useState<Settings>({} as Settings);
   const [loading, setLoading] = useState(true);
   const [version, setVersion] = useState('');
