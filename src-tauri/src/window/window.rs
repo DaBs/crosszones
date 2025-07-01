@@ -14,8 +14,6 @@ pub fn create_window(app: &tauri::App) -> WebviewWindow {
 
     #[cfg(target_os = "windows")]
     {
-        window_builder = window_builder.decorations(false);
-        window_builder = window_builder.transparent(true);
     }
 
     #[cfg(target_os = "macos")]

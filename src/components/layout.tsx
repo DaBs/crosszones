@@ -10,7 +10,7 @@ export function Layout({ children, isSettingsOpen, setIsSettingsOpen }: LayoutPr
   return (
     <div>
       <TitleBar isSettingsOpen={isSettingsOpen} setIsSettingsOpen={setIsSettingsOpen} />
-      <main className="flex-1">{children}</main>
+      <main className="flex-1 p-4">{children}</main>
     </div>
   )
 } 
