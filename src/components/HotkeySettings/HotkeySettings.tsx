@@ -1,14 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import { AVAILABLE_HOTKEYS, HOTKEY_GROUPS } from './constants';
-import { HotkeyConfig } from './types';
-import { WindowSnapIcon } from '../WindowSnapIcon';
-import { LayoutAction } from '../../types/snapping';
+import { type LayoutAction } from '@/types/snapping';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
-import { X } from "lucide-react";
+import { HotkeyConfigComponent } from './HotkeyConfig';
+import { type HotkeyConfig } from './types';
 
 interface HotkeyGroupProps {
   title: string;
@@ -27,7 +24,8 @@ const HotkeyGroup: React.FC<HotkeyGroupProps> = ({
 
   const handleKeyDown = (e: React.KeyboardEvent, action: LayoutAction) => {
     e.preventDefault();
-    
+    e.stopPropagation();
+
     if (e.key === 'Escape') {
       setRecording(null);
       return;
@@ -37,9 +35,9 @@ const HotkeyGroup: React.FC<HotkeyGroupProps> = ({
     if (e.ctrlKey) modifiers.push('control');
     if (e.altKey) modifiers.push('alt');
     if (e.shiftKey) modifiers.push('shift');
-    if (e.metaKey) modifiers.push('command');
+    if (e.metaKey) modifiers.push('super');
 
-    if (!['control', 'alt', 'shift', 'command'].includes(e.key)) {
+    if (!['control', 'alt', 'shift', 'super'].includes(e.key)) {
       modifiers.push(e.code);
     }
     
@@ -58,35 +56,7 @@ const HotkeyGroup: React.FC<HotkeyGroupProps> = ({
       <CardContent className="p-3 pt-1">
         <div className="grid grid-cols-2 gap-2">
           {configs.map((config, index) => (
-            <div key={index} className="flex items-center gap-2">
-              {config.layoutAction && (
-                <div className="flex items-center justify-center w-5 h-5 rounded bg-muted shrink-0">
-                  <WindowSnapIcon action={config.layoutAction} width={14} height={10} />
-                </div>
-              )}
-              <span className="text-xs select-none">{config.name}</span>
-              <div className="flex items-center gap-1 ml-auto">
-                <Input
-                  type="text"
-                  value={recording === config.layoutAction ? 'Press keys...' : config.shortcut}
-                  className={`w-32 h-7 text-xs select-none ${recording === config.layoutAction ? 'ring-2 ring-primary' : ''}`}
-                  readOnly
-                  placeholder="Record shortcut"
-                  onFocus={() => config.layoutAction && setRecording(config.layoutAction)}
-                  onBlur={() => setRecording(null)}
-                  onKeyDown={(e) => config.layoutAction && handleKeyDown(e, config.layoutAction)}
-                />
-                <Button
-                  variant="outline"
-                  disabled={!config.shortcut}
-                  size="icon"
-                  className={`h-7 w-7 ${!config.shortcut ? 'invisible' : ''}`}
-                  onClick={() => config.layoutAction && onShortcutClear(config.layoutAction)}
-                >
-                  <X className="h-3 w-3" />
-                </Button>
-              </div>
-            </div>
+            <HotkeyConfigComponent key={index} config={config} index={index} recording={recording} setRecording={setRecording} onShortcutClear={onShortcutClear} handleKeyDown={handleKeyDown} />
           ))}
         </div>
       </CardContent>
