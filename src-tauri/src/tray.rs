@@ -20,7 +20,9 @@ pub fn setup_tray(app_handle: &tauri::AppHandle) {
         })
         .on_menu_event(|app, event| match event.id.as_ref() {
             "open" => {
-                app.get_webview_window(WINDOW_NAME).unwrap().show().unwrap();
+                let window = app.get_webview_window(WINDOW_NAME).unwrap();
+                window.show().unwrap();
+                window.set_focus().unwrap();
             }
             "quit" => {
                 app.exit(0);
