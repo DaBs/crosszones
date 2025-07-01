@@ -20,12 +20,11 @@ pub fn run() {
             store::settings::set_settings,
         ])
         .setup(move |app| {
-            let window = window::window::setup(app);
             hotkeys::setup(app.handle());
             tray::setup_tray(app.handle());
             autostart::setup_autostart(app.handle());
 
-            window.show().unwrap();
+            window::window::setup(app);
             Ok(())
         })
         .on_window_event(window::window_manager::on_window_event)
