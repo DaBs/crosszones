@@ -81,19 +81,21 @@ pub fn snap_window(action: LayoutAction) -> Result<(), String> {
         height: monitor_info.rcWork.bottom - monitor_info.rcWork.top,
     };
 
+    // Remove the effect of the invisible borders
     let current_rect = WindowRect {
-        x: rect.left,
-        y: rect.top,
-        width: rect.right - rect.left,
-        height: rect.bottom - rect.top,
+        x: rect.left + x_position_offset,
+        y: rect.top + y_position_offset,
+        width: rect.right - rect.left - width_addition,
+        height: rect.bottom - rect.top - height_addition,
     };
 
     let window_id = format!("{:?}", hwnd.0);
 
     // Calculate new position and size based on the action
-    let new_rect = calculate_window_rect(&window_id, action, screen_dimensions, Some(current_rect));
+    let mut new_rect = calculate_window_rect(&window_id, action, screen_dimensions, Some(current_rect));
 
-    let new_rect = WindowRect {
+    // Add the effect of the invisible borders to get the correct position and size
+    new_rect = WindowRect {
         x: new_rect.x - x_position_offset,
         y: new_rect.y - y_position_offset,
         width: new_rect.width + width_addition,
