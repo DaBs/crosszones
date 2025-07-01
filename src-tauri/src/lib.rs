@@ -20,11 +20,16 @@ pub fn run() {
             store::settings::set_settings,
         ])
         .setup(move |app| {
+            #[cfg(target_os = "macos")]
+            {
+                app.set_activation_policy(tauri::ActivationPolicy::Accessory);
+            }
+
             hotkeys::setup(app.handle());
             tray::setup_tray(app.handle());
             autostart::setup_autostart(app.handle());
 
-            window::window::setup(app);
+            window::window::create_window(app);
             Ok(())
         })
         .on_window_event(window::window_manager::on_window_event)

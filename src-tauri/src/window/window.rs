@@ -5,7 +5,7 @@ use tauri::TitleBarStyle;
 
 use crate::{store::settings::SettingsStore, window::WINDOW_NAME};
 
-pub fn setup(app: &tauri::App) -> WebviewWindow {
+pub fn create_window(app: &tauri::App) -> WebviewWindow {
     let mut window_builder = WebviewWindowBuilder::new(app, WINDOW_NAME, WebviewUrl::default())
       .title("CrossZones")
       .visible(false)
