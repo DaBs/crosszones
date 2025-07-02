@@ -12,7 +12,15 @@ interface KeyMapping {
   className?: string;
 }
 
+const ARROW_KEY_MAPPING: Record<string, KeyMapping> = {
+  "ArrowUp": { label: "Up", className: "text-primary" },
+  "ArrowDown": { label: "Down", className: "text-primary" },
+  "ArrowLeft": { label: "Left", className: "text-primary" },
+  "ArrowRight": { label: "Right", className: "text-primary" },
+};
+
 const MACOS_KEY_MAPPING: Record<string, KeyMapping> = {
+  ...ARROW_KEY_MAPPING,
   "control": { label: "Ctrl", className: "text-primary" },
   "alt": { label: "Option", className: "text-primary" },
   "shift": { label: "Shift", className: "text-primary" },
@@ -22,6 +30,7 @@ const MACOS_KEY_MAPPING: Record<string, KeyMapping> = {
 };
 
 const WINDOWS_KEY_MAPPING: Record<string, KeyMapping> = {
+  ...ARROW_KEY_MAPPING,
   "control": { label: "CTRL", className: "text-primary" },
   "alt": { label: "ALT", className: "text-primary" },
   "shift": { label: "Shift", className: "text-primary" },
