@@ -1,11 +1,12 @@
+import "@/App.css";
+
 import { useState } from "react";
 import { OsType, type } from "@tauri-apps/plugin-os";
-import HotkeySettings from "./components/HotkeySettings/HotkeySettings";
-import { PermissionCheck } from "./components/PermissionCheck/PermissionCheck";
-import { Layout } from "./components/layout";
-import { ThemeProvider } from "./components/theme-provider";
-import "./App.css";
-import { SettingsOverlay } from "./components/Settings/Settings";
+import HotkeySettings from "@/components/HotkeySettings/HotkeySettings";
+import { PermissionCheck } from "@/components/PermissionCheck/PermissionCheck";
+import { Layout } from "@/components/layout";
+import { ThemeProvider } from "@/components/theme-provider";
+import { SettingsOverlay } from "@/components/Settings/Settings";
 
 const HAS_PERMISSIONS_DEFAULT: Record<OsType, boolean> = {
   "windows": true,
