@@ -25,9 +25,10 @@ Download the latest release installer for your OS in the [Release](https://githu
 | Third Controls     | ✅       | ✅     | ❌     |
 | Fourth Controls    | ✅       | ✅     | ❌     |
 | Sixth Controls     | ✅       | ✅     | ❌     |
-| Movement Controls  | ✅       | ✅     | ❌     |
+| Movement Controls  | ✅**     | ✅**   | ❌     |
 
 (* Restore functionality not implemented yet)
+(** Moving display not implemented yet)
 
 ## 🚀 Development
 
