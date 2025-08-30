@@ -80,3 +80,4 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 ## 🙏 Acknowledgments
 
 - [Rectangle](https://rectangleapp.com/) for Mac, the original inspiration
+- [FancyZones (PowerToys)](https://github.com/microsoft/PowerToys) for Windows, [which lacked the functionality](https://github.com/microsoft/PowerToys), spawning this
