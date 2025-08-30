@@ -21,11 +21,13 @@ Download the latest release installer for your OS in the [Release](https://githu
 |--------------------|-----------|--------|---------|
 | Window Positioning | ✅       | ✅     | ❌     |
 | Corner Controls    | ✅       | ✅     | ❌     |
-| Window Sizing      | ❌       | ❌     | ❌     |
+| Window Sizing      | ✅*      | ✅*    | ❌     |
 | Third Controls     | ✅       | ✅     | ❌     |
 | Fourth Controls    | ✅       | ✅     | ❌     |
 | Sixth Controls     | ✅       | ✅     | ❌     |
-| Movement Controls  | ❌       | ❌     | ❌     |
+| Movement Controls  | ✅       | ✅     | ❌     |
+
+(* Restore functionality not implemented yet)
 
 ## 🚀 Development
 
