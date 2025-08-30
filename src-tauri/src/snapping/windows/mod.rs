@@ -79,6 +79,8 @@ pub fn snap_window(action: LayoutAction) -> Result<(), String> {
     let screen_dimensions = ScreenDimensions {
         width: monitor_info.rcWork.right - monitor_info.rcWork.left,
         height: monitor_info.rcWork.bottom - monitor_info.rcWork.top,
+        x: monitor_info.rcWork.left,
+        y: monitor_info.rcWork.top,
     };
 
     // Remove the effect of the invisible borders

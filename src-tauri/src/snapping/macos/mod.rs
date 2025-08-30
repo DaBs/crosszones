@@ -1,12 +1,17 @@
+use std::ffi::os_str::Display;
+
 use accessibility::value::AXValue;
 use accessibility::AXUIElementAttributes;
 use ::accessibility::{AXAttribute, AXUIElement};
 use core_graphics_types::geometry::{CGPoint, CGSize};
-use display_info::DisplayInfo;
 use objc2_app_kit::NSWorkspace;
 
+mod screen;
+
+use super::common::ScreenDimensions;
 use super::action::LayoutAction;
-use super::common::{calculate_window_rect, ScreenDimensions};
+use super::common::{calculate_window_rect};
+use screen::get_screen_dimensions;
 use super::window_rect::WindowRect;
 
 // Function to snap a window according to the specified layout action
@@ -18,7 +23,7 @@ pub fn snap_window(action: LayoutAction) -> Result<(), String> {
     let current_rect = get_window_rect(&window)?;
 
     // Get screen dimensions
-    let screen_dimensions = get_screen_dimensions()?;
+    let screen_dimensions = get_screen_dimensions(&window)?;
 
     let identifier = "blabla";
     let identifier_string = identifier.to_string();
@@ -84,21 +89,6 @@ fn set_window_rect(window: &AXUIElement, rect: WindowRect) -> Result<(), String>
     window.set_attribute(&AXAttribute::size(), size)
         .map_err(|e| e.to_string())?;
     Ok(())
-}
-
-// Helper function to get screen dimensions
-fn get_screen_dimensions() -> Result<ScreenDimensions, String> {
-    let binding = DisplayInfo::all()
-        .map_err(|e| e.to_string())?;
-    let main_display = binding
-        .iter()
-        .find(|display| display.is_primary)
-        .ok_or_else(|| String::from("No primary display found"))?;
-
-    Ok(ScreenDimensions {
-        width: main_display.width as i32,
-        height: main_display.height as i32,
-    })
 }
 
 // Helper function to get all visible windows

@@ -7,7 +7,9 @@ use crate::snapping::window_state::{get_window_state, insert_window_state, Windo
 
 /// Represents screen dimensions
 #[derive(Debug, Clone, Copy, Serialize, Deserialize)]
-    pub struct ScreenDimensions {
+pub struct ScreenDimensions {
+    pub x: i32,
+    pub y: i32,
     pub width: i32,
     pub height: i32,
 }
@@ -306,6 +308,14 @@ pub fn calculate_window_rect(
 
     println!("current: {:?}", current);
     println!("result: {:?}", result);
+
+    // Add the screen x and y to the result
+    let result = WindowRect {
+        x: result.x + screen.x,
+        y: result.y + screen.y,
+        width: result.width,
+        height: result.height,
+    };
 
     // Apply screen boundary constraints to all layout actions
     let result = constrain_to_screen(result, screen);
