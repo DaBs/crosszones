@@ -17,8 +17,8 @@ pub struct ScreenDimensions {
 /// Ensures a window stays within screen boundaries
 fn constrain_to_screen(rect: WindowRect, screen: ScreenDimensions) -> WindowRect {
     WindowRect {
-        x: rect.x.max(0).min(screen.width),
-        y: rect.y.max(0).min(screen.height),
+        x: rect.x.max(0).min(screen.width + screen.x),
+        y: rect.y.max(0).min(screen.height + screen.y),
         width: rect.width,
         height: rect.height,
     }
@@ -307,7 +307,6 @@ pub fn calculate_window_rect(
     };
 
     println!("current: {:?}", current);
-    println!("result: {:?}", result);
 
     // Add the screen x and y to the result
     let result = WindowRect {
@@ -316,6 +315,8 @@ pub fn calculate_window_rect(
         width: result.width,
         height: result.height,
     };
+
+    println!("result: {:?}", result);
 
     // Apply screen boundary constraints to all layout actions
     let result = constrain_to_screen(result, screen);
