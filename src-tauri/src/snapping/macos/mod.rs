@@ -40,7 +40,13 @@ fn get_frontmost_window() -> Result<AXUIElement, String> {
     let frontmost_application_pid = unsafe { frontmost_application.processIdentifier() };
 
     let app = AXUIElement::application(frontmost_application_pid);
-    let window = app.main_window().unwrap();
+
+    if app.focused_window().is_ok() {
+        let focused_window = app.focused_window().unwrap().clone();
+        return Ok(focused_window);
+    }
+
+    let window = app.windows().unwrap().iter().next().unwrap().clone();
     Ok(window)
 }
 
