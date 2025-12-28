@@ -36,7 +36,7 @@ ts-rs = "11.0.1"
 display-info = "0.5.4"
 
 [target.'cfg(any(target_os = "windows"))'.dependencies]
-windows = { version = "0.61.1", features = ["Graphics", "Win32_Graphics_Gdi", "Win32_Graphics_Dwm"] }
+windows = { version = "0.61.1", features = ["Graphics", "Win32_Graphics_Gdi", "Win32_Graphics_Dwm", "Win32_UI_WindowsAndMessaging"] }
 
 [target.'cfg(target_os = "macos")'.dependencies]
 core-graphics-types = "0.1.3"
