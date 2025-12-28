@@ -1,6 +1,14 @@
 import { TabsList, TabsTrigger } from './ui/tabs';
 import { Keyboard, Settings, PanelsTopLeft } from 'lucide-react';
 
+/**
+ * Renders a centered title bar containing tabbed navigation for Hotkeys, Layout Areas, and Settings.
+ *
+ * The bar includes left and right drag regions for window dragging and a centered TabsList with three TabsTrigger items,
+ * each showing an icon and a label.
+ *
+ * @returns The JSX element for the title bar with centered tabs and drag regions.
+ */
 export function TitleBar() {
   return (
     <div className="flex w-full justify-center items-center h-12 px-4" data-tauri-drag-region>

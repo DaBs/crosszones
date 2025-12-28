@@ -15,6 +15,11 @@ const HAS_PERMISSIONS_DEFAULT: Record<OsType, boolean> = {
   "android": false,
 }
 
+/**
+ * Root application component that provides theming, layout with tab state, and a permission-gated main view.
+ *
+ * @returns The root React element for the application UI.
+ */
 function App() {
   const [hasPermissions, setHasPermissions] = useState(HAS_PERMISSIONS_DEFAULT[type()]);
   const [activeTab, setActiveTab] = useState('hotkeys');
