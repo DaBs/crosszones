@@ -5,6 +5,7 @@ import { getSetting, setSettings as setSettingsStore, SettingsKey } from '@/lib/
 import { Settings } from '../../src-tauri/bindings/Settings';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { showError, showSuccess } from '@/lib/toast';
 
 interface SettingDefinition {
   key: SettingsKey;
@@ -50,10 +51,15 @@ export const SettingsTab: React.FC = () => {
       setLoading(false);
     })
     .catch(error => {
-      console.error('Failed to load settings:', error);
+      showError('Failed to load settings', error);
       setLoading(false);
     });
-    getVersion().then(setVersion);  
+    
+    getVersion()
+      .then(setVersion)
+      .catch(error => {
+        showError('Failed to load version', error);
+      });
   }, []);
 
   const handleToggle = async (key: SettingsKey, value: boolean) => {
@@ -61,8 +67,9 @@ export const SettingsTab: React.FC = () => {
     try {
       await setSettingsStore(newSettings);
       setSettings(prev => ({ ...prev, [key]: value }));
+      showSuccess('Setting updated successfully');
     } catch (error) {
-      console.error('Failed to update setting:', error);
+      showError('Failed to update setting', error);
     }
   };
 
@@ -114,12 +121,17 @@ export const SettingsTab: React.FC = () => {
           <Button 
             variant="outline" 
             onClick={async () => {
-              setSettings(prev => ({ ...prev, auto_start: false, start_minimized: false, close_to_system_tray: false }));
-              await setSettingsStore({
-                auto_start: false,
-                start_minimized: false,
-                close_to_system_tray: false,
-              });
+              try {
+                setSettings(prev => ({ ...prev, auto_start: false, start_minimized: false, close_to_system_tray: false }));
+                await setSettingsStore({
+                  auto_start: false,
+                  start_minimized: false,
+                  close_to_system_tray: false,
+                });
+                showSuccess('Settings reset successfully');
+              } catch (error) {
+                showError('Failed to reset settings', error);
+              }
             }}
           >
             Reset settings

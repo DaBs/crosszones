@@ -6,6 +6,7 @@ import { Layout } from "@/components/layout";
 import { ThemeProvider } from "@/components/theme-provider";
 import { MainView } from "@/screens/MainView";
 import { useState } from "react";
+import { Toaster } from "sonner";
 
 const HAS_PERMISSIONS_DEFAULT: Record<OsType, boolean> = {
   "windows": true,
@@ -28,6 +29,7 @@ function App() {
           <MainView />
         )}
       </Layout>
+      <Toaster position="top-right" richColors />
     </ThemeProvider>
   );
 }
