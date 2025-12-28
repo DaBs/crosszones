@@ -95,7 +95,11 @@ export const SettingsTab: React.FC = () => {
                   </div>
                   <Checkbox
                     checked={settings[setting.key]}
-                    onCheckedChange={(checked) => handleToggle(setting.key, checked as boolean)}
+                    onCheckedChange={(checked) => {
+                      if (typeof checked === 'boolean') {
+                        handleToggle(setting.key, checked);
+                      }
+                    }}
                   />
                 </div>
               ))}
