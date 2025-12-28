@@ -54,8 +54,12 @@ export const SettingsTab: React.FC = () => {
 
   const handleToggle = async (key: SettingsKey, value: boolean) => {
     const newSettings = { ...settings, [key]: value };
-    await setSettingsStore(newSettings);
-    setSettings(prev => ({ ...prev, [key]: value }));
+    try {
+      await setSettingsStore(newSettings);
+      setSettings(prev => ({ ...prev, [key]: value }));
+    } catch (error) {
+      console.error('Failed to update setting:', error);
+    }
   };
 
   const settingsByCategory = SETTINGS_SCHEMA.reduce((acc, setting) => {
