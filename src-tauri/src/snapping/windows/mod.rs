@@ -10,8 +10,8 @@ use windows::{
             HiDpi::GetDpiForWindow,
             WindowsAndMessaging::{
                 EnumWindows, GetForegroundWindow, GetWindowRect,
-                GetWindowThreadProcessId, IsWindowVisible, SetWindowPos,
-                SWP_NOACTIVATE, SWP_NOZORDER
+                GetWindowThreadProcessId, IsWindowVisible, IsZoomed, SetWindowPos,
+                ShowWindow, SWP_NOACTIVATE, SWP_NOZORDER, SW_RESTORE
             },
         },
     },
@@ -26,6 +26,17 @@ pub fn snap_window(action: LayoutAction) -> Result<(), String> {
     let hwnd = unsafe { GetForegroundWindow() };
     if hwnd.0 == std::ptr::null_mut() {
         return Err("Failed to get foreground window".to_string());
+    }
+
+    // Check if the window is maximized and restore it first
+    // On Windows, you cannot resize a maximized window directly with SetWindowPos
+    let is_maximized = unsafe { IsZoomed(hwnd).as_bool() };
+    if is_maximized {
+        unsafe {
+            ShowWindow(hwnd, SW_RESTORE);
+        }
+        // Give Windows a moment to process the restore
+        std::thread::sleep(std::time::Duration::from_millis(10));
     }
 
     // Get the current window position and size
