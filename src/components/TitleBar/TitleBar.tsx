@@ -26,11 +26,11 @@ export function TitleBar() {
           Hotkeys
         </TabsTrigger>
         <TabsTrigger 
-          value="layout-areas" 
+          value="zones" 
           className="rounded-md px-4 py-2 text-sm font-medium transition-all data-[state=active]:bg-background data-[state=active]:text-primary data-[state=active]:shadow-sm data-[state=inactive]:text-muted-foreground [&[data-state=active]_svg]:text-primary"
         >
           <PanelsTopLeft className="h-4 w-4 mr-2" />
-          Layout Areas
+          Zones
         </TabsTrigger>
         <TabsTrigger 
           value="settings" 
