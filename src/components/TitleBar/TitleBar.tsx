@@ -5,12 +5,16 @@ import { useMemo } from 'react';
 
 export function TitleBar() {
   const isMacOS = useMemo(() => platform() === 'macos', []);
+
+  const macosRoundedClass = useMemo(() => {
+    return isMacOS ? 'rounded-none rounded-b-lg rounded-out-t-lg' : 'rounded-lg';
+  }, [isMacOS]);
   
   return (
     <div className="flex w-full justify-center items-center h-12 px-4" data-tauri-drag-region>
       <div className="flex-1" data-tauri-drag-region></div>
       <TabsList 
-        className={`rounded-none rounded-b-md relative inline-flex h-auto bg-muted p-1 shadow-sm ${isMacOS ? 'rounded-out-t-lg' : 'rounded-lg'}`}
+        className={`relative inline-flex h-auto bg-muted p-1 shadow-sm ${macosRoundedClass}`}
       >
         <TabsTrigger 
           value="hotkeys" 
