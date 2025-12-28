@@ -1,16 +1,23 @@
 import { TitleBar } from "./TitleBar"
+import { Tabs } from "./ui/tabs"
 
 interface LayoutProps extends React.HTMLAttributes<HTMLDivElement> {
   children: React.ReactNode
-  isSettingsOpen: boolean
-  setIsSettingsOpen: (isSettingsOpen: boolean) => void
+  activeTab?: string;
+  onTabChange?: (value: string) => void;
 }
 
-export function Layout({ children, isSettingsOpen, setIsSettingsOpen }: LayoutProps) {
+export function Layout({ children, activeTab, onTabChange }: LayoutProps) {
   return (
-    <div>
-      <TitleBar isSettingsOpen={isSettingsOpen} setIsSettingsOpen={setIsSettingsOpen} />
-      <main className="flex-1 p-4">{children}</main>
+    <div className="flex flex-col h-screen">
+      {activeTab && onTabChange ? (
+        <Tabs value={activeTab} onValueChange={onTabChange} className="flex flex-col h-full">
+          <TitleBar />
+          <main className="flex-1 overflow-hidden">{children}</main>
+        </Tabs>
+      ) : (
+        <main className="flex-1 overflow-hidden">{children}</main>
+      )}
     </div>
   )
 } 

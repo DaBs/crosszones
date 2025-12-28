@@ -1,12 +1,11 @@
 import "@/App.css";
 
-import { useState } from "react";
 import { OsType, type } from "@tauri-apps/plugin-os";
-import HotkeySettings from "@/components/HotkeySettings/HotkeySettings";
 import { PermissionCheck } from "@/components/PermissionCheck/PermissionCheck";
 import { Layout } from "@/components/layout";
 import { ThemeProvider } from "@/components/theme-provider";
-import { SettingsOverlay } from "@/components/Settings/Settings";
+import { MainView } from "@/screens/MainView";
+import { useState } from "react";
 
 const HAS_PERMISSIONS_DEFAULT: Record<OsType, boolean> = {
   "windows": true,
@@ -17,18 +16,17 @@ const HAS_PERMISSIONS_DEFAULT: Record<OsType, boolean> = {
 }
 
 function App() {
-  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [hasPermissions, setHasPermissions] = useState(HAS_PERMISSIONS_DEFAULT[type()]);
+  const [activeTab, setActiveTab] = useState('hotkeys');
 
   return (
     <ThemeProvider defaultTheme="system" storageKey="crosszones-theme">
-      <Layout isSettingsOpen={isSettingsOpen} setIsSettingsOpen={setIsSettingsOpen}>
+      <Layout activeTab={activeTab} onTabChange={setActiveTab}>
         {!hasPermissions ? (
           <PermissionCheck onPermissionsGranted={() => setHasPermissions(true)} />
         ) : (
-          <HotkeySettings />
+          <MainView />
         )}
-        <SettingsOverlay open={isSettingsOpen} />
       </Layout>
     </ThemeProvider>
   );
