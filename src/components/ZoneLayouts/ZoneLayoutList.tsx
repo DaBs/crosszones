@@ -1,0 +1,107 @@
+import React from 'react';
+import { invoke } from '@tauri-apps/api/core';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { type ZoneLayout } from '@/types/zoneLayout';
+import { Plus, Trash2, Edit2 } from 'lucide-react';
+
+interface ZoneLayoutListProps {
+  layouts: ZoneLayout[];
+  onLayoutSelect: (layout: ZoneLayout) => void;
+  onLayoutDelete: (layoutId: string) => void;
+  onNewLayout: () => void;
+  onRefresh: () => void;
+}
+
+export const ZoneLayoutList: React.FC<ZoneLayoutListProps> = ({
+  layouts,
+  onLayoutSelect,
+  onLayoutDelete,
+  onNewLayout,
+  onRefresh,
+}) => {
+  const handleDelete = async (layoutId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (confirm('Are you sure you want to delete this zone layout?')) {
+      try {
+        await invoke('delete_zone_layout', { layoutId });
+        onRefresh();
+      } catch (error) {
+        console.error('Failed to delete zone layout:', error);
+        alert('Failed to delete zone layout');
+      }
+    }
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="flex justify-between items-center">
+        <h2 className="text-2xl font-semibold">Zone Layouts</h2>
+        <Button onClick={onNewLayout}>
+          <Plus className="h-4 w-4 mr-2" />
+          New Layout
+        </Button>
+      </div>
+
+      {layouts.length === 0 ? (
+        <Card>
+          <CardContent className="pt-6">
+            <p className="text-center text-muted-foreground">
+              No zone layouts yet. Create one to get started!
+            </p>
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {layouts.map((layout) => (
+            <Card
+              key={layout.id}
+              className="cursor-pointer hover:shadow-md transition-shadow"
+              onClick={() => onLayoutSelect(layout)}
+            >
+              <CardHeader>
+                <CardTitle className="flex items-center justify-between">
+                  <span>{layout.name}</span>
+                  <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => onLayoutSelect(layout)}
+                    >
+                      <Edit2 className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={(e) => handleDelete(layout.id, e)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </CardTitle>
+                <CardDescription>
+                  {layout.zones.length} zone{layout.zones.length !== 1 ? 's' : ''}
+                </CardDescription>
+              </CardHeader>
+              {layout.zones.length > 0 && (
+                <CardContent>
+                  <div className="flex flex-wrap gap-1">
+                    {layout.zones.map((zone) => (
+                      <span
+                        key={zone.id}
+                        className="inline-flex items-center justify-center w-6 h-6 rounded bg-primary/10 text-primary text-xs font-medium"
+                      >
+                        {zone.number}
+                      </span>
+                    ))}
+                  </div>
+                </CardContent>
+              )}
+            </Card>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
