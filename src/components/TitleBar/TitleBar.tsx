@@ -3,8 +3,10 @@ import { Keyboard, Settings, PanelsTopLeft } from 'lucide-react';
 import { platform } from '@tauri-apps/plugin-os';
 import { useMemo } from 'react';
 
+const IS_MACOS = platform() === 'macos';
+
 export function TitleBar() {
-  const isMacOS = useMemo(() => platform() === 'macos', []);
+  const isMacOS = IS_MACOS;
 
   const macosRoundedClass = useMemo(() => {
     return isMacOS ? 'rounded-none rounded-b-lg rounded-out-t-lg' : 'rounded-lg';
