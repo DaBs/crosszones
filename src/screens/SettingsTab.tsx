@@ -45,9 +45,14 @@ export const SettingsTab: React.FC = () => {
       SETTINGS_SCHEMA.map(setting => 
         getSetting(setting.key).then(value => [setting.key, typeof value === 'boolean' ? value : false])
       )
-    ).then(results => {
-      )
-    ).then(results => {
+   Promise.all(
+     SETTINGS_SCHEMA.map(setting => 
+       getSetting(setting.key).then(value => [setting.key, typeof value === 'boolean' ? value : false])
+     )
+   ).then(results => {
+     setSettings(Object.fromEntries(results) as Settings);
+     setLoading(false);
+   });
       setSettings(Object.fromEntries(results) as Settings);
       setLoading(false);
     });
