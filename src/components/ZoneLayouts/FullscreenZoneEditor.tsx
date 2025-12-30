@@ -14,6 +14,7 @@ function FullscreenZoneEditor() {
   const [hoveredZone, setHoveredZone] = useState<string | null>(null);
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null);
   const [mousePosition, setMousePosition] = useState<{ x: number; y: number } | null>(null);
+  const [snapEnabled, setSnapEnabled] = useState<boolean>(true);
 
   const { editorData, zones, setZones, splitMode, zonesStateRef, handleCloseEditor } = useZoneEditor();
 
@@ -25,11 +26,14 @@ function FullscreenZoneEditor() {
     originalZonePosition,
     handleMouseDown,
     resetDrag,
+    hasJustDragged,
+    clearDragFlag,
   } = useZoneDrag({
     zones,
     setZones,
     containerRef,
     zonesStateRef,
+    snapEnabled,
     onMergeInitiate: (draggedId, targetId) => {
       mergeInitiateRef.current?.(draggedId, targetId);
     },
@@ -48,6 +52,7 @@ function FullscreenZoneEditor() {
     setZones,
     containerRef,
     zonesStateRef,
+    snapEnabled,
   });
 
   // Update the ref with the actual initiateMerge function
@@ -83,6 +88,12 @@ function FullscreenZoneEditor() {
     // Don't split if clicking on a button or if dragging/resizing
     const target = e.target as HTMLElement;
     if (target.tagName === 'BUTTON' || target.closest('button') || draggedZone || resizingZone) {
+      return;
+    }
+
+    // Don't split if we just finished dragging (prevents split on drag release)
+    if (hasJustDragged()) {
+      clearDragFlag();
       return;
     }
 
@@ -150,7 +161,7 @@ function FullscreenZoneEditor() {
         />
       ))}
 
-      <InstructionsOverlay />
+      <InstructionsOverlay snapEnabled={snapEnabled} onSnapToggle={setSnapEnabled} />
 
       <ContextMenu
         position={contextMenu}

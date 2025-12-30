@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import type { Zone } from '@/types/zoneLayout';
 import { snapZoneEdges, preventOverlaps } from './useZoneSnap';
 
@@ -7,6 +7,7 @@ interface UseZoneDragProps {
   setZones: React.Dispatch<React.SetStateAction<Zone[]>>;
   containerRef: React.RefObject<HTMLDivElement>;
   zonesStateRef: React.MutableRefObject<Zone[]>;
+  snapEnabled?: boolean;
   onMergeInitiate?: (draggedId: string, targetId: string) => void;
 }
 
@@ -15,12 +16,15 @@ export function useZoneDrag({
   setZones,
   containerRef,
   zonesStateRef,
+  snapEnabled = true,
   onMergeInitiate,
 }: UseZoneDragProps) {
   const [draggedZone, setDraggedZone] = useState<string | null>(null);
   const [dragStart, setDragStart] = useState<{ x: number; y: number } | null>(null);
   const [originalZonePosition, setOriginalZonePosition] = useState<{ x: number; y: number } | null>(null);
   const [mergeTarget, setMergeTarget] = useState<string | null>(null);
+  const hasDraggedRef = useRef<boolean>(false);
+  const initialMousePositionRef = useRef<{ x: number; y: number } | null>(null);
 
   const handleMouseDown = useCallback((e: React.MouseEvent, zoneId: string) => {
     // Don't start dragging if clicking on a button or interactive element
@@ -38,12 +42,27 @@ export function useZoneDrag({
       setOriginalZonePosition({ x: zone.x, y: zone.y });
     }
 
+    // Reset drag tracking
+    hasDraggedRef.current = false;
+    initialMousePositionRef.current = { x: e.clientX, y: e.clientY };
+
     setDraggedZone(zoneId);
     setDragStart({ x: e.clientX, y: e.clientY });
   }, [zones]);
 
   const handleMouseMove = useCallback((e: MouseEvent) => {
     if (!draggedZone || !dragStart || !containerRef.current) return;
+
+    // Check if mouse has moved significantly (more than a few pixels) to consider it a drag
+    if (initialMousePositionRef.current) {
+      const moveDistance = Math.sqrt(
+        Math.pow(e.clientX - initialMousePositionRef.current.x, 2) +
+        Math.pow(e.clientY - initialMousePositionRef.current.y, 2)
+      );
+      if (moveDistance > 5) {
+        hasDraggedRef.current = true;
+      }
+    }
 
     const container = containerRef.current;
     const rect = container.getBoundingClientRect();
@@ -68,8 +87,10 @@ export function useZoneDrag({
         // Create updated zone
         let updatedZone = { ...zone, x: newX, y: newY };
 
-        // Snap to other zones' boundaries
-        updatedZone = snapZoneEdges(updatedZone, prevZones, draggedZone);
+        // Snap to other zones' boundaries (if enabled)
+        if (snapEnabled) {
+          updatedZone = snapZoneEdges(updatedZone, prevZones, draggedZone);
+        }
 
         // Prevent overlaps
         updatedZone = preventOverlaps(updatedZone, prevZones, draggedZone);
@@ -97,7 +118,7 @@ export function useZoneDrag({
     });
 
     setMergeTarget(targetZone?.id || null);
-  }, [draggedZone, dragStart, containerRef, setZones, zonesStateRef]);
+  }, [draggedZone, dragStart, containerRef, setZones, zonesStateRef, snapEnabled]);
 
   const handleMouseUp = useCallback(() => {
     if (draggedZone && mergeTarget && onMergeInitiate) {
@@ -110,6 +131,8 @@ export function useZoneDrag({
       setOriginalZonePosition(null);
       setMergeTarget(null);
     }
+    // Note: hasDraggedRef.current remains true until next mousedown
+    // This allows the click handler to check if a drag just occurred
   }, [draggedZone, mergeTarget, onMergeInitiate]);
 
   useEffect(() => {
@@ -128,6 +151,17 @@ export function useZoneDrag({
     setDragStart(null);
     setOriginalZonePosition(null);
     setMergeTarget(null);
+    hasDraggedRef.current = false;
+    initialMousePositionRef.current = null;
+  }, []);
+
+  const hasJustDragged = useCallback(() => {
+    return hasDraggedRef.current;
+  }, []);
+
+  const clearDragFlag = useCallback(() => {
+    hasDraggedRef.current = false;
+    initialMousePositionRef.current = null;
   }, []);
 
   return {
@@ -136,5 +170,7 @@ export function useZoneDrag({
     originalZonePosition,
     handleMouseDown,
     resetDrag,
+    hasJustDragged,
+    clearDragFlag,
   };
 }

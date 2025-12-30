@@ -8,6 +8,7 @@ interface UseZoneResizeProps {
   setZones: React.Dispatch<React.SetStateAction<Zone[]>>;
   containerRef: React.RefObject<HTMLDivElement>;
   zonesStateRef: React.MutableRefObject<Zone[]>;
+  snapEnabled?: boolean;
 }
 
 export function useZoneResize({
@@ -15,6 +16,7 @@ export function useZoneResize({
   setZones,
   containerRef,
   zonesStateRef,
+  snapEnabled = true,
 }: UseZoneResizeProps) {
   const [resizingZone, setResizingZone] = useState<string | null>(null);
   const [resizeHandle, setResizeHandle] = useState<ResizeHandle | null>(null);
@@ -145,8 +147,10 @@ export function useZoneResize({
           height: newHeight,
         };
 
-        // Snap to other zones' boundaries
-        updatedZone = snapZoneEdges(updatedZone, prevZones, resizingZone);
+        // Snap to other zones' boundaries (if enabled)
+        if (snapEnabled) {
+          updatedZone = snapZoneEdges(updatedZone, prevZones, resizingZone);
+        }
 
         // Prevent overlaps
         updatedZone = preventOverlaps(updatedZone, prevZones, resizingZone);
@@ -154,7 +158,7 @@ export function useZoneResize({
         return updatedZone;
       });
     });
-  }, [resizingZone, resizeHandle, resizeStart, containerRef, setZones]);
+  }, [resizingZone, resizeHandle, resizeStart, containerRef, setZones, snapEnabled]);
 
   const handleResizeEnd = useCallback(() => {
     setResizingZone(null);

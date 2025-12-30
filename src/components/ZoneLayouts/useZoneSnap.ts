@@ -1,6 +1,6 @@
 import type { Zone } from '@/types/zoneLayout';
 
-const SNAP_THRESHOLD = 1.5; // Percentage threshold for snapping
+const SNAP_THRESHOLD = 0.2; // Percentage threshold for snapping
 
 interface SnapPoints {
   x: number[]; // Vertical lines (left/right edges)
