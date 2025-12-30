@@ -23,12 +23,12 @@ pub fn run() {
             store::zone_layouts::save_zone_layout,
             store::zone_layouts::delete_zone_layout,
             store::zone_layouts::get_zone_layout,
-            zones::zone_windows::create_zone_window,
-            zones::zone_windows::update_zone_window,
-            zones::zone_windows::destroy_zone_window,
-            zones::zone_windows::destroy_all_zone_windows,
-            zones::zone_windows::get_primary_screen_dimensions,
-            zones::zone_windows::focus_zone_window,
+            zones::zone_layout_editor::get_all_screens,
+            zones::zone_layout_editor::create_zone_editor_windows,
+            zones::zone_layout_editor::destroy_all_editor_windows,
+            zones::zone_layout_editor::close_editor_windows,
+            zones::zone_layout_editor::store_editor_zones,
+            zones::zone_layout_editor::get_editor_zones,
         ])
         .setup(move |app| {
             #[cfg(target_os = "macos")]

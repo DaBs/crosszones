@@ -2,19 +2,15 @@ use tauri::{Manager, Window, WindowEvent};
 
 use crate::store::settings::SettingsStore;
 use crate::window::PRIMARY_WINDOW_NAME;
-use crate::zones::zone_windows;
+use crate::zones::zone_layout_editor;
 
 pub fn on_window_event(window: &Window, event: &WindowEvent) {
     let window_label = window.label();
     
-    // Handle zone window close events
-    if window_label.starts_with("zone-") {
+    // Handle editor window close events - destroy all editor windows when one closes
+    if window_label.starts_with("zone-editor-") {
         if let WindowEvent::CloseRequested { .. } = event {
-            // Extract zone ID from window label (format: "zone-{id}")
-            if let Some(zone_id) = window_label.strip_prefix("zone-") {
-                // Remove from HashMap - window is already closing, just clean up our reference
-                zone_windows::remove_zone_window_from_map(zone_id);
-            }
+            let _ = zone_layout_editor::destroy_all_editor_windows();
         }
         return;
     }

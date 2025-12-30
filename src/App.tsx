@@ -1,10 +1,12 @@
 import "@/App.css";
 
 import { OsType, type } from "@tauri-apps/plugin-os";
+import { Route, Router, Switch } from "wouter";
 import { PermissionCheck } from "@/components/PermissionCheck/PermissionCheck";
 import { Layout } from "@/components/layout";
 import { ThemeProvider } from "@/components/theme-provider";
 import { MainView } from "@/screens/MainView";
+import { FullscreenZoneEditor } from "@/components/ZoneLayouts/FullscreenZoneEditor";
 import { useState } from "react";
 
 const HAS_PERMISSIONS_DEFAULT: Record<OsType, boolean> = {
@@ -21,13 +23,22 @@ function App() {
 
   return (
     <ThemeProvider defaultTheme="system" storageKey="crosszones-theme">
-      <Layout activeTab={activeTab} onTabChange={setActiveTab}>
-        {!hasPermissions ? (
-          <PermissionCheck onPermissionsGranted={() => setHasPermissions(true)} />
-        ) : (
-          <MainView />
-        )}
-      </Layout>
+      <Router>
+        <Switch>
+          <Route path="/zone-editor">
+            <FullscreenZoneEditor />
+          </Route>
+          <Route path="/">
+            <Layout activeTab={activeTab} onTabChange={setActiveTab}>
+              {!hasPermissions ? (
+                <PermissionCheck onPermissionsGranted={() => setHasPermissions(true)} />
+              ) : (
+                <MainView />
+              )}
+            </Layout>
+          </Route>
+        </Switch>
+      </Router>
     </ThemeProvider>
   );
 }

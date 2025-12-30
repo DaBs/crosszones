@@ -2,9 +2,11 @@
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "default",
   "description": "Capability for the main window",
-  "windows": ["main", "crosszones"],
+  "windows": ["main", "crosszones", "zone-editor-0", "zone-editor-1", "zone-editor-2", "zone-editor-3", "zone-editor-4", "zone-editor-5", "zone-editor-6", "zone-editor-7", "zone-editor-8", "zone-editor-9"],
   "permissions": [
     "core:default",
+    "core:event:allow-listen",
+    "core:event:allow-emit",
     "opener:default",
     "store:default",
     "macos-permissions:default"
