@@ -6,6 +6,7 @@ import { InstructionsOverlay } from './InstructionsOverlay';
 import { useZoneEditor } from './useZoneEditor';
 import { useZoneDrag } from './useZoneDrag';
 import { useZoneOperations } from './useZoneOperations';
+import { useZoneResize } from './useZoneResize';
 
 function FullscreenZoneEditor() {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -42,6 +43,13 @@ function FullscreenZoneEditor() {
     originalZonePosition,
   });
 
+  const { resizingZone, handleResizeStart } = useZoneResize({
+    zones,
+    setZones,
+    containerRef,
+    zonesStateRef,
+  });
+
   // Update the ref with the actual initiateMerge function
   useEffect(() => {
     mergeInitiateRef.current = operations.initiateMerge;
@@ -66,20 +74,20 @@ function FullscreenZoneEditor() {
   }, [contextMenu]);
 
   const handleZoneMouseMove = (e: React.MouseEvent) => {
-    if (draggedZone) return; // Don't show split bar while dragging
+    if (draggedZone || resizingZone) return; // Don't show split bar while dragging or resizing
 
     setMousePosition({ x: e.clientX, y: e.clientY });
   };
 
   const handleZoneClick = (e: React.MouseEvent, zoneId: string) => {
-    // Don't split if clicking on a button or if dragging
+    // Don't split if clicking on a button or if dragging/resizing
     const target = e.target as HTMLElement;
-    if (target.tagName === 'BUTTON' || target.closest('button') || draggedZone) {
+    if (target.tagName === 'BUTTON' || target.closest('button') || draggedZone || resizingZone) {
       return;
     }
 
-    // Only split if hovering over this zone and we're not dragging
-    if (hoveredZone === zoneId && !draggedZone) {
+    // Only split if hovering over this zone and we're not dragging/resizing
+    if (hoveredZone === zoneId && !draggedZone && !resizingZone) {
       const splitCoord = splitMode === 'horizontal' ? e.clientX : e.clientY;
       operations.handleSplitZone(zoneId, splitCoord, splitMode);
     }
@@ -128,6 +136,7 @@ function FullscreenZoneEditor() {
           hoveredZone={hoveredZone}
           draggedZone={draggedZone}
           mergeTarget={mergeTarget}
+          resizingZone={resizingZone}
           splitMode={splitMode}
           mousePosition={mousePosition}
           containerRef={containerRef}
@@ -137,6 +146,7 @@ function FullscreenZoneEditor() {
           onMouseMove={handleZoneMouseMove}
           onClick={handleZoneClick}
           onZoneRef={handleZoneRef}
+          onResizeStart={handleResizeStart}
         />
       ))}
 

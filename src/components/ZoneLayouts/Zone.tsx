@@ -1,12 +1,16 @@
 import React, { useRef } from 'react';
 import type { Zone } from '@/types/zoneLayout';
 import { SplitBar } from './SplitBar';
+import { ResizeHandle } from './types';
+
+const RESIZE_HANDLES: ResizeHandle[] = Object.values(ResizeHandle);
 
 interface ZoneProps {
   zone: Zone;
   hoveredZone: string | null;
   draggedZone: string | null;
   mergeTarget: string | null;
+  resizingZone: string | null;
   splitMode: 'horizontal' | 'vertical';
   mousePosition: { x: number; y: number } | null;
   containerRef: React.RefObject<HTMLDivElement>;
@@ -16,6 +20,7 @@ interface ZoneProps {
   onMouseMove: (e: React.MouseEvent) => void;
   onClick: (e: React.MouseEvent, zoneId: string) => void;
   onZoneRef: (zoneId: string, el: HTMLDivElement | null) => void;
+  onResizeStart: (e: React.MouseEvent, zoneId: string, handle: ResizeHandle) => void;
 }
 
 export function ZoneComponent({
@@ -23,6 +28,7 @@ export function ZoneComponent({
   hoveredZone,
   draggedZone,
   mergeTarget,
+  resizingZone,
   splitMode,
   mousePosition,
   containerRef,
@@ -32,8 +38,9 @@ export function ZoneComponent({
   onMouseMove,
   onClick,
   onZoneRef,
+  onResizeStart,
 }: ZoneProps) {
-  const zoneRef = useRef<HTMLDivElement>(null);
+  const zoneRef = useRef<HTMLDivElement | null>(null);
 
   const getZoneStyle = (): React.CSSProperties => {
     return {
@@ -49,14 +56,73 @@ export function ZoneComponent({
       backgroundColor: hoveredZone === zone.id || mergeTarget === zone.id
         ? 'rgba(59, 130, 246, 0.2)'
         : 'rgba(59, 130, 246, 0.1)',
-      cursor: draggedZone === zone.id ? 'grabbing' : 'grab',
+      cursor: draggedZone === zone.id ? 'grabbing' : resizingZone === zone.id ? 'grabbing' : 'grab',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-      transition: draggedZone === zone.id ? 'none' : 'all 0.2s',
-      zIndex: draggedZone === zone.id ? 1000 : 1,
+      transition: draggedZone === zone.id || resizingZone === zone.id ? 'none' : 'all 0.2s',
+      zIndex: draggedZone === zone.id || resizingZone === zone.id ? 1000 : 1,
     };
   };
+
+  const getResizeHandleStyle = (handle: ResizeHandle): React.CSSProperties => {
+    const handleSize = 12;
+    const handleOffset = -handleSize / 2;
+    
+    const baseStyle: React.CSSProperties = {
+      position: 'absolute',
+      width: `${handleSize}px`,
+      height: `${handleSize}px`,
+      backgroundColor: 'rgba(59, 130, 246, 0.9)',
+      border: '2px solid white',
+      borderRadius: '50%',
+      cursor: getResizeCursor(handle),
+      zIndex: 1001,
+      pointerEvents: 'auto',
+    };
+
+    switch (handle) {
+      case ResizeHandle.N:
+        return { ...baseStyle, top: `${handleOffset}px`, left: '50%', transform: 'translateX(-50%)' };
+      case ResizeHandle.S:
+        return { ...baseStyle, bottom: `${handleOffset}px`, left: '50%', transform: 'translateX(-50%)' };
+      case ResizeHandle.E:
+        return { ...baseStyle, right: `${handleOffset}px`, top: '50%', transform: 'translateY(-50%)' };
+      case ResizeHandle.W:
+        return { ...baseStyle, left: `${handleOffset}px`, top: '50%', transform: 'translateY(-50%)' };
+      case ResizeHandle.NE:
+        return { ...baseStyle, top: `${handleOffset}px`, right: `${handleOffset}px` };
+      case ResizeHandle.NW:
+        return { ...baseStyle, top: `${handleOffset}px`, left: `${handleOffset}px` };
+      case ResizeHandle.SE:
+        return { ...baseStyle, bottom: `${handleOffset}px`, right: `${handleOffset}px` };
+      case ResizeHandle.SW:
+        return { ...baseStyle, bottom: `${handleOffset}px`, left: `${handleOffset}px` };
+      default:
+        return baseStyle;
+    }
+  };
+
+  const getResizeCursor = (handle: ResizeHandle): string => {
+    switch (handle) {
+      case ResizeHandle.N:
+      case ResizeHandle.S:
+        return 'ns-resize';
+      case ResizeHandle.E:
+      case ResizeHandle.W:
+        return 'ew-resize';
+      case ResizeHandle.NE:
+      case ResizeHandle.SW:
+        return 'nesw-resize';
+      case ResizeHandle.NW:
+      case ResizeHandle.SE:
+        return 'nwse-resize';
+      default:
+        return 'default';
+    }
+  };
+
+  const showResizeHandles = hoveredZone === zone.id && draggedZone === null && resizingZone === null;
 
   const shouldShowSplitBar =
     hoveredZone === zone.id &&
@@ -113,6 +179,19 @@ export function ZoneComponent({
           {zone.width.toFixed(1)}% × {zone.height.toFixed(1)}%
         </div>
       </div>
+
+      {/* Resize handles */}
+      {showResizeHandles &&
+        RESIZE_HANDLES.map((handle) => (
+          <div
+            key={handle}
+            style={getResizeHandleStyle(handle)}
+            onMouseDown={(e) => {
+              e.stopPropagation();
+              onResizeStart(e, zone.id, handle);
+            }}
+          />
+        ))}
 
       {/* Split bar */}
       {splitBar}
