@@ -3,10 +3,10 @@ use tauri::{WebviewUrl, WebviewWindow, WebviewWindowBuilder};
 #[cfg(target_os = "macos")]
 use tauri::TitleBarStyle;
 
-use crate::{store::settings::SettingsStore, window::WINDOW_NAME};
+use crate::{store::settings::SettingsStore, window::PRIMARY_WINDOW_NAME};
 
 pub fn create_window(app: &tauri::App) -> WebviewWindow {
-    let mut window_builder = WebviewWindowBuilder::new(app, WINDOW_NAME, WebviewUrl::default())
+    let mut window_builder = WebviewWindowBuilder::new(app, PRIMARY_WINDOW_NAME, WebviewUrl::default())
       .title("CrossZones")
       .visible(false)
       .inner_size(1300.0, 820.0)

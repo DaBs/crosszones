@@ -32,24 +32,6 @@ export const ZoneEditor: React.FC<ZoneEditorProps> = ({
     loadScreenDimensions();
   }, []);
 
-  // Create/update zone windows when zones change
-  useEffect(() => {
-    const syncZoneWindows = async () => {
-      // Create or update windows for all zones
-      // The Rust code will handle checking if windows exist and updating them
-      // Zone deletions are handled separately by handleDeleteZone
-      for (const zone of zones) {
-        try {
-          await invoke('update_zone_window', { zone });
-        } catch (error) {
-          console.error(`Failed to sync zone window for zone ${zone.id}:`, error);
-        }
-      }
-    };
-
-    syncZoneWindows();
-  }, [zones]);
-
   // Cleanup: destroy all zone windows when component unmounts
   useEffect(() => {
     return () => {
@@ -90,14 +72,6 @@ export const ZoneEditor: React.FC<ZoneEditorProps> = ({
     }
 
     onZonesChange([...zones, newZone]);
-  };
-
-  const handleZoneClick = async (zoneId: string) => {
-    try {
-      await invoke('focus_zone_window', { zoneId });
-    } catch (error) {
-      console.error('Failed to focus zone window:', error);
-    }
   };
 
   // Calculate canvas dimensions based on screen size
@@ -152,7 +126,6 @@ export const ZoneEditor: React.FC<ZoneEditorProps> = ({
                       width: `${zone.width}%`,
                       height: `${zone.height}%`,
                     }}
-                    onClick={() => handleZoneClick(zone.id)}
                   >
                     <div className="absolute top-1 left-1 bg-primary text-primary-foreground rounded px-1.5 py-0.5 text-xs font-bold">
                       {zone.number}

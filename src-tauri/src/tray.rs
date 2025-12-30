@@ -4,7 +4,7 @@ use tauri::{
     Manager,
 };
 
-use crate::window::WINDOW_NAME;
+use crate::window::PRIMARY_WINDOW_NAME;
 
 pub fn setup_tray(app_handle: &tauri::AppHandle) {
     let open_i = MenuItem::with_id(app_handle, "open", "Open", true, None::<&str>).unwrap();
@@ -20,7 +20,7 @@ pub fn setup_tray(app_handle: &tauri::AppHandle) {
         })
         .on_menu_event(|app, event| match event.id.as_ref() {
             "open" => {
-                let window = app.get_webview_window(WINDOW_NAME).unwrap();
+                let window = app.get_webview_window(PRIMARY_WINDOW_NAME).unwrap();
                 window.show().unwrap();
                 window.set_focus().unwrap();
             }

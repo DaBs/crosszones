@@ -14,16 +14,17 @@ pub fn create_zone_window(
     let window_label = format!("zone-{}", zone.id);
     
     // Check if window already exists
-    {
+    let should_update = {
         let windows = ZONE_WINDOWS.lock().unwrap();
-        if windows.contains_key(&window_label) {
-            // Window exists, just update it
-            drop(windows);
-            return update_zone_window(app, zone);
-        }
+        windows.contains_key(&window_label)
+    };
+    
+    if should_update {
+        // Window exists, just update it
+        return update_zone_window(app, zone);
     }
 
-    // Get primary screen dimensions
+    // Get primary screen dimensions (this is safe to do synchronously)
     let screens = DisplayInfo::all().map_err(|e| format!("Failed to get screens: {}", e))?;
     let primary_screen = screens
         .first()
@@ -34,43 +35,48 @@ pub fn create_zone_window(
     let y = (primary_screen.height as f64 * zone.y / 100.0) as i32 + primary_screen.y;
     let width = (primary_screen.width as f64 * zone.width / 100.0) as u32;
     let height = (primary_screen.height as f64 * zone.height / 100.0) as u32;
+    
+    // Clone data needed for window creation
+    let app_handle = app.clone();
+    let window_label_clone = window_label.clone();
+    let zone_clone = zone.clone();
+    let title = format!("Zone {}", zone.number);
+    
+    // Spawn window creation in a separate thread to avoid deadlocks on Windows
+    // The thread will handle window creation asynchronously
+    std::thread::spawn(move || {
+        // Create transparent window
+        let mut window_builder = WebviewWindowBuilder::new(
+            &app_handle,
+            &window_label_clone,
+            WebviewUrl::App("zone-overlay.html".into()),
+        )
+        .title(&title)
+        .inner_size(width as f64, height as f64)
+        .position(x as f64, y as f64)
+        .visible(true)
+        .resizable(true)
+        .decorations(false)
+        .always_on_top(true)
+        .skip_taskbar(true)
+        .closable(true)
+        .focused(false);
 
-    // Create transparent window
-    let mut window_builder = WebviewWindowBuilder::new(
-        &app,
-        &window_label,
-        WebviewUrl::App("zone-overlay.html".into()),
-    )
-    .title(&format!("Zone {}", zone.number))
-    .inner_size(width as f64, height as f64)
-    .position(x as f64, y as f64)
-    .visible(true)
-    .resizable(true)
-    .decorations(false)
-    .always_on_top(true)
-    .skip_taskbar(true)
-    .focused(false);
+        #[cfg(target_os = "windows")]
+        {
+            window_builder = window_builder.transparent(true);
+        }
 
-    #[cfg(target_os = "macos")]
-    {
-        use tauri::TitleBarStyle;
-        window_builder = window_builder.title_bar_style(TitleBarStyle::Overlay);
-    }
-
-    let window = window_builder
-        .build()
-        .map_err(|e| format!("Failed to create zone window: {}", e))?;
-
-    // Emit zone data to the window
-    window
-        .emit("zone-data", &zone)
-        .map_err(|e| format!("Failed to emit zone data: {}", e))?;
-
-    // Store window reference
-    {
-        let mut windows = ZONE_WINDOWS.lock().unwrap();
-        windows.insert(window_label, window);
-    }
+        if let Ok(window) = window_builder.build() {
+            // Emit zone data to the window (ignore errors)
+            let _ = window.emit("zone-data", &zone_clone);
+            
+            // Store window reference
+            let mut windows = ZONE_WINDOWS.lock().unwrap();
+            windows.insert(window_label_clone, window);
+        }
+        // Note: Errors are silently ignored as window creation happens in background
+    });
 
     Ok(())
 }
@@ -94,27 +100,41 @@ pub fn update_zone_window(
     let width = (primary_screen.width as f64 * zone.width / 100.0) as u32;
     let height = (primary_screen.height as f64 * zone.height / 100.0) as u32;
 
-    let windows = ZONE_WINDOWS.lock().unwrap();
-    if let Some(window) = windows.get(&window_label) {
+    let window_exists = {
+        let windows = ZONE_WINDOWS.lock().unwrap();
+        windows.contains_key(&window_label)
+    };
+    
+    if window_exists {
         // Update position and size
-        window
-            .set_position(tauri::PhysicalPosition::new(x, y))
-            .map_err(|e| format!("Failed to set position: {}", e))?;
-        window
-            .set_size(tauri::PhysicalSize::new(width, height))
-            .map_err(|e| format!("Failed to set size: {}", e))?;
+        let windows = ZONE_WINDOWS.lock().unwrap();
+        if let Some(window) = windows.get(&window_label) {
+            window
+                .set_position(tauri::PhysicalPosition::new(x, y))
+                .map_err(|e| format!("Failed to set position: {}", e))?;
+            window
+                .set_size(tauri::PhysicalSize::new(width, height))
+                .map_err(|e| format!("Failed to set size: {}", e))?;
 
-        // Update zone data
-        window
-            .emit("zone-data", &zone)
-            .map_err(|e| format!("Failed to emit zone data: {}", e))?;
+            // Update zone data
+            window
+                .emit("zone-data", &zone)
+                .map_err(|e| format!("Failed to emit zone data: {}", e))?;
+        }
     } else {
         // Window doesn't exist, create it
-        drop(windows);
         return create_zone_window(app, zone);
     }
 
     Ok(())
+}
+
+/// Remove a zone window from the HashMap without closing it.
+/// Used when the window is already in the process of closing.
+pub fn remove_zone_window_from_map(zone_id: &str) {
+    let window_label = format!("zone-{}", zone_id);
+    let mut windows = ZONE_WINDOWS.lock().unwrap();
+    windows.remove(&window_label);
 }
 
 #[tauri::command]
@@ -124,7 +144,7 @@ pub fn destroy_zone_window(zone_id: String) -> Result<(), String> {
     let mut windows = ZONE_WINDOWS.lock().unwrap();
     if let Some(window) = windows.remove(&window_label) {
         window
-            .close()
+            .destroy()
             .map_err(|e| format!("Failed to close zone window: {}", e))?;
     }
 
@@ -136,7 +156,7 @@ pub fn destroy_all_zone_windows() -> Result<(), String> {
     let mut windows = ZONE_WINDOWS.lock().unwrap();
     
     for (_label, window) in windows.drain() {
-        let _ = window.close();
+        let _ = window.destroy();
     }
 
     Ok(())

@@ -57,6 +57,11 @@ export const ZoneLayoutEditor: React.FC<ZoneLayoutEditorProps> = ({
     }
   };
 
+  const handleCancel = async () => {
+    await invoke('destroy_all_zone_windows');
+    onBack();
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-4">
@@ -99,7 +104,7 @@ export const ZoneLayoutEditor: React.FC<ZoneLayoutEditorProps> = ({
       </Card>
 
       <div className="flex justify-end gap-2">
-        <Button variant="outline" onClick={onBack}>
+        <Button variant="outline" onClick={handleCancel}>
           Cancel
         </Button>
         <Button onClick={handleSave} disabled={isSaving || !name.trim()}>
