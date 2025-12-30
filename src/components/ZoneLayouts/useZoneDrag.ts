@@ -1,5 +1,6 @@
 import { useState, useCallback, useEffect } from 'react';
 import type { Zone } from '@/types/zoneLayout';
+import { snapZoneEdges, preventOverlaps } from './useZoneSnap';
 
 interface UseZoneDragProps {
   zones: Zone[];
@@ -64,7 +65,16 @@ export function useZoneDrag({
         newX = Math.max(0, Math.min(100 - zone.width, newX));
         newY = Math.max(0, Math.min(100 - zone.height, newY));
 
-        return { ...zone, x: newX, y: newY };
+        // Create updated zone
+        let updatedZone = { ...zone, x: newX, y: newY };
+
+        // Snap to other zones' boundaries
+        updatedZone = snapZoneEdges(updatedZone, prevZones, draggedZone);
+
+        // Prevent overlaps
+        updatedZone = preventOverlaps(updatedZone, prevZones, draggedZone);
+
+        return updatedZone;
       });
     });
 

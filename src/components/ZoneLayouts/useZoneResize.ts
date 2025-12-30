@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect } from 'react';
 import type { Zone } from '@/types/zoneLayout';
 import { ResizeHandle } from './types';
+import { snapZoneEdges, preventOverlaps } from './useZoneSnap';
 
 interface UseZoneResizeProps {
   zones: Zone[];
@@ -124,24 +125,33 @@ export function useZoneResize({
         // Ensure minimum size
         if (newWidth < 5) {
           newWidth = 5;
-          if (resizeHandle.includes(ResizeHandle.W)) {
+          if (resizeHandle && (resizeHandle === ResizeHandle.W || resizeHandle === ResizeHandle.NW || resizeHandle === ResizeHandle.SW)) {
             newX = original.x + original.width - 5;
           }
         }
         if (newHeight < 5) {
           newHeight = 5;
-          if (resizeHandle.includes(ResizeHandle.N)) {
+          if (resizeHandle && (resizeHandle === ResizeHandle.N || resizeHandle === ResizeHandle.NW || resizeHandle === ResizeHandle.NE)) {
             newY = original.y + original.height - 5;
           }
         }
 
-        return {
+        // Create updated zone
+        let updatedZone = {
           ...zone,
           x: newX,
           y: newY,
           width: newWidth,
           height: newHeight,
         };
+
+        // Snap to other zones' boundaries
+        updatedZone = snapZoneEdges(updatedZone, prevZones, resizingZone);
+
+        // Prevent overlaps
+        updatedZone = preventOverlaps(updatedZone, prevZones, resizingZone);
+
+        return updatedZone;
       });
     });
   }, [resizingZone, resizeHandle, resizeStart, containerRef, setZones]);
