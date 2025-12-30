@@ -13,7 +13,7 @@ export function TitleBar() {
   }, [isMacOS]);
   
   return (
-    <div className="flex w-full justify-center items-center h-12 px-4" data-tauri-drag-region>
+    <div className="flex w-full justify-center items-center h-12 px-4 bg-background" data-tauri-drag-region>
       <div className="flex-1" data-tauri-drag-region></div>
       <TabsList 
         className={`relative inline-flex h-auto bg-muted p-1 shadow-sm ${macosRoundedClass}`}
