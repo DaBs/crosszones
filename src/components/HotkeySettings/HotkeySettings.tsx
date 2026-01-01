@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { HotkeyConfigComponent } from './HotkeyConfig';
 import { type HotkeyConfig } from './types';
+import { showError, showSuccess } from '@/lib/toast';
 
 interface HotkeyGroupProps {
   title: string;
@@ -81,9 +82,10 @@ export const HotkeySettings: React.FC = () => {
         await invoke('unregister_hotkey_action', { action });
         await invoke('register_hotkey_action', { shortcut, action });
         updateHotkey(action, shortcut);
+        showSuccess('Hotkey registered successfully');
       }
     } catch (error) {
-      console.error('Failed to register hotkey:', error);
+      showError('Failed to register hotkey', error);
     }
   };
 
@@ -93,9 +95,10 @@ export const HotkeySettings: React.FC = () => {
       if (existingHotkey) {
         await invoke('unregister_hotkey_action', { action });
         updateHotkey(action, '');
+        showSuccess('Hotkey cleared successfully');
       }
     } catch (error) {
-      console.error('Failed to unregister hotkey:', error);
+      showError('Failed to clear hotkey', error);
     }
   };
 
@@ -106,18 +109,23 @@ export const HotkeySettings: React.FC = () => {
 
   useEffect(() => {
     const loadHotkeys = async () => {
-      const existingHotkeys = await invoke('get_all_hotkeys') as [string, string][];
+      try {
+        const existingHotkeys = await invoke('get_all_hotkeys') as [string, string][];
 
-      const mappedHotkeys = AVAILABLE_HOTKEYS.map(hotkey => {
-        const existingHotkey = existingHotkeys.find(h => h[1] === hotkey.layoutAction?.toString());
-        return {
-          ...hotkey,
-          shortcut: existingHotkey?.[0] || ''
-        };
-      });
+        const mappedHotkeys = AVAILABLE_HOTKEYS.map(hotkey => {
+          const existingHotkey = existingHotkeys.find(h => h[1] === hotkey.layoutAction?.toString());
+          return {
+            ...hotkey,
+            shortcut: existingHotkey?.[0] || ''
+          };
+        });
 
-      setHotkeys(mappedHotkeys);
-      setIsLoading(false);
+        setHotkeys(mappedHotkeys);
+        setIsLoading(false);
+      } catch (error) {
+        showError('Failed to load hotkeys', error);
+        setIsLoading(false);
+      }
     };
 
     loadHotkeys();
