@@ -1,10 +1,11 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { type ZoneLayout } from '@/types/zoneLayout';
 import { Plus, Trash2, Edit2 } from 'lucide-react';
 import { ZonePreviewCanvas } from './ZonePreviewCanvas';
+import { ZoneHotkeyInput } from './ZoneHotkeyInput';
 
 interface ZoneLayoutListProps {
   layouts: ZoneLayout[];
@@ -21,6 +22,12 @@ export const ZoneLayoutList: React.FC<ZoneLayoutListProps> = ({
   onNewLayout,
   onRefresh,
 }) => {
+  const [hotkeyRefreshKey, setHotkeyRefreshKey] = useState(0);
+
+  const handleHotkeyRefresh = () => {
+    setHotkeyRefreshKey(prev => prev + 1);
+  };
+
   const handleDelete = async (layoutId: string, e: React.MouseEvent) => {
     e.stopPropagation();
     if (confirm('Are you sure you want to delete this zone layout?')) {
@@ -58,7 +65,6 @@ export const ZoneLayoutList: React.FC<ZoneLayoutListProps> = ({
             <Card
               key={layout.id}
               className="cursor-pointer hover:shadow-md transition-shadow"
-              onClick={() => onLayoutSelect(layout)}
             >
               <CardHeader>
                 <CardTitle className="flex items-center justify-between">
@@ -91,6 +97,16 @@ export const ZoneLayoutList: React.FC<ZoneLayoutListProps> = ({
                     screenWidth={layout.screenWidth}
                     screenHeight={layout.screenHeight}
                   />
+                  <div className="space-y-2 pt-2 border-t">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="font-medium text-muted-foreground">Activate Layout</span>
+                      <ZoneHotkeyInput 
+                        key={`${layout.id}-${hotkeyRefreshKey}`}
+                        layoutId={layout.id} 
+                        onRefresh={handleHotkeyRefresh}
+                      />
+                    </div>
+                  </div>
                 </CardContent>
               )}
             </Card>

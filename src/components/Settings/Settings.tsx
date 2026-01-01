@@ -35,6 +35,12 @@ const SETTINGS_SCHEMA: SettingDefinition[] = [
     label: 'Close to system tray',
     description: 'Close CrossZones to the system tray',
     category: 'Application'
+  },
+  {
+    key: 'show_layout_activation_notification',
+    label: 'Show layout activation notification',
+    description: 'Show a notification when switching zone layouts',
+    category: 'Zones'
   }
 ];
 
@@ -112,11 +118,12 @@ export const SettingsOverlay: React.FC<SettingsOverlayProps> = ({ open }) => {
       </div>
       <div className="container mx-auto p-6 max-w-2xl pt-16">
         <Button variant="outline" onClick={async () => {
-          setSettings(prev => ({ ...prev, auto_start: false, start_minimized: false, close_to_system_tray: false }));
+          setSettings(prev => ({ ...prev, auto_start: false, start_minimized: false, close_to_system_tray: false, show_layout_activation_notification: false }));
           await setSettingsStore({
             auto_start: false,
             start_minimized: false,
             close_to_system_tray: false,
+            show_layout_activation_notification: false,
           });
         }}>Reset settings</Button>
       </div>

@@ -8,6 +8,7 @@ mod zones;
 
 pub fn run() {
     tauri::Builder::default()
+        .plugin(tauri_plugin_notification::init())
         .plugin(tauri_plugin_os::init())
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_store::Builder::new().build())
@@ -23,6 +24,8 @@ pub fn run() {
             store::zone_layouts::save_zone_layout,
             store::zone_layouts::delete_zone_layout,
             store::zone_layouts::get_zone_layout,
+            store::zone_layouts::get_active_zone_layout_id,
+            store::zone_layouts::set_active_zone_layout_id,
             zones::zone_layout_editor::get_all_screens,
             zones::zone_layout_editor::create_zone_editor_windows,
             zones::zone_layout_editor::destroy_all_editor_windows,

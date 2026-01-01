@@ -15,9 +15,7 @@ pub fn setup_tray(app_handle: &tauri::AppHandle) {
         .icon(app_handle.default_window_icon().unwrap().clone())
         .tooltip("CrossZones")
         .menu(&menu)
-        .on_tray_icon_event(|tray, event| {
-
-        })
+        .on_tray_icon_event(|tray, event| {})
         .on_menu_event(|app, event| match event.id.as_ref() {
             "open" => {
                 let window = app.get_webview_window(PRIMARY_WINDOW_NAME).unwrap();

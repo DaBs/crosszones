@@ -27,7 +27,6 @@ pub struct ZoneLayout {
     pub screen_height: Option<u32>,
 }
 
-
 #[tauri::command]
 pub fn get_all_zone_layouts(app: tauri::AppHandle) -> Result<Vec<ZoneLayout>, String> {
     let store = app
@@ -35,7 +34,7 @@ pub fn get_all_zone_layouts(app: tauri::AppHandle) -> Result<Vec<ZoneLayout>, St
         .map_err(|e| format!("Failed to open store: {}", e))?;
 
     let layouts_json = store.get("layouts");
-    
+
     if let Some(layouts_value) = layouts_json {
         let layouts: Vec<ZoneLayout> = serde_json::from_value(layouts_value.clone())
             .map_err(|e| format!("Failed to deserialize layouts: {}", e))?;
@@ -65,10 +64,15 @@ pub fn save_zone_layout(app: tauri::AppHandle, layout: ZoneLayout) -> Result<(),
         layouts.push(layout);
     }
 
-    store.set("layouts", serde_json::to_value(&layouts)
-        .map_err(|e| format!("Failed to serialize layouts: {}", e))?);
-    
-    store.save().map_err(|e| format!("Failed to save store: {}", e))?;
+    store.set(
+        "layouts",
+        serde_json::to_value(&layouts)
+            .map_err(|e| format!("Failed to serialize layouts: {}", e))?,
+    );
+
+    store
+        .save()
+        .map_err(|e| format!("Failed to save store: {}", e))?;
 
     Ok(())
 }
@@ -88,16 +92,24 @@ pub fn delete_zone_layout(app: tauri::AppHandle, layout_id: String) -> Result<()
 
     layouts.retain(|l| l.id != layout_id);
 
-    store.set("layouts", serde_json::to_value(&layouts)
-        .map_err(|e| format!("Failed to serialize layouts: {}", e))?);
-    
-    store.save().map_err(|e| format!("Failed to save store: {}", e))?;
+    store.set(
+        "layouts",
+        serde_json::to_value(&layouts)
+            .map_err(|e| format!("Failed to serialize layouts: {}", e))?,
+    );
+
+    store
+        .save()
+        .map_err(|e| format!("Failed to save store: {}", e))?;
 
     Ok(())
 }
 
 #[tauri::command]
-pub fn get_zone_layout(app: tauri::AppHandle, layout_id: String) -> Result<Option<ZoneLayout>, String> {
+pub fn get_zone_layout(
+    app: tauri::AppHandle,
+    layout_id: String,
+) -> Result<Option<ZoneLayout>, String> {
     let store = app
         .store(ZONE_LAYOUTS_STORE_NAME)
         .map_err(|e| format!("Failed to open store: {}", e))?;
@@ -112,3 +124,43 @@ pub fn get_zone_layout(app: tauri::AppHandle, layout_id: String) -> Result<Optio
     Ok(layouts.into_iter().find(|l| l.id == layout_id))
 }
 
+#[tauri::command]
+pub fn get_active_zone_layout_id(app: tauri::AppHandle) -> Result<Option<String>, String> {
+    let store = app
+        .store(ZONE_LAYOUTS_STORE_NAME)
+        .map_err(|e| format!("Failed to open store: {}", e))?;
+
+    if let Some(active_id_value) = store.get("active_layout_id") {
+        let active_id: String = serde_json::from_value(active_id_value.clone())
+            .map_err(|e| format!("Failed to deserialize active layout ID: {}", e))?;
+        Ok(Some(active_id))
+    } else {
+        Ok(None)
+    }
+}
+
+#[tauri::command]
+pub fn set_active_zone_layout_id(
+    app: tauri::AppHandle,
+    layout_id: Option<String>,
+) -> Result<(), String> {
+    let store = app
+        .store(ZONE_LAYOUTS_STORE_NAME)
+        .map_err(|e| format!("Failed to open store: {}", e))?;
+
+    if let Some(id) = layout_id {
+        store.set(
+            "active_layout_id",
+            serde_json::to_value(id)
+                .map_err(|e| format!("Failed to serialize active layout ID: {}", e))?,
+        );
+    } else {
+        store.delete("active_layout_id");
+    }
+
+    store
+        .save()
+        .map_err(|e| format!("Failed to save store: {}", e))?;
+
+    Ok(())
+}

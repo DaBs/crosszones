@@ -34,6 +34,7 @@ thiserror = "2.0.12"
 tauri-plugin-os = "2"
 ts-rs = "11.0.1"
 display-info = "0.5.4"
+tauri-plugin-notification = "2"
 
 [target.'cfg(any(target_os = "windows"))'.dependencies]
 windows = { version = "0.61.1", features = ["Graphics", "Win32_Graphics_Gdi", "Win32_Graphics_Dwm", "Win32_UI_WindowsAndMessaging"] }

@@ -6,15 +6,15 @@ use tauri::TitleBarStyle;
 use crate::{store::settings::SettingsStore, window::PRIMARY_WINDOW_NAME};
 
 pub fn create_window(app: &tauri::App) -> WebviewWindow {
-    let mut window_builder = WebviewWindowBuilder::new(app, PRIMARY_WINDOW_NAME, WebviewUrl::default())
-      .title("CrossZones")
-      .visible(false)
-      .inner_size(1300.0, 820.0)
-      .min_inner_size(1300.0, 820.0);
+    let mut window_builder =
+        WebviewWindowBuilder::new(app, PRIMARY_WINDOW_NAME, WebviewUrl::default())
+            .title("CrossZones")
+            .visible(false)
+            .inner_size(1300.0, 820.0)
+            .min_inner_size(1300.0, 820.0);
 
     #[cfg(target_os = "windows")]
-    {
-    }
+    {}
 
     #[cfg(target_os = "macos")]
     {
@@ -30,7 +30,10 @@ pub fn create_window(app: &tauri::App) -> WebviewWindow {
         }
     };
 
-    let start_minimized = SettingsStore::new(&app.handle()).unwrap().get_start_minimized().unwrap_or(false);
+    let start_minimized = SettingsStore::new(&app.handle())
+        .unwrap()
+        .get_start_minimized()
+        .unwrap_or(false);
 
     if !start_minimized {
         window.show().unwrap();

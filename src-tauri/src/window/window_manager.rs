@@ -6,7 +6,7 @@ use crate::zones::zone_layout_editor;
 
 pub fn on_window_event(window: &Window, event: &WindowEvent) {
     let window_label = window.label();
-    
+
     // Handle editor window close events - destroy all editor windows when one closes
     if window_label.starts_with("zone-editor-") {
         if let WindowEvent::CloseRequested { .. } = event {
