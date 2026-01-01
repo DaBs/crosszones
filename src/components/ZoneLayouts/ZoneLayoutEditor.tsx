@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { ArrowLeft, Save, Edit } from 'lucide-react';
 import { generateLayoutId } from '@/lib/utils';
 import { ZonePreviewCanvas } from './ZonePreviewCanvas';
+import { showError, showWarning } from '@/lib/toast';
 
 interface ZoneLayoutEditorProps {
   layout: ZoneLayout | null;
@@ -67,7 +68,7 @@ export const ZoneLayoutEditor: React.FC<ZoneLayoutEditorProps> = ({
           const zones = await invoke<Zone[]>('get_editor_zones');
           setCurrentZones(zones);
         } catch (error) {
-          console.error('Failed to get editor zones:', error);
+          showError('Failed to get editor zones', error);
         }
       });
       return unlisten;
@@ -77,7 +78,7 @@ export const ZoneLayoutEditor: React.FC<ZoneLayoutEditorProps> = ({
 
   const handleOpenEditor = async () => {
     if (!name.trim()) {
-      alert('Please enter a name for the zone layout first');
+      showWarning('Please enter a name for the zone layout first');
       return;
     }
 
@@ -100,23 +101,22 @@ export const ZoneLayoutEditor: React.FC<ZoneLayoutEditorProps> = ({
             setCurrentZones(zones);
           }
         } catch (error) {
-          console.error('Failed to get editor zones:', error);
+          showError('Failed to get editor zones', error);
         }
       }, 500);
     } catch (error) {
-      console.error('Failed to open editor:', error);
-      alert('Failed to open zone editor');
+      showError('Failed to open zone editor', error);
     }
   };
 
   const handleSave = async () => {
     if (!name.trim()) {
-      alert('Please enter a name for the zone layout');
+      showWarning('Please enter a name for the zone layout');
       return;
     }
 
     if (currentZones.length === 0) {
-      alert('Please open the editor and create at least one zone');
+      showWarning('Please open the editor and create at least one zone');
       return;
     }
 
@@ -147,7 +147,7 @@ export const ZoneLayoutEditor: React.FC<ZoneLayoutEditorProps> = ({
             screenHeight = screens[0].height;
           }
         } catch (error) {
-          console.error('Failed to get screen dimensions:', error);
+          showError('Failed to get screen dimensions', error);
           // Use existing layout dimensions or leave undefined
         }
       }
@@ -165,8 +165,7 @@ export const ZoneLayoutEditor: React.FC<ZoneLayoutEditorProps> = ({
       setEditorOpen(false);
       onSave();
     } catch (error) {
-      console.error('Failed to save zone layout:', error);
-      alert('Failed to save zone layout');
+      showError('Failed to save zone layout', error);
     } finally {
       setIsSaving(false);
     }

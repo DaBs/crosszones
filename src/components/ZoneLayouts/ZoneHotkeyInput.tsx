@@ -4,6 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { X } from 'lucide-react';
 import { getShortcutMapping } from '@/components/HotkeySettings/keyMapping';
+import { showError } from '@/lib/toast';
 
 interface ZoneHotkeyInputProps {
   layoutId: string;
@@ -28,7 +29,7 @@ export const ZoneHotkeyInput: React.FC<ZoneHotkeyInputProps> = ({ layoutId, onRe
       const hotkey = allHotkeys.find(([_shortcut, action]) => action === actionJson);
       setShortcut(hotkey?.[0] || '');
     } catch (error) {
-      console.error('Failed to load hotkey:', error);
+      showError('Failed to load hotkey', error);
     }
   };
 
@@ -71,7 +72,7 @@ export const ZoneHotkeyInput: React.FC<ZoneHotkeyInputProps> = ({ layoutId, onRe
         setRecording(false);
         onRefresh?.();
       } catch (error) {
-        console.error('Failed to register hotkey:', error);
+        showError('Failed to register hotkey', error);
       }
     }
   };
@@ -83,7 +84,7 @@ export const ZoneHotkeyInput: React.FC<ZoneHotkeyInputProps> = ({ layoutId, onRe
       setShortcut('');
       onRefresh?.();
     } catch (error) {
-      console.error('Failed to unregister hotkey:', error);
+      showError('Failed to unregister hotkey', error);
     }
   };
 

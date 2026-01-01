@@ -6,11 +6,12 @@ import { type ZoneLayout } from '@/types/zoneLayout';
 import { Plus, Trash2, Edit2 } from 'lucide-react';
 import { ZonePreviewCanvas } from './ZonePreviewCanvas';
 import { ZoneHotkeyInput } from './ZoneHotkeyInput';
+import { DeleteConfirmDialog } from './DeleteConfirmDialog';
+import { showError } from '@/lib/toast';
 
 interface ZoneLayoutListProps {
   layouts: ZoneLayout[];
   onLayoutSelect: (layout: ZoneLayout) => void;
-  onLayoutDelete: (layoutId: string) => void;
   onNewLayout: () => void;
   onRefresh: () => void;
 }
@@ -18,38 +19,59 @@ interface ZoneLayoutListProps {
 export const ZoneLayoutList: React.FC<ZoneLayoutListProps> = ({
   layouts,
   onLayoutSelect,
-  onLayoutDelete,
   onNewLayout,
   onRefresh,
 }) => {
   const [hotkeyRefreshKey, setHotkeyRefreshKey] = useState(0);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [layoutToDelete, setLayoutToDelete] = useState<string | null>(null);
 
   const handleHotkeyRefresh = () => {
     setHotkeyRefreshKey(prev => prev + 1);
   };
 
-  const handleDelete = async (layoutId: string, e: React.MouseEvent) => {
+  const handleDeleteClick = (layoutId: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    if (confirm('Are you sure you want to delete this zone layout?')) {
-      try {
-        await invoke('delete_zone_layout', { layoutId });
-        onRefresh();
-      } catch (error) {
-        console.error('Failed to delete zone layout:', error);
-        alert('Failed to delete zone layout');
-      }
+    setLayoutToDelete(layoutId);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!layoutToDelete) return;
+    
+    try {
+      await invoke('delete_zone_layout', { layoutId: layoutToDelete });
+      onRefresh();
+      setDeleteDialogOpen(false);
+      setLayoutToDelete(null);
+    } catch (error) {
+      showError('Failed to delete zone layout', error);
+      setDeleteDialogOpen(false);
+      setLayoutToDelete(null);
     }
   };
 
+  const handleDeleteCancel = () => {
+    setDeleteDialogOpen(false);
+    setLayoutToDelete(null);
+  };
+
   return (
-    <div className="space-y-4">
-      <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-semibold">Zone Layouts</h2>
-        <Button onClick={onNewLayout}>
-          <Plus className="h-4 w-4 mr-2" />
-          New Layout
-        </Button>
-      </div>
+    <>
+      <DeleteConfirmDialog
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+        onConfirm={handleDeleteConfirm}
+        onCancel={handleDeleteCancel}
+      />
+      <div className="space-y-4">
+        <div className="flex justify-between items-center">
+          <h2 className="text-2xl font-semibold">Zone Layouts</h2>
+          <Button onClick={onNewLayout}>
+            <Plus className="h-4 w-4 mr-2" />
+            New Layout
+          </Button>
+        </div>
 
       {layouts.length === 0 ? (
         <Card>
@@ -80,7 +102,7 @@ export const ZoneLayoutList: React.FC<ZoneLayoutListProps> = ({
                     <Button
                       variant="ghost"
                       size="icon"
-                      onClick={(e) => handleDelete(layout.id, e)}
+                      onClick={(e) => handleDeleteClick(layout.id, e)}
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>
@@ -113,7 +135,8 @@ export const ZoneLayoutList: React.FC<ZoneLayoutListProps> = ({
           ))}
         </div>
       )}
-    </div>
+      </div>
+    </>
   );
 };
 

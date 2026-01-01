@@ -5,6 +5,7 @@ import { ZoneLayoutEditor } from '@/components/ZoneLayouts/ZoneLayoutEditor';
 import { type ZoneLayout } from '@/types/zoneLayout';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Card, CardContent } from '@/components/ui/card';
+import { showError } from '@/lib/toast';
 
 export const ZonesTab: React.FC = () => {
   const [layouts, setLayouts] = useState<ZoneLayout[]>([]);
@@ -18,7 +19,7 @@ export const ZonesTab: React.FC = () => {
       const loadedLayouts = await invoke<ZoneLayout[]>('get_all_zone_layouts');
       setLayouts(loadedLayouts);
     } catch (error) {
-      console.error('Failed to load zone layouts:', error);
+      showError('Failed to load zone layouts', error);
     } finally {
       setIsLoading(false);
     }
@@ -74,7 +75,6 @@ export const ZonesTab: React.FC = () => {
           <ZoneLayoutList
             layouts={layouts}
             onLayoutSelect={handleLayoutSelect}
-            onLayoutDelete={handleSave}
             onNewLayout={handleNewLayout}
             onRefresh={loadLayouts}
           />

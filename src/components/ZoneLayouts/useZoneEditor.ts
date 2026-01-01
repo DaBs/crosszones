@@ -3,6 +3,7 @@ import { invoke } from '@tauri-apps/api/core';
 import { listen } from '@tauri-apps/api/event';
 import type { Zone } from '@/types/zoneLayout';
 import { generateZoneId } from '@/lib/utils';
+import { showError } from '@/lib/toast';
 
 interface ScreenInfo {
   x: number;
@@ -35,7 +36,7 @@ export function useZoneEditor() {
     // Only store if we have zones and editor data (meaning editor is open)
     if (zones.length > 0 && editorData) {
       invoke('store_editor_zones', { zones }).catch((error) => {
-        console.error('Failed to store editor zones:', error);
+        showError('Failed to store editor zones', error);
       });
     }
   }, [zones, editorData]);
