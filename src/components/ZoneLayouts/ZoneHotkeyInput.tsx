@@ -4,6 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { X } from 'lucide-react';
 import { getShortcutMapping } from '@/components/HotkeySettings/keyMapping';
+import { handleHotkeyKeyDown } from '@/components/HotkeySettings/useHotkeyRecording';
 import { showError } from '@/lib/toast';
 
 interface ZoneHotkeyInputProps {
@@ -38,43 +39,30 @@ export const ZoneHotkeyInput: React.FC<ZoneHotkeyInputProps> = ({ layoutId, onRe
   }, [layoutId]);
 
   const handleKeyDown = async (e: React.KeyboardEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-
-    if (e.key === 'Escape') {
-      setRecording(false);
-      return;
-    }
-
-    const modifiers = [];
-    if (e.ctrlKey) modifiers.push('control');
-    if (e.altKey) modifiers.push('alt');
-    if (e.shiftKey) modifiers.push('shift');
-    if (e.metaKey) modifiers.push('super');
-
-    if (!['control', 'alt', 'shift', 'super'].includes(e.key)) {
-      modifiers.push(e.code);
-    }
-
-    if (modifiers.length > 0) {
-      const newShortcut = modifiers.join('+');
-      try {
-        // Pass action as object that serde will deserialize (kebab-case: activate-layout)
-        const action = { "activate-layout": layoutId };
-        
-        // Unregister existing hotkey for this action if any
-        await invoke('unregister_hotkey_action', { action });
-        
-        // Register new hotkey
-        await invoke('register_hotkey_action', { shortcut: newShortcut, action });
-        
-        setShortcut(newShortcut);
+    handleHotkeyKeyDown(
+      e,
+      async (newShortcut: string) => {
+        try {
+          // Pass action as object that serde will deserialize (kebab-case: activate-layout)
+          const action = { "activate-layout": layoutId };
+          
+          // Unregister existing hotkey for this action if any
+          await invoke('unregister_hotkey_action', { action });
+          
+          // Register new hotkey
+          await invoke('register_hotkey_action', { shortcut: newShortcut, action });
+          
+          setShortcut(newShortcut);
+          setRecording(false);
+          onRefresh?.();
+        } catch (error) {
+          showError('Failed to register hotkey', error);
+        }
+      },
+      () => {
         setRecording(false);
-        onRefresh?.();
-      } catch (error) {
-        showError('Failed to register hotkey', error);
       }
-    }
+    );
   };
 
   const handleClear = async () => {
@@ -90,11 +78,11 @@ export const ZoneHotkeyInput: React.FC<ZoneHotkeyInputProps> = ({ layoutId, onRe
 
   return (
     <div className="flex items-center gap-1">
-      <div className="w-28 h-6 relative">
+      <div className="w-40 h-6 relative">
         <Input
           type="text"
           value={recording ? 'Press keys...' : getShortcutMapping(shortcut)}
-          className={`w-28 h-6 text-xs select-none ${recording ? 'ring-2 ring-primary' : ''}`}
+          className={`w-40 h-6 text-xs select-none ${recording ? 'ring-2 ring-primary' : ''}`}
           readOnly
           placeholder="No shortcut"
           onFocus={() => setRecording(true)}

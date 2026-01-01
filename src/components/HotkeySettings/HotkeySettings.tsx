@@ -6,7 +6,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { HotkeyConfigComponent } from './HotkeyConfig';
 import { type HotkeyConfig } from './types';
-import { showError, showSuccess } from '@/lib/toast';
+import { handleHotkeyKeyDown } from './useHotkeyRecording';
+import { showError } from '@/lib/toast';
 
 interface HotkeyGroupProps {
   title: string;
@@ -24,29 +25,16 @@ const HotkeyGroup: React.FC<HotkeyGroupProps> = ({
   const [recording, setRecording] = useState<LayoutAction | null>(null);
 
   const handleKeyDown = (e: React.KeyboardEvent, action: LayoutAction) => {
-    e.preventDefault();
-    e.stopPropagation();
-
-    if (e.key === 'Escape') {
-      setRecording(null);
-      return;
-    }
-    
-    const modifiers = [];
-    if (e.ctrlKey) modifiers.push('control');
-    if (e.altKey) modifiers.push('alt');
-    if (e.shiftKey) modifiers.push('shift');
-    if (e.metaKey) modifiers.push('super');
-
-    if (!['control', 'alt', 'shift', 'super'].includes(e.key)) {
-      modifiers.push(e.code);
-    }
-    
-    if (modifiers.length > 0) {
-      const shortcut = modifiers.join('+');
-      onShortcutChange(action, shortcut);
-      setRecording(null);
-    }
+    handleHotkeyKeyDown(
+      e,
+      (shortcut: string) => {
+        onShortcutChange(action, shortcut);
+        setRecording(null);
+      },
+      () => {
+        setRecording(null);
+      }
+    );
   };
 
   return (
@@ -82,7 +70,6 @@ export const HotkeySettings: React.FC = () => {
         await invoke('unregister_hotkey_action', { action });
         await invoke('register_hotkey_action', { shortcut, action });
         updateHotkey(action, shortcut);
-        showSuccess('Hotkey registered successfully');
       }
     } catch (error) {
       showError('Failed to register hotkey', error);
@@ -95,7 +82,6 @@ export const HotkeySettings: React.FC = () => {
       if (existingHotkey) {
         await invoke('unregister_hotkey_action', { action });
         updateHotkey(action, '');
-        showSuccess('Hotkey cleared successfully');
       }
     } catch (error) {
       showError('Failed to clear hotkey', error);
