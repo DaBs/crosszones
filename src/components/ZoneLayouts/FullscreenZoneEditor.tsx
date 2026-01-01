@@ -97,6 +97,14 @@ function FullscreenZoneEditor() {
       return;
     }
 
+    // Handle control-click to grow zone
+    if (e.ctrlKey || e.metaKey) {
+      if (hoveredZone === zoneId && !draggedZone && !resizingZone) {
+        operations.handleGrowZone(zoneId);
+      }
+      return;
+    }
+
     // Only split if hovering over this zone and we're not dragging/resizing
     if (hoveredZone === zoneId && !draggedZone && !resizingZone) {
       const splitCoord = splitMode === 'horizontal' ? e.clientX : e.clientY;

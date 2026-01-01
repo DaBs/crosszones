@@ -140,6 +140,84 @@ export function useZoneOperations({
     setShowMergeDialog(true);
   }, []);
 
+  const handleGrowZone = useCallback((zoneId: string) => {
+    const zone = zones.find((z) => z.id === zoneId);
+    if (!zone) return;
+
+    const otherZones = zones.filter((z) => z.id !== zoneId);
+    
+    // Calculate the zone's current boundaries
+    const zoneLeft = zone.x;
+    const zoneRight = zone.x + zone.width;
+    const zoneTop = zone.y;
+    const zoneBottom = zone.y + zone.height;
+
+    // Find the maximum expansion in each direction
+    let maxLeft = 0; // Can expand left to 0
+    let maxRight = 100; // Can expand right to 100
+    let maxTop = 0; // Can expand top to 0
+    let maxBottom = 100; // Can expand bottom to 100
+
+    // Check each other zone to see if it blocks expansion
+    for (const otherZone of otherZones) {
+      const otherLeft = otherZone.x;
+      const otherRight = otherZone.x + otherZone.width;
+      const otherTop = otherZone.y;
+      const otherBottom = otherZone.y + otherZone.height;
+
+      // Check if zones overlap vertically (can block horizontal expansion)
+      const verticalOverlap = !(zoneBottom <= otherTop || zoneTop >= otherBottom);
+      
+      // Check if zones overlap horizontally (can block vertical expansion)
+      const horizontalOverlap = !(zoneRight <= otherLeft || zoneLeft >= otherRight);
+
+      if (verticalOverlap) {
+        // This zone can block left/right expansion
+        if (otherRight <= zoneLeft) {
+          // Other zone is to the left, blocks left expansion
+          maxLeft = Math.max(maxLeft, otherRight);
+        }
+        if (otherLeft >= zoneRight) {
+          // Other zone is to the right, blocks right expansion
+          maxRight = Math.min(maxRight, otherLeft);
+        }
+      }
+
+      if (horizontalOverlap) {
+        // This zone can block top/bottom expansion
+        if (otherBottom <= zoneTop) {
+          // Other zone is above, blocks top expansion
+          maxTop = Math.max(maxTop, otherBottom);
+        }
+        if (otherTop >= zoneBottom) {
+          // Other zone is below, blocks bottom expansion
+          maxBottom = Math.min(maxBottom, otherTop);
+        }
+      }
+    }
+
+    // Create the expanded zone
+    const expandedZone: Zone = {
+      ...zone,
+      x: maxLeft,
+      y: maxTop,
+      width: maxRight - maxLeft,
+      height: maxBottom - maxTop,
+    };
+
+    // Only update if the zone actually changed
+    if (
+      expandedZone.x !== zone.x ||
+      expandedZone.y !== zone.y ||
+      expandedZone.width !== zone.width ||
+      expandedZone.height !== zone.height
+    ) {
+      setZones((prevZones) =>
+        prevZones.map((z) => (z.id === zoneId ? expandedZone : z))
+      );
+    }
+  }, [zones, setZones]);
+
   return {
     showMergeDialog,
     pendingMerge,
@@ -147,6 +225,7 @@ export function useZoneOperations({
     handleMergeConfirm,
     handleMergeCancel,
     initiateMerge,
+    handleGrowZone,
   };
 }
 

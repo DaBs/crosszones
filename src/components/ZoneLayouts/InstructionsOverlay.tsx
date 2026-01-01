@@ -13,6 +13,7 @@ export function InstructionsOverlay({ snapEnabled, onSnapToggle }: InstructionsO
       <div>• Hover over a zone and click to split (follows mouse)</div>
       <div>• Hold Shift to split vertically instead of horizontally</div>
       <div>• Drag a zone onto another to merge them</div>
+      <div>• Control-click a zone to grow it to fill remaining space</div>
       <div className="mt-3 pt-3 border-t border-white/20 flex items-center gap-2">
         <Checkbox
           id="snap-toggle"
