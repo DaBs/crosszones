@@ -8,6 +8,7 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { MainView } from "@/screens/MainView";
 import { FullscreenZoneEditor } from "@/components/ZoneLayouts/FullscreenZoneEditor";
 import { useState } from "react";
+import { Toaster } from "sonner";
 
 const HAS_PERMISSIONS_DEFAULT: Record<OsType, boolean> = {
   "windows": true,
@@ -39,6 +40,7 @@ function App() {
           </Route>
         </Switch>
       </Router>
+      <Toaster position="bottom-center" richColors />
     </ThemeProvider>
   );
 }
