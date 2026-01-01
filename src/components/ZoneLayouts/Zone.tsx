@@ -22,6 +22,7 @@ interface ZoneProps {
   onClick: (e: React.MouseEvent, zoneId: string) => void;
   onZoneRef: (zoneId: string, el: HTMLDivElement | null) => void;
   onResizeStart: (e: React.MouseEvent, zoneId: string, handle: ResizeHandle) => void;
+  zIndex?: number;
 }
 
 export function ZoneComponent({
@@ -40,6 +41,7 @@ export function ZoneComponent({
   onClick,
   onZoneRef,
   onResizeStart,
+  zIndex = 1,
 }: ZoneProps) {
   const zoneRef = useRef<HTMLDivElement | null>(null);
 
@@ -58,11 +60,15 @@ export function ZoneComponent({
   }, [zone.width, zone.height, containerRef]);
 
   const getZoneStyle = (): React.CSSProperties => {
+    // Use provided z-index, but override with 100 if dragged or resizing
+    const finalZIndex = isDraggedOrResizing ? 100 : zIndex;
+    
     return {
       left: `${zone.x}%`,
       top: `${zone.y}%`,
       width: `${zone.width}%`,
       height: `${zone.height}%`,
+      zIndex: finalZIndex,
     };
   };
 
@@ -156,7 +162,7 @@ export function ZoneComponent({
         isHoveredOrMerged
           ? 'border-[3px] border-blue-500 bg-blue-500/60'
           : 'border-2 border-blue-500/60 bg-blue-500/40',
-        isDraggedOrResizing ? 'cursor-grabbing z-[1000]' : 'cursor-grab z-[1] transition-all duration-200'
+        isDraggedOrResizing ? 'cursor-grabbing' : 'cursor-grab transition-all duration-200'
       )}
       style={getZoneStyle()}
       onMouseDown={(e) => onMouseDown(e, zone.id)}

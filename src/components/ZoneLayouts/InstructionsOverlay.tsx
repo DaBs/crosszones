@@ -7,7 +7,7 @@ interface InstructionsOverlayProps {
 
 export function InstructionsOverlay({ snapEnabled, onSnapToggle }: InstructionsOverlayProps) {
   return (
-    <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-black/70 text-white p-4 rounded-lg text-sm space-y-1 max-w-xs z-10">
+    <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-black/70 text-white p-4 z-101 rounded-lg text-sm space-y-1 max-w-xs z-10">
       <div className="font-semibold mb-2">Zone Editor Instructions</div>
       <div>• Drag zones to move them</div>
       <div>• Hover over a zone and click to split (follows mouse)</div>

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { ZoneComponent } from './Zone';
 import { MergeDialog } from './MergeDialog';
 import { ContextMenu } from './ContextMenu';
@@ -123,6 +123,29 @@ function FullscreenZoneEditor() {
     await handleCloseEditor();
     setContextMenu(null);
   };
+  
+    // Calculate z-index based on zone size (smaller zones get higher z-index)
+    const zoneZIndices = useMemo(() => {
+      // Calculate area for each zone
+      const zonesWithArea = zones.map(zone => ({
+        id: zone.id,
+        area: zone.width * zone.height,
+      }));
+      
+      // Sort by area (smallest first)
+      zonesWithArea.sort((a, b) => a.area - b.area);
+      
+      // Create a map of zone ID to z-index
+      // Smallest zone gets highest z-index (start from a high number and decrease)
+      const zIndexMap = new Map<string, number>();
+      const baseZIndex = 100; // Base z-index for zones
+      zonesWithArea.forEach((zone, index) => {
+        // Smaller zones (earlier in sorted array) get higher z-index
+        zIndexMap.set(zone.id, baseZIndex + (zones.length - index));
+      });
+      
+      return zIndexMap;
+    }, [zones]);
 
   // Render loading state
   if (!editorData) {
@@ -158,6 +181,7 @@ function FullscreenZoneEditor() {
           onClick={handleZoneClick}
           onZoneRef={handleZoneRef}
           onResizeStart={handleResizeStart}
+          zIndex={zoneZIndices.get(zone.id) || 1}
         />
       ))}
 
