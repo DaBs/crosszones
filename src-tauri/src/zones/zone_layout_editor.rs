@@ -47,7 +47,7 @@ pub fn create_zone_editor_windows(
     let screens = DisplayInfo::all().map_err(|e| format!("Failed to get screens: {}", e))?;
     
     // Destroy existing editor windows first
-    destroy_all_editor_windows()?;
+    destroy_all_editor_windows(app.clone())?;
     
     // Extract screen data before moving into threads
     let screen_data: Vec<(i32, i32, u32, u32, usize)> = screens
@@ -118,30 +118,35 @@ pub fn create_zone_editor_windows(
 }
 
 #[tauri::command]
-pub fn destroy_all_editor_windows() -> Result<(), String> {
+pub fn destroy_all_editor_windows(app: tauri::AppHandle) -> Result<(), String> {
     let mut windows = EDITOR_WINDOWS.lock().unwrap();
     
     for (_label, window) in windows.drain() {
         let _ = window.destroy();
     }
-
+    
+    let _ = app.emit("editor-closed", &serde_json::json!({})).unwrap();
     Ok(())
 }
 
 #[tauri::command]
-pub fn store_editor_zones(zones: Vec<Zone>) -> Result<(), String> {
+pub fn store_editor_zones(app: tauri::AppHandle, zones: Vec<Zone>) -> Result<(), String> {
     let mut stored_zones = EDITOR_ZONES.lock().unwrap();
-    *stored_zones = zones;
+    *stored_zones = zones.clone();
+    
+    // Emit event to notify listeners that zones have been updated
+    let _ = app.emit("zones-updated", &zones);
+    
     Ok(())
 }
 
 #[tauri::command]
-pub fn close_editor_windows(zones: Vec<Zone>) -> Result<(), String> {
+pub fn close_editor_windows(app: tauri::AppHandle, zones: Vec<Zone>) -> Result<(), String> {
     // Store zones before closing
-    store_editor_zones(zones)?;
+    store_editor_zones(app.clone(), zones)?;
     
     // Close all windows
-    destroy_all_editor_windows()
+    destroy_all_editor_windows(app.clone())
 }
 
 #[tauri::command]

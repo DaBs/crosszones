@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { type ZoneLayout } from '@/types/zoneLayout';
 import { Plus, Trash2, Edit2 } from 'lucide-react';
+import { ZonePreviewCanvas } from './ZonePreviewCanvas';
 
 interface ZoneLayoutListProps {
   layouts: ZoneLayout[];
@@ -84,17 +85,12 @@ export const ZoneLayoutList: React.FC<ZoneLayoutListProps> = ({
                 </CardDescription>
               </CardHeader>
               {layout.zones.length > 0 && (
-                <CardContent>
-                  <div className="flex flex-wrap gap-1">
-                    {layout.zones.map((zone) => (
-                      <span
-                        key={zone.id}
-                        className="inline-flex items-center justify-center w-6 h-6 rounded bg-primary/10 text-primary text-xs font-medium"
-                      >
-                        {zone.number}
-                      </span>
-                    ))}
-                  </div>
+                <CardContent className="space-y-3">
+                  <ZonePreviewCanvas 
+                    zones={layout.zones} 
+                    screenWidth={layout.screenWidth}
+                    screenHeight={layout.screenHeight}
+                  />
                 </CardContent>
               )}
             </Card>

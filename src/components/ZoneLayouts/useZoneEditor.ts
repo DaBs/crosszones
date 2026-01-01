@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { invoke as invokeCore } from '@tauri-apps/api/core';
+import { invoke } from '@tauri-apps/api/core';
 import { listen } from '@tauri-apps/api/event';
 import type { Zone } from '@/types/zoneLayout';
 import { generateZoneId } from '@/lib/utils';
@@ -30,6 +30,16 @@ export function useZoneEditor() {
     zonesStateRef.current = zones;
   }, [zones]);
 
+  // Store zones whenever they change (this will emit the zones-updated event)
+  useEffect(() => {
+    // Only store if we have zones and editor data (meaning editor is open)
+    if (zones.length > 0 && editorData) {
+      invoke('store_editor_zones', { zones }).catch((error) => {
+        console.error('Failed to store editor zones:', error);
+      });
+    }
+  }, [zones, editorData]);
+
   useEffect(() => {
     const setupListener = async () => {
       const unlistenEditorData = await listen<EditorData>('editor-data', (event) => {
@@ -55,7 +65,7 @@ export function useZoneEditor() {
       const unlistenRequestZones = await listen('request-zones', async () => {
         // Use the ref to get the latest zones
         const currentZones = zonesStateRef.current;
-        await invokeCore('store_editor_zones', { zones: currentZones });
+        await invoke('store_editor_zones', { zones: currentZones });
       });
 
       return () => {
@@ -71,7 +81,7 @@ export function useZoneEditor() {
   useEffect(() => {
     const handleKeyDown = async (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
-        await invokeCore('close_editor_windows', { zones });
+        await invoke('close_editor_windows', { zones });
       } else if (e.key === 'Shift') {
         setSplitMode('vertical');
       }
@@ -92,7 +102,7 @@ export function useZoneEditor() {
   }, [zones]);
 
   const handleCloseEditor = async () => {
-    await invokeCore('close_editor_windows', { zones });
+    await invoke('close_editor_windows', { zones });
   };
 
   return {

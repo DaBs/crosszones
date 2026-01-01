@@ -21,6 +21,10 @@ pub struct ZoneLayout {
     pub id: String,
     pub name: String,
     pub zones: Vec<Zone>,
+    #[serde(skip_serializing_if = "Option::is_none", rename = "screenWidth")]
+    pub screen_width: Option<u32>,
+    #[serde(skip_serializing_if = "Option::is_none", rename = "screenHeight")]
+    pub screen_height: Option<u32>,
 }
 
 

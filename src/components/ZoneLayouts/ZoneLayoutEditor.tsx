@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ArrowLeft, Save, Edit } from 'lucide-react';
 import { generateLayoutId } from '@/lib/utils';
+import { ZonePreviewCanvas } from './ZonePreviewCanvas';
 
 interface ZoneLayoutEditorProps {
   layout: ZoneLayout | null;
@@ -22,20 +23,52 @@ export const ZoneLayoutEditor: React.FC<ZoneLayoutEditorProps> = ({
   const [name, setName] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const [editorOpen, setEditorOpen] = useState(false);
+  const [currentZones, setCurrentZones] = useState<Zone[]>([]);
 
   useEffect(() => {
     if (layout) {
       setName(layout.name);
+      setCurrentZones(layout.zones);
     } else {
       setName('');
+      setCurrentZones([]);
     }
   }, [layout]);
 
   useEffect(() => {
+    // Listen for zone update events when editor is open
+    if (!editorOpen) return;
+
+    let unlistenFn: (() => void) | null = null;
+
+    const setupListener = async () => {
+      const unlisten = await listen<Zone[]>('zones-updated', (event) => {
+        setCurrentZones(event.payload);
+      });
+      unlistenFn = unlisten;
+    };
+
+    setupListener();
+
+    return () => {
+      if (unlistenFn) {
+        unlistenFn();
+      }
+    };
+  }, [editorOpen]);
+
+  useEffect(() => {
     // Listen for editor close events
     const setupListener = async () => {
-      const unlisten = await listen('editor-closed', () => {
+      const unlisten = await listen('editor-closed', async () => {
         setEditorOpen(false);
+        // Update zones from stored state when editor closes
+        try {
+          const zones = await invoke<Zone[]>('get_editor_zones');
+          setCurrentZones(zones);
+        } catch (error) {
+          console.error('Failed to get editor zones:', error);
+        }
       });
       return unlisten;
     };
@@ -50,7 +83,7 @@ export const ZoneLayoutEditor: React.FC<ZoneLayoutEditorProps> = ({
 
     try {
       const layoutId = layout?.id || generateLayoutId();
-      const initialZones = layout?.zones || [];
+      const initialZones = currentZones.length > 0 ? currentZones : (layout?.zones || []);
       
       await invoke('create_zone_editor_windows', {
         layoutId,
@@ -59,6 +92,17 @@ export const ZoneLayoutEditor: React.FC<ZoneLayoutEditorProps> = ({
       });
       
       setEditorOpen(true);
+      // Update zones from stored state after opening
+      setTimeout(async () => {
+        try {
+          const zones = await invoke<Zone[]>('get_editor_zones');
+          if (zones.length > 0) {
+            setCurrentZones(zones);
+          }
+        } catch (error) {
+          console.error('Failed to get editor zones:', error);
+        }
+      }, 500);
     } catch (error) {
       console.error('Failed to open editor:', error);
       alert('Failed to open zone editor');
@@ -71,7 +115,7 @@ export const ZoneLayoutEditor: React.FC<ZoneLayoutEditorProps> = ({
       return;
     }
 
-    if (!editorOpen) {
+    if (currentZones.length === 0) {
       alert('Please open the editor and create at least one zone');
       return;
     }
@@ -83,21 +127,37 @@ export const ZoneLayoutEditor: React.FC<ZoneLayoutEditorProps> = ({
         await emit('request-zones');
         // Small delay to ensure zones are stored
         await new Promise(resolve => setTimeout(resolve, 100));
+        
+        // Get latest zones from stored state
+        const zones = await invoke<Zone[]>('get_editor_zones');
+        if (zones.length > 0) {
+          setCurrentZones(zones);
+        }
       }
+
+      // Get screen dimensions - use stored layout's dimensions if available, otherwise get from first screen
+      let screenWidth = layout?.screenWidth;
+      let screenHeight = layout?.screenHeight;
       
-      // Get zones from stored state
-      const zones = await invoke<Zone[]>('get_editor_zones');
-      
-      if (zones.length === 0) {
-        alert('Please create at least one zone');
-        setIsSaving(false);
-        return;
+      if (!screenWidth || !screenHeight) {
+        try {
+          const screens = await invoke<Array<{ width: number; height: number }>>('get_all_screens');
+          if (screens.length > 0) {
+            screenWidth = screens[0].width;
+            screenHeight = screens[0].height;
+          }
+        } catch (error) {
+          console.error('Failed to get screen dimensions:', error);
+          // Use existing layout dimensions or leave undefined
+        }
       }
 
       const layoutToSave: ZoneLayout = {
         id: layout?.id || generateLayoutId(),
         name: name.trim(),
-        zones: zones.sort((a, b) => a.number - b.number),
+        zones: currentZones.sort((a, b) => a.number - b.number),
+        screenWidth,
+        screenHeight,
       };
 
       await invoke('save_zone_layout', { layout: layoutToSave });
@@ -150,21 +210,45 @@ export const ZoneLayoutEditor: React.FC<ZoneLayoutEditorProps> = ({
 
       <Card>
         <CardHeader>
-          <CardTitle>Zone Editor</CardTitle>
+          <CardTitle>Zone Preview</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <p className="text-sm text-muted-foreground">
-            Click the button below to open the fullscreen zone editor on all your screens.
-            You'll be able to split zones, merge them, and arrange them visually.
-          </p>
-          <Button 
-            onClick={handleOpenEditor} 
-            disabled={!name.trim()}
-            className="w-full"
-          >
-            <Edit className="h-4 w-4 mr-2" />
-            Open Zone Editor
-          </Button>
+          {currentZones.length > 0 ? (
+            <div className="flex justify-center">
+              <ZonePreviewCanvas 
+                zones={currentZones} 
+                width={450}
+                screenWidth={layout?.screenWidth}
+                screenHeight={layout?.screenHeight}
+              />
+            </div>
+          ) : (
+            <div className="flex flex-col items-center justify-center py-12 text-center">
+              <p className="text-sm text-muted-foreground mb-4">
+                No zones yet. Open the zone editor to create zones.
+              </p>
+              <Button 
+                onClick={handleOpenEditor} 
+                disabled={!name.trim()}
+              >
+                <Edit className="h-4 w-4 mr-2" />
+                Open Zone Editor
+              </Button>
+            </div>
+          )}
+          {currentZones.length > 0 && (
+            <div className="flex justify-center">
+              <Button 
+                onClick={handleOpenEditor} 
+                disabled={!name.trim()}
+                variant="outline"
+                className="w-full"
+              >
+                <Edit className="h-4 w-4 mr-2" />
+                {editorOpen ? 'Zone Editor Open' : 'Open Zone Editor'}
+              </Button>
+            </div>
+          )}
         </CardContent>
       </Card>
 
@@ -174,7 +258,7 @@ export const ZoneLayoutEditor: React.FC<ZoneLayoutEditorProps> = ({
         </Button>
         <Button 
           onClick={handleSave} 
-          disabled={isSaving || !name.trim() || !editorOpen}
+          disabled={isSaving || !name.trim()}
         >
           <Save className="h-4 w-4 mr-2" />
           {isSaving ? 'Saving...' : 'Save Layout'}

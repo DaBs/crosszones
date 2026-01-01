@@ -10,7 +10,7 @@ pub fn on_window_event(window: &Window, event: &WindowEvent) {
     // Handle editor window close events - destroy all editor windows when one closes
     if window_label.starts_with("zone-editor-") {
         if let WindowEvent::CloseRequested { .. } = event {
-            let _ = zone_layout_editor::destroy_all_editor_windows();
+            let _ = zone_layout_editor::destroy_all_editor_windows(window.app_handle().clone());
         }
         return;
     }

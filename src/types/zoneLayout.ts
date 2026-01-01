@@ -11,5 +11,7 @@ export interface ZoneLayout {
   id: string;
   name: string;
   zones: Zone[];
+  screenWidth?: number;
+  screenHeight?: number;
 }
 
