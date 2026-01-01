@@ -5,7 +5,7 @@ import { getSetting, setSettings as setSettingsStore, SettingsKey } from '@/lib/
 import { Settings } from '../../src-tauri/bindings/Settings';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { showError, showSuccess } from '@/lib/toast';
+import { showError } from '@/lib/toast';
 
 interface SettingDefinition {
   key: SettingsKey;
@@ -67,7 +67,6 @@ export const SettingsTab: React.FC = () => {
     try {
       await setSettingsStore(newSettings);
       setSettings(prev => ({ ...prev, [key]: value }));
-      showSuccess('Setting updated successfully');
     } catch (error) {
       showError('Failed to update setting', error);
     }
@@ -128,7 +127,6 @@ export const SettingsTab: React.FC = () => {
                   start_minimized: false,
                   close_to_system_tray: false,
                 });
-                showSuccess('Settings reset successfully');
               } catch (error) {
                 showError('Failed to reset settings', error);
               }
