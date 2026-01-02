@@ -1,4 +1,4 @@
-//pub mod overlay;
+pub mod overlay;
 
 #[cfg(target_os = "windows")]
 pub mod windows;

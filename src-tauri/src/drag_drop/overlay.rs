@@ -1,48 +1,107 @@
-use crate::store::zone_layouts::{ZoneLayout, Zone};
+use crate::store::zone_layouts::ZoneLayout;
 use crate::snapping::common::ScreenDimensions;
+use display_info::DisplayInfo;
+use serde_json;
+use std::collections::HashMap;
+use std::sync::LazyLock;
+use std::sync::Mutex;
+use tauri::{Emitter, WebviewUrl, WebviewWindow, WebviewWindowBuilder};
 
-pub struct ZoneOverlay {
-    // Window handle will be added when we implement the visual overlay
-    // For now, we just track zones for drop detection
-}
+static OVERLAY_WINDOWS: LazyLock<Mutex<HashMap<String, WebviewWindow>>> =
+    LazyLock::new(|| Mutex::new(HashMap::new()));
+
+pub struct ZoneOverlay;
 
 impl ZoneOverlay {
     pub fn new() -> Self {
-        Self { window: None }
+        Self
     }
 
     pub fn show(
-        &mut self,
+        &self,
         app_handle: &tauri::AppHandle,
         layout: &ZoneLayout,
         screen: ScreenDimensions,
     ) -> Result<(), String> {
         // Hide existing overlay if any
-        self.hide();
+        self.hide()?;
 
-        // For now, we'll skip the visual overlay and just track zones
-        // A proper overlay window would require creating an HTML file and webview
-        // This can be added later as an enhancement
-        // For now, the drag detection will work without visual feedback
-        
+        // Find screen index for window label
+        let screens = DisplayInfo::all().map_err(|e| format!("Failed to get screens: {}", e))?;
+        let screen_idx = screens
+            .iter()
+            .enumerate()
+            .find(|(_, s)| s.x == screen.x && s.y == screen.y && s.width == screen.width as u32 && s.height == screen.height as u32)
+            .map(|(idx, _)| idx)
+            .unwrap_or(0);
+
+        let window_label = format!("zone-overlay-{}", screen_idx);
+
+        // Create overlay window on the specified screen
+        let mut window_builder = WebviewWindowBuilder::new(
+            app_handle,
+            &window_label,
+            WebviewUrl::App("index.html#/zone-overlay".into()),
+        )
+        .title("Zone Overlay")
+        .inner_size(screen.width as f64, screen.height as f64)
+        .position(screen.x as f64, screen.y as f64)
+        .visible(true)
+        .resizable(false)
+        .decorations(true)
+        .skip_taskbar(true)
+        .closable(false)
+        .focused(false);
+
+        if app_handle.config().app.macos_private_api || cfg!(target_os = "windows") {
+            window_builder = window_builder.transparent(true);
+        }
+
+        if let Ok(window) = window_builder.build() {
+            // Small delay to ensure navigation completes before emitting data
+            std::thread::sleep(std::time::Duration::from_millis(300));
+
+            // Emit overlay data to the window
+            let overlay_data = serde_json::json!({
+                "layout": layout,
+                "screen": {
+                    "x": screen.x,
+                    "y": screen.y,
+                    "width": screen.width,
+                    "height": screen.height,
+                }
+            });
+            let _ = app_handle.emit("drag-overlay-show", &overlay_data);
+
+            // Store window reference
+            let mut windows = OVERLAY_WINDOWS.lock().unwrap();
+            windows.insert(window_label, window);
+        }
+
         Ok(())
     }
 
-    pub fn hide(&mut self) {
-        // Overlay hiding will be implemented when visual overlay is added
+    pub fn hide(&self) -> Result<(), String> {
+        let mut windows = OVERLAY_WINDOWS.lock().unwrap();
+
+        for (_label, window) in windows.drain() {
+            //let _ = window.destroy();
+        }
+
+        Ok(())
     }
 
-    pub fn get_zone_at_position(&self, x: i32, y: i32, layout: &ZoneLayout, screen: ScreenDimensions) -> Option<&Zone> {
-        // Convert screen coordinates to percentage
-        let x_percent = ((x - screen.x) as f64 / screen.width as f64) * 100.0;
-        let y_percent = ((y - screen.y) as f64 / screen.height as f64) * 100.0;
+    pub fn update_mouse_position(
+        &self,
+        x: i32,
+        y: i32,
+    ) -> Result<(), String> {
+        let windows = OVERLAY_WINDOWS.lock().unwrap();
 
-        // Find zone containing this position
-        layout.zones.iter().find(|zone| {
-            x_percent >= zone.x
-                && x_percent <= zone.x + zone.width
-                && y_percent >= zone.y
-                && y_percent <= zone.y + zone.height
-        })
+        for (_label, window) in windows.iter() {
+            let _ = window.emit("drag-overlay-mouse", serde_json::json!({ "x": x, "y": y }));
+        }
+
+        Ok(())
     }
 }
