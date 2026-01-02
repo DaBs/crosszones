@@ -54,7 +54,7 @@ export const ZonesTab: React.FC = () => {
       <div className="flex justify-center w-full">
         <div className="max-w-4xl w-full space-y-4">
           <Skeleton className="h-10 w-48" />
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4">
             {[1, 2, 3].map((i) => (
               <Card key={i}>
                 <CardContent className="pt-6">
