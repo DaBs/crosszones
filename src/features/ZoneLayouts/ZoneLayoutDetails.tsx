@@ -107,16 +107,14 @@ export const ZoneLayoutEditor: React.FC<ZoneLayoutEditorProps> = ({
       
       setEditorOpen(true);
       // Update zones from stored state after opening
-      setTimeout(async () => {
-        try {
-          const zones = await invoke<Zone[]>('get_editor_zones');
-          if (zones.length > 0) {
-            setCurrentZones(zones);
-          }
-        } catch (error) {
-          showError('Failed to get editor zones', error);
+      try {
+        const zones = await invoke<Zone[]>('get_editor_zones');
+        if (zones.length > 0) {
+          setCurrentZones(zones);
         }
-      }, 500);
+      } catch (error) {
+        showError('Failed to get editor zones', error);
+      }
     } catch (error) {
       showError('Failed to open zone editor', error);
     }
@@ -140,9 +138,13 @@ export const ZoneLayoutEditor: React.FC<ZoneLayoutEditorProps> = ({
         await emit('request-zones');
         
         // Get latest zones from stored state
-        const zones = await invoke<Zone[]>('get_editor_zones');
-        if (zones.length > 0) {
-          setCurrentZones(zones);
+        try {
+          const zones = await invoke<Zone[]>('get_editor_zones');
+          if (zones.length > 0) {
+            setCurrentZones(zones);
+          }
+        } catch (error) {
+          showError('Failed to get editor zones', error);
         }
       }
 
