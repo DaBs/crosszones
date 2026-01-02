@@ -90,7 +90,7 @@ export const ZoneLayoutList: React.FC<ZoneLayoutListProps> = ({
             return (
             <Card
               key={layout.id}
-              className={`cursor-pointer hover:shadow-md transition-shadow ${
+              className={`hover:shadow-md transition-shadow ${
                 isActive ? 'bg-primary' : ''
               }`}
             >
@@ -102,6 +102,7 @@ export const ZoneLayoutList: React.FC<ZoneLayoutListProps> = ({
                       variant="ghost"
                       size="icon"
                       onClick={() => onLayoutSelect(layout)}
+                      className={`${isActive ? 'hover:bg-secondary/20' : 'hover:bg-accent/80'}`}
                     >
                       <Edit2 className={`h-4 w-4 ${isActive ? 'text-primary-foreground' : 'text-muted-foreground'}`} />
                     </Button>
@@ -109,6 +110,7 @@ export const ZoneLayoutList: React.FC<ZoneLayoutListProps> = ({
                       variant="ghost"
                       size="icon"
                       onClick={(e) => handleDeleteClick(layout.id, e)}
+                      className={`${isActive ? 'hover:bg-accent/20' : 'hover:bg-accent/80'}`}
                     >
                       <Trash2 className={`h-4 w-4 ${isActive ? 'text-primary-foreground' : 'text-muted-foreground'}`} />
                     </Button>
