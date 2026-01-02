@@ -62,9 +62,11 @@ export const ZoneLayoutEditor: React.FC<ZoneLayoutEditorProps> = ({
   }, [editorOpen]);
 
   useEffect(() => {
+
+    let unlistenEditorClosed: (() => void) | null = null;
     // Listen for editor close events
     const setupListener = async () => {
-      const unlisten = await listen('editor-closed', async () => {
+      unlistenEditorClosed = await listen('editor-closed', async () => {
         setEditorOpen(false);
         // Update zones from stored state when editor closes
         try {
@@ -74,9 +76,14 @@ export const ZoneLayoutEditor: React.FC<ZoneLayoutEditorProps> = ({
           showError('Failed to get editor zones', error);
         }
       });
-      return unlisten;
     };
     setupListener();
+
+    return () => {
+      if (unlistenEditorClosed) {
+        unlistenEditorClosed();
+      }
+    };
   }, []);
 
   const handleOpenEditor = async () => {
