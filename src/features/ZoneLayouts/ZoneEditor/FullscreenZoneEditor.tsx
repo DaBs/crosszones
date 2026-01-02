@@ -3,10 +3,10 @@ import { ZoneComponent } from './Zone';
 import { MergeDialog } from './MergeDialog';
 import { ContextMenu } from './ContextMenu';
 import { InstructionsOverlay } from './InstructionsOverlay';
-import { useZoneEditor } from './useZoneEditor';
-import { useZoneDrag } from './useZoneDrag';
-import { useZoneOperations } from './useZoneOperations';
-import { useZoneResize } from './useZoneResize';
+import { useZoneEditor } from './hooks/useZoneEditor';
+import { useZoneDrag } from './hooks/useZoneDrag';
+import { useZoneOperations } from './hooks/useZoneOperations';
+import { useZoneResize } from './hooks/useZoneResize';
 
 function FullscreenZoneEditor() {
   const containerRef = useRef<HTMLDivElement>(null);

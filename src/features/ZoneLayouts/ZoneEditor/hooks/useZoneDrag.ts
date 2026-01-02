@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import type { Zone } from '@/types/zoneLayout';
-import { snapZoneEdges, preventOverlaps } from './useZoneSnap';
+import { snapZoneEdges, preventOverlaps } from '@/features/ZoneLayouts/ZoneEditor/hooks/useZoneSnap';
 
 interface UseZoneDragProps {
   zones: Zone[];

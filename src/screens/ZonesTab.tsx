@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import { ZoneLayoutList } from '@/features/ZoneLayouts/ZoneLayoutList';
-import { ZoneLayoutEditor } from '@/features/ZoneLayouts/ZoneLayoutEditor';
+import { ZoneLayoutEditor } from '@/features/ZoneLayouts/ZoneLayoutDetails';
 import { type ZoneLayout } from '@/types/zoneLayout';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Card, CardContent } from '@/components/ui/card';

@@ -1,7 +1,7 @@
 import React, { useRef, useMemo } from 'react';
 import type { Zone } from '@/types/zoneLayout';
 import { SplitBar } from './SplitBar';
-import { ResizeHandle } from './types';
+import { ResizeHandle } from '../types';
 import { cn } from '@/lib/utils';
 
 const RESIZE_HANDLES: ResizeHandle[] = Object.values(ResizeHandle);

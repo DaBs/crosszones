@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect } from 'react';
 import type { Zone } from '@/types/zoneLayout';
-import { ResizeHandle } from './types';
-import { snapZoneEdges, preventOverlaps } from './useZoneSnap';
+import { ResizeHandle } from '@/features/ZoneLayouts/types';
+import { snapZoneEdges, preventOverlaps } from '@/features/ZoneLayouts/ZoneEditor/hooks/useZoneSnap';
 
 interface UseZoneResizeProps {
   zones: Zone[];

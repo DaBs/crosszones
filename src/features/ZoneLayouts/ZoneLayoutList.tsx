@@ -6,8 +6,8 @@ import { type ZoneLayout } from '@/types/zoneLayout';
 import { Plus, Trash2, Edit2 } from 'lucide-react';
 import { ZonePreviewCanvas } from './ZonePreviewCanvas';
 import { ZoneHotkeyInput } from './ZoneHotkeyInput';
-import { DeleteConfirmDialog } from './DeleteConfirmDialog';
-import { useActiveLayout } from './useActiveLayout';
+import { DeleteConfirmDialog } from './ZoneEditor/DeleteConfirmDialog';
+import { useActiveLayout } from './hooks/useActiveLayout';
 import { showError } from '@/lib/toast';
 
 interface ZoneLayoutListProps {

@@ -2,11 +2,11 @@ import "@/App.css";
 
 import { OsType, type } from "@tauri-apps/plugin-os";
 import { Route, Router, Switch } from "wouter";
-import { PermissionCheck } from "@/features/PermissionCheck/PermissionCheck";
+import { Permissions } from "@/features/Permissions/Permissions";
 import { Layout } from "@/components/ui/layout";
 import { ThemeProvider } from "@/lib/theme-provider";
 import { MainView } from "@/screens/MainView";
-import { FullscreenZoneEditor } from "@/features/ZoneLayouts/FullscreenZoneEditor";
+import { FullscreenZoneEditor } from "@/features/ZoneLayouts/ZoneEditor/FullscreenZoneEditor";
 import { useState } from "react";
 import { Toaster } from "sonner";
 
@@ -32,7 +32,7 @@ function App() {
           <Route path="/">
             <Layout activeTab={activeTab} onTabChange={setActiveTab}>
               {!hasPermissions ? (
-                <PermissionCheck onPermissionsGranted={() => setHasPermissions(true)} />
+                <Permissions onPermissionsGranted={() => setHasPermissions(true)} />
               ) : (
                 <MainView />
               )}
