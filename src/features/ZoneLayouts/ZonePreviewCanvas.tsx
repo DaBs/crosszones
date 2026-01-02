@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { type Zone } from '@/types/zoneLayout';
+import type { Zone } from '@/types/zoneLayout';
 
 interface ZonePreviewCanvasProps {
   zones: Zone[];

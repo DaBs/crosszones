@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { type ZoneLayout } from '@/types/zoneLayout';
+import type { ZoneLayout } from '@/types/zoneLayout';
 import { Plus, Trash2, Edit2 } from 'lucide-react';
 import { ZonePreviewCanvas } from './ZonePreviewCanvas';
 import { ZoneHotkeyInput } from './ZoneHotkeyInput';
@@ -122,8 +122,8 @@ export const ZoneLayoutList: React.FC<ZoneLayoutListProps> = ({
                 <CardContent className="space-y-3">
                   <ZonePreviewCanvas 
                     zones={layout.zones} 
-                    screenWidth={layout.screenWidth}
-                    screenHeight={layout.screenHeight}
+                    screenWidth={layout.screenWidth ?? undefined}
+                    screenHeight={layout.screenHeight ?? undefined}
                   />
                   <div className="space-y-2 pt-2 border-t">
                     <div className="flex items-center justify-between text-xs">

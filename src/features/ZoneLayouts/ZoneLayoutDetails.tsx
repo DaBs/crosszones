@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import { listen, emit } from '@tauri-apps/api/event';
-import { type ZoneLayout, type Zone } from '@/types/zoneLayout';
+import type { ZoneLayout, Zone } from '@/types/zoneLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -156,8 +156,8 @@ export const ZoneLayoutEditor: React.FC<ZoneLayoutEditorProps> = ({
         id: layout?.id || generateLayoutId(),
         name: name.trim(),
         zones: currentZones.sort((a, b) => a.number - b.number),
-        screenWidth,
-        screenHeight,
+        screenWidth: screenWidth ?? null,
+        screenHeight: screenHeight ?? null,
       };
 
       await invoke('save_zone_layout', { layout: layoutToSave });
@@ -217,8 +217,8 @@ export const ZoneLayoutEditor: React.FC<ZoneLayoutEditorProps> = ({
               <ZonePreviewCanvas 
                 zones={currentZones} 
                 width={450}
-                screenWidth={layout?.screenWidth}
-                screenHeight={layout?.screenHeight}
+                screenWidth={layout?.screenWidth ?? undefined}
+                screenHeight={layout?.screenHeight ?? undefined}
               />
             </div>
           ) : (
