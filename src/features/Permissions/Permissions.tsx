@@ -1,13 +1,13 @@
 import { useState, useEffect } from 'react';
 import { checkAccessibilityPermission, requestAccessibilityPermission } from "tauri-plugin-macos-permissions-api";
-import { showError, showSuccess } from '@/lib/toast';
-import './PermissionCheck.css';
+import { showError } from '@/lib/toast';
+import './Permissions.css';
 
-interface PermissionCheckProps {
+interface PermissionsProps {
   onPermissionsGranted: () => void;
 }
 
-export const PermissionCheck: React.FC<PermissionCheckProps> = ({ onPermissionsGranted }) => {
+export const Permissions: React.FC<PermissionsProps> = ({ onPermissionsGranted }) => {
   const [hasPermission, setHasPermission] = useState(false);
   const [isChecking, setIsChecking] = useState(true);
 
@@ -17,7 +17,6 @@ export const PermissionCheck: React.FC<PermissionCheckProps> = ({ onPermissionsG
       setHasPermission(isGranted);
       if (isGranted) {
         onPermissionsGranted();
-        showSuccess('Permissions granted');
       }
     } catch (error) {
       showError('Failed to check permission', error);

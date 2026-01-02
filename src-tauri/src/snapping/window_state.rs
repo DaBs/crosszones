@@ -20,14 +20,16 @@ impl WindowState {
     }
 }
 
-static WINDOW_STATE_STORE: LazyLock<Mutex<HashMap<String, WindowState>>> = LazyLock::new(|| Mutex::new(HashMap::new()));
+static WINDOW_STATE_STORE: LazyLock<Mutex<HashMap<String, WindowState>>> =
+    LazyLock::new(|| Mutex::new(HashMap::new()));
 
 pub fn get_window_state(window_id: &str) -> Option<WindowState> {
     WINDOW_STATE_STORE.lock().unwrap().get(window_id).cloned()
 }
 
 pub fn insert_window_state(window_id: &str, window_state: WindowState) {
-    WINDOW_STATE_STORE.lock().unwrap().insert(window_id.to_string(), window_state);
+    WINDOW_STATE_STORE
+        .lock()
+        .unwrap()
+        .insert(window_id.to_string(), window_state);
 }
-
-

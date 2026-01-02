@@ -2,16 +2,20 @@ use windows::{
     core::BOOL,
     Win32::{
         Foundation::{HWND, LPARAM, RECT, TRUE},
-        Graphics::{Dwm::{DwmGetWindowAttribute, DWMWA_EXTENDED_FRAME_BOUNDS}, Gdi::{
-            GetDC, GetDeviceCaps, GetMonitorInfoW, MonitorFromWindow, MONITORINFO, MONITOR_DEFAULTTONEAREST, LOGPIXELSY
-        }},
+        Graphics::{
+            Dwm::{DwmGetWindowAttribute, DWMWA_EXTENDED_FRAME_BOUNDS},
+            Gdi::{
+                GetDC, GetDeviceCaps, GetMonitorInfoW, MonitorFromWindow, LOGPIXELSY, MONITORINFO,
+                MONITOR_DEFAULTTONEAREST,
+            },
+        },
         System::Threading::GetCurrentProcessId,
         UI::{
             HiDpi::GetDpiForWindow,
             WindowsAndMessaging::{
-                EnumWindows, GetForegroundWindow, GetWindowRect,
-                GetWindowThreadProcessId, IsWindowVisible, IsZoomed, SetWindowPos,
-                ShowWindow, SWP_NOACTIVATE, SWP_NOZORDER, SW_RESTORE
+                EnumWindows, GetForegroundWindow, GetWindowRect, GetWindowThreadProcessId,
+                IsWindowVisible, IsZoomed, SetWindowPos, ShowWindow, SWP_NOACTIVATE, SWP_NOZORDER,
+                SW_RESTORE,
             },
         },
     },
@@ -22,7 +26,10 @@ use super::common::{calculate_window_rect, ScreenDimensions};
 use super::window_rect::WindowRect;
 
 // Function to snap a window according to the specified layout action
-pub fn snap_window(action: LayoutAction) -> Result<(), String> {
+pub fn snap_window(
+    action: LayoutAction,
+    app_handle: Option<tauri::AppHandle>,
+) -> Result<(), String> {
     let hwnd = unsafe { GetForegroundWindow() };
     if hwnd.0 == std::ptr::null_mut() {
         return Err("Failed to get foreground window".to_string());
@@ -105,7 +112,13 @@ pub fn snap_window(action: LayoutAction) -> Result<(), String> {
     let window_id = format!("{:?}", hwnd.0);
 
     // Calculate new position and size based on the action
-    let mut new_rect = calculate_window_rect(&window_id, action, screen_dimensions, Some(current_rect));
+    let mut new_rect = calculate_window_rect(
+        &window_id,
+        action,
+        screen_dimensions,
+        Some(current_rect),
+        app_handle.as_ref(),
+    );
 
     // Add the effect of the invisible borders to get the correct position and size
     new_rect = WindowRect {

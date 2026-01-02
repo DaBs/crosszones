@@ -1,10 +1,12 @@
 import "@/App.css";
 
 import { OsType, type } from "@tauri-apps/plugin-os";
-import { PermissionCheck } from "@/components/PermissionCheck/PermissionCheck";
-import { Layout } from "@/components/layout";
-import { ThemeProvider } from "@/components/theme-provider";
+import { Route, Router, Switch } from "wouter";
+import { Permissions } from "@/features/Permissions/Permissions";
+import { Layout } from "@/components/ui/layout";
+import { ThemeProvider } from "@/lib/theme-provider";
 import { MainView } from "@/screens/MainView";
+import { FullscreenZoneEditor } from "@/features/ZoneLayouts/ZoneEditor/FullscreenZoneEditor";
 import { useState } from "react";
 import { Toaster } from "sonner";
 
@@ -22,14 +24,23 @@ function App() {
 
   return (
     <ThemeProvider defaultTheme="system" storageKey="crosszones-theme">
-      <Layout activeTab={activeTab} onTabChange={setActiveTab}>
-        {!hasPermissions ? (
-          <PermissionCheck onPermissionsGranted={() => setHasPermissions(true)} />
-        ) : (
-          <MainView />
-        )}
-      </Layout>
-      <Toaster position="top-right" richColors />
+      <Router>
+        <Switch>
+          <Route path="/zone-editor">
+            <FullscreenZoneEditor />
+          </Route>
+          <Route path="/">
+            <Layout activeTab={activeTab} onTabChange={setActiveTab}>
+              {!hasPermissions ? (
+                <Permissions onPermissionsGranted={() => setHasPermissions(true)} />
+              ) : (
+                <MainView />
+              )}
+            </Layout>
+          </Route>
+        </Switch>
+      </Router>
+      <Toaster position="bottom-center" richColors />
     </ThemeProvider>
   );
 }

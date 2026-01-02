@@ -1,5 +1,5 @@
 import React from 'react';
-import { LayoutAction } from '../types/snapping';
+import { LayoutAction } from '../../types/snapping';
 
 interface WindowSnapIconProps {
   width?: number;

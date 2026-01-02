@@ -4,6 +4,7 @@ use std::collections::HashMap;
 use crate::snapping::action::LayoutAction;
 use crate::snapping::window_rect::WindowRect;
 use crate::snapping::window_state::{get_window_state, insert_window_state, WindowState};
+use crate::store::zone_layouts;
 
 /// Represents screen dimensions
 #[derive(Debug, Clone, Copy, Serialize, Deserialize)]
@@ -30,6 +31,7 @@ pub fn calculate_window_rect(
     action: LayoutAction,
     screen: ScreenDimensions,
     current_rect: Option<WindowRect>,
+    app_handle: Option<&tauri::AppHandle>,
 ) -> WindowRect {
     // Default to full screen if no current rect is provided
     let current = current_rect.unwrap_or(WindowRect {
@@ -178,9 +180,7 @@ pub fn calculate_window_rect(
             width: 9 * current.width / 10,
             height: 9 * current.height / 10,
         },
-        LayoutAction::Restore => {
-            previous_state.unwrap().window_rect
-        },
+        LayoutAction::Restore => previous_state.unwrap().window_rect,
         // TODO: Implement next and previous display
         LayoutAction::NextDisplay | LayoutAction::PreviousDisplay => current,
         LayoutAction::MoveLeft => WindowRect {
@@ -303,6 +303,40 @@ pub fn calculate_window_rect(
             width: screen.width / 3,
             height: screen.height,
         },
+        // Zone-based actions
+        LayoutAction::ApplyZone(zone_number) => {
+            // Try to load active zone layout and apply zone
+            if let Some(app) = app_handle {
+                if let Ok(Some(active_layout_id)) =
+                    zone_layouts::get_active_zone_layout_id(app.clone())
+                {
+                    if let Ok(Some(layout)) =
+                        zone_layouts::get_zone_layout(app.clone(), active_layout_id)
+                    {
+                        // Find the zone with matching number
+                        if let Some(zone) =
+                            layout.zones.iter().find(|z| z.number == zone_number as u32)
+                        {
+                            // Convert percentage-based zone coordinates to screen coordinates
+                            // Zone coordinates are 0-100, convert to screen pixels
+                            let zone_x = (zone.x / 100.0) * screen.width as f64;
+                            let zone_y = (zone.y / 100.0) * screen.height as f64;
+                            let zone_width = (zone.width / 100.0) * screen.width as f64;
+                            let zone_height = (zone.height / 100.0) * screen.height as f64;
+
+                            return WindowRect {
+                                x: zone_x as i32,
+                                y: zone_y as i32,
+                                width: zone_width as i32,
+                                height: zone_height as i32,
+                            };
+                        }
+                    }
+                }
+            }
+            // If we can't apply zone, return current position unchanged
+            current
+        }
         _ => current,
     };
 
