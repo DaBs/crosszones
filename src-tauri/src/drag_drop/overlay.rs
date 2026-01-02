@@ -66,7 +66,7 @@ impl ZoneOverlay {
         .position(screen.x as f64, screen.y as f64)
         .visible(true)
         .resizable(false)
-        .decorations(true)
+        .decorations(false)
         .skip_taskbar(true)
         .closable(false)
         .focused(false)
