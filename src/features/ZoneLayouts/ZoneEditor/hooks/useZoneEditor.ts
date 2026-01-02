@@ -42,8 +42,11 @@ export function useZoneEditor() {
   }, [zones, editorData]);
 
   useEffect(() => {
+    let unlistenEditorData: (() => void) | null = null;
+    let unlistenRequestZones: (() => void) | null = null;
+
     const setupListener = async () => {
-      const unlistenEditorData = await listen<EditorData>('editor-data', (event) => {
+      unlistenEditorData = await listen<EditorData>('editor-data', (event) => {
         const data = event.payload;
         setEditorData(data);
         // If no zones, create a default fullscreen zone
@@ -63,26 +66,30 @@ export function useZoneEditor() {
       });
 
       // Listen for zone storage requests (when saving while editor is open)
-      const unlistenRequestZones = await listen('request-zones', async () => {
+      unlistenRequestZones = await listen('request-zones', async () => {
         // Use the ref to get the latest zones
         const currentZones = zonesStateRef.current;
         await invoke('store_editor_zones', { zones: currentZones });
       });
-
-      return () => {
-        unlistenEditorData();
-        unlistenRequestZones();
-      };
     };
 
     setupListener();
+
+    return () => {
+      if (unlistenEditorData) {
+        unlistenEditorData();
+      }
+      if (unlistenRequestZones) {
+        unlistenRequestZones();
+      }
+    };
   }, []);
 
   // Handle ESC key to close editor and Shift key for split mode
   useEffect(() => {
     const handleKeyDown = async (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
-        await invoke('close_editor_windows', { zones });
+        await invoke('close_editor_windows', { zones: zonesStateRef.current });
       } else if (e.key === 'Shift') {
         setSplitMode('vertical');
       }
@@ -100,7 +107,7 @@ export function useZoneEditor() {
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('keyup', handleKeyUp);
     };
-  }, [zones]);
+  }, []);
 
   const handleCloseEditor = async () => {
     await invoke('close_editor_windows', { zones });

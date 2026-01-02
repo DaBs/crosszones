@@ -21,6 +21,7 @@ export function DeleteConfirmDialog({ open, onOpenChange, onConfirm, onCancel }:
     <Dialog
       open={open}
       onOpenChange={(open) => {
+        onOpenChange(open);
         if (!open) {
           onCancel();
         }
