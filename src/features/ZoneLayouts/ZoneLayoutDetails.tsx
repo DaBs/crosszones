@@ -125,8 +125,6 @@ export const ZoneLayoutEditor: React.FC<ZoneLayoutEditorProps> = ({
       // Request zones from editor if it's still open
       if (editorOpen) {
         await emit('request-zones');
-        // Small delay to ensure zones are stored
-        await new Promise(resolve => setTimeout(resolve, 100));
         
         // Get latest zones from stored state
         const zones = await invoke<Zone[]>('get_editor_zones');
