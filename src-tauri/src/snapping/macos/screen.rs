@@ -69,7 +69,8 @@ pub fn get_screen_dimensions(element: &AXUIElement) -> Result<ScreenDimensions, 
         });
     }
 
-    let screen = screen_with_rect(element.frame().unwrap(), screens)?;
+    let frame = element.frame().map_err(|e| e.to_string())?;
+    let screen = screen_with_rect(frame, screens)?;
 
     println!("screen: {:?}", screen);
 
