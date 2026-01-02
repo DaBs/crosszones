@@ -160,8 +160,8 @@ export function ZoneComponent({
       className={cn(
         'absolute rounded-lg flex items-center justify-center',
         isHoveredOrMerged
-          ? 'border-[3px] border-blue-500 bg-blue-500/60'
-          : 'border-2 border-blue-500/60 bg-blue-500/40',
+          ? 'border-[3px] border-primary/80 bg-primary/80'
+          : 'border-2 border-primary/60 bg-primary/60',
         isDraggedOrResizing ? 'cursor-grabbing' : 'cursor-grab transition-all duration-200'
       )}
       style={getZoneStyle()}
@@ -187,7 +187,7 @@ export function ZoneComponent({
           <div
             key={handle}
             className={cn(
-              'absolute w-3 h-3 bg-blue-500/90 border-2 border-white rounded-full z-[1001] pointer-events-auto',
+              'absolute w-3 h-3 bg-primary/90 border-2 border-white rounded-full z-[1001] pointer-events-auto',
               getResizeHandleCursor(handle)
             )}
             style={getResizeHandleStyle(handle)}

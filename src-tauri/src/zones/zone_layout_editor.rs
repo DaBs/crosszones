@@ -79,8 +79,7 @@ pub fn create_zone_editor_windows(
             .closable(true)
             .focused(screen_idx == 0);
 
-            #[cfg(target_os = "windows")]
-            {
+            if app_handle.config().app.macos_private_api || cfg!(target_os = "windows") {
                 window_builder = window_builder.transparent(true);
             }
 

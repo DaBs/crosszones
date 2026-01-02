@@ -10,8 +10,8 @@ pub fn create_window(app: &tauri::App) -> WebviewWindow {
         WebviewWindowBuilder::new(app, PRIMARY_WINDOW_NAME, WebviewUrl::default())
             .title("CrossZones")
             .visible(false)
-            .inner_size(1300.0, 820.0)
-            .min_inner_size(1300.0, 820.0);
+            .inner_size(1300.0, 1120.0)
+            .min_inner_size(1300.0, 1120.0);
 
     #[cfg(target_os = "windows")]
     {}
