@@ -1,12 +1,12 @@
 use std::sync::Mutex;
+use std::thread;
 use tauri::AppHandle;
 use windows::{
     Win32::{
         Foundation::{HWND, LPARAM, LRESULT, POINT, WPARAM},
-        System::LibraryLoader::GetModuleHandleW,
         UI::{
             WindowsAndMessaging::{
-                CallNextHookEx, SetWindowsHookExW, UnhookWindowsHookEx, HHOOK,
+                CallNextHookEx, SetWindowsHookExW,
                 WindowFromPoint, WH_MOUSE_LL, WM_LBUTTONDOWN, WM_LBUTTONUP, WM_MOUSEMOVE, MSLLHOOKSTRUCT,
             },
             Input::KeyboardAndMouse::GetAsyncKeyState,
@@ -17,7 +17,7 @@ use crate::store::settings::SettingsStore;
 use crate::store::zone_layouts;
 use crate::snapping::common::ScreenDimensions;
 use crate::snapping::action::LayoutAction;
-use crate::snapping::snap_window;
+use crate::snapping::windows::snap_window_with_handle;
 
 static HOOK_HANDLE: Mutex<Option<isize>> = Mutex::new(None);
 static APP_HANDLE: Mutex<Option<AppHandle>> = Mutex::new(None);
@@ -140,12 +140,24 @@ unsafe extern "system" fn mouse_hook_proc(
 
                     println!("Dropping window at mouse position: ({}, {})", mouse_x, mouse_y);
 
-                    // Find zone at position and snap window
-                    if let Err(e) = handle_drop(&app_handle, hwnd, mouse_x, mouse_y) {
-                        eprintln!("Failed to handle drop: {}", e);
-                    }
+                    // Store HWND value as isize for thread safety
+                    let hwnd_value = hwnd.0 as isize;
+
+                    // Let Windows process WM_LBUTTONUP normally to complete the drag operation,
+                    // then handle the drop asynchronously after Windows has finished
+                    let app_handle_clone = app_handle.clone();
+                    thread::spawn(move || {
+                        // Wait for Windows to finish processing the drag operation
+                        thread::sleep(std::time::Duration::from_millis(10));
+                        // Reconstruct HWND from the stored value
+                        let hwnd = HWND(hwnd_value as *mut _);
+                        if let Err(e) = handle_drop(&app_handle_clone, hwnd, mouse_x, mouse_y) {
+                            eprintln!("Failed to handle drop: {}", e);
+                        }
+                    });
                 }
 
+                // Clear dragging state after handling (whether hwnd was Some or None)
                 let mut dragging = DRAGGING.lock().unwrap();
                 *dragging = false;
                 drop(dragging);
@@ -183,11 +195,9 @@ fn handle_drop(app_handle: &AppHandle, hwnd: HWND, x: i32, y: i32) -> Result<(),
     // Find zone at drop position
     let zone = layout.get_zone_at_position(x, y, screen);
     if let Some(zone) = zone {
-        // Snap window to zone
+        // Snap window to zone using the specific window handle we tracked during drag
         let action = LayoutAction::ApplyZone(zone.number);
-        // Wait a little bit for Windows to finish restoring the window to its original position
-        std::thread::sleep(std::time::Duration::from_millis(20));
-        snap_window(action, Some(app_handle.clone()))?;
+        snap_window_with_handle(action, Some(app_handle.clone()), hwnd)?;
     }
 
     Ok(())
