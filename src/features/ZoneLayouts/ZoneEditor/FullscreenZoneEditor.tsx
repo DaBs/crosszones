@@ -167,7 +167,7 @@ function FullscreenZoneEditor() {
   return (
     <div
       ref={containerRef}
-      className="w-full h-screen relative bg-transparent"
+      className="w-full h-screen overflow-hidden relative bg-transparent"
       style={{ width: '100vw', height: '100vh' }}
       onContextMenu={handleContextMenu}
     >
