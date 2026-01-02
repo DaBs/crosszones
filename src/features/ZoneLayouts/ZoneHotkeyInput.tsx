@@ -3,8 +3,8 @@ import { invoke } from '@tauri-apps/api/core';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { X } from 'lucide-react';
-import { getShortcutMapping } from '@/components/HotkeySettings/keyMapping';
-import { handleHotkeyKeyDown } from '@/components/HotkeySettings/useHotkeyRecording';
+import { getShortcutMapping } from '@/features/HotkeySettings/keyMapping';
+import { handleHotkeyKeyDown } from '@/features/HotkeySettings/useHotkeyRecording';
 import { showError } from '@/lib/toast';
 
 interface ZoneHotkeyInputProps {

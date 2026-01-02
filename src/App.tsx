@@ -2,11 +2,11 @@ import "@/App.css";
 
 import { OsType, type } from "@tauri-apps/plugin-os";
 import { Route, Router, Switch } from "wouter";
-import { PermissionCheck } from "@/components/PermissionCheck/PermissionCheck";
-import { Layout } from "@/components/layout";
-import { ThemeProvider } from "@/components/theme-provider";
+import { PermissionCheck } from "@/features/PermissionCheck/PermissionCheck";
+import { Layout } from "@/components/ui/layout";
+import { ThemeProvider } from "@/lib/theme-provider";
 import { MainView } from "@/screens/MainView";
-import { FullscreenZoneEditor } from "@/components/ZoneLayouts/FullscreenZoneEditor";
+import { FullscreenZoneEditor } from "@/features/ZoneLayouts/FullscreenZoneEditor";
 import { useState } from "react";
 import { Toaster } from "sonner";
 

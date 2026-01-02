@@ -1,7 +1,7 @@
 import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { WindowSnapIcon } from "@/components/WindowSnapIcon";
+import { WindowSnapIcon } from "@/components/WindowSnapIcon/WindowSnapIcon";
 import { type LayoutAction } from "@/types/snapping";
 import { type HotkeyConfig } from "./types";
 import { getShortcutMapping } from "./keyMapping";

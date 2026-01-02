@@ -1,5 +1,5 @@
-import { TitleBar } from "./TitleBar/TitleBar"
-import { Tabs } from "./ui/tabs"
+import { TitleBar } from "../TitleBar/TitleBar"
+import { Tabs } from "./tabs"
 
 interface LayoutProps extends React.HTMLAttributes<HTMLDivElement> {
   children: React.ReactNode
