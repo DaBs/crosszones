@@ -36,8 +36,7 @@ fn rect_contained_percentage(rect: CGRect, screen: &DisplayInfo) -> f64 {
         &CGSize::new(screen.width as f64, screen.height as f64),
     );
     let intersection_area = rect_intersection(rect, screen_rect);
-    intersection_area.size.width * intersection_area.size.height / rect.size.width
-        * rect.size.height
+    (intersection_area.size.width * intersection_area.size.height) / (rect.size.width * rect.size.height)
 }
 
 fn screen_with_rect(rect: CGRect, screens: Vec<DisplayInfo>) -> Result<DisplayInfo, String> {
