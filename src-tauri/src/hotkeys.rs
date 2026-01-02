@@ -28,7 +28,7 @@ fn persist_hotkey_action(
     let store = app.store(HOTKEYS_STORE_NAME).expect("Failed to open store");
 
     // Convert to ActionPayload for consistent storage format
-    let payload: ActionPayload = action.into();
+    let payload: ActionPayload = action.try_into()?;
     let action_str =
         serde_json::to_string(&payload).map_err(|e| format!("Failed to serialize: {}", e))?;
     store.set(shortcut.to_string(), action_str);
@@ -66,12 +66,8 @@ pub fn setup(app_handle: &tauri::AppHandle) {
                             return;
                         }
                         // Parse as ActionPayload (new format only)
-                        let payload: ActionPayload = serde_json::from_str(action_str)
-                            .unwrap_or_else(|e| {
-                                eprintln!("Failed to parse action '{}': {}", action_str, e);
-                                panic!("Failed to parse action: {}", e);
-                            });
-                        let layout_action: LayoutAction = payload.into();
+                        let payload: ActionPayload = serde_json::from_str(action_str).unwrap();
+                        let layout_action: LayoutAction = payload.try_into().unwrap();
 
                         // Handle ActivateLayout action separately
                         match &layout_action {
@@ -118,7 +114,7 @@ pub fn register_hotkey_action(
     action: ActionPayload,
 ) -> Result<(), String> {
     let shortcut = Shortcut::from_str(&shortcut).map_err(|e| e.to_string())?;
-    let layout_action: LayoutAction = action.into();
+    let layout_action: LayoutAction = action.try_into()?;
 
     persist_hotkey_action(&app, shortcut, layout_action)?;
     register_hotkey(&app, shortcut)?;
