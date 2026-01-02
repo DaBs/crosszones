@@ -21,6 +21,7 @@ export const ZoneLayoutEditor: React.FC<ZoneLayoutEditorProps> = ({
   onBack,
   onSave,
 }) => {
+  const [layoutId, setLayoutId] = useState<string | null>(null);
   const [name, setName] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const [editorOpen, setEditorOpen] = useState(false);
@@ -28,9 +29,11 @@ export const ZoneLayoutEditor: React.FC<ZoneLayoutEditorProps> = ({
 
   useEffect(() => {
     if (layout) {
+      setLayoutId(layout.id);
       setName(layout.name);
       setCurrentZones(layout.zones);
     } else {
+      setLayoutId(null);
       setName('');
       setCurrentZones([]);
     }
@@ -83,11 +86,14 @@ export const ZoneLayoutEditor: React.FC<ZoneLayoutEditorProps> = ({
     }
 
     try {
-      const layoutId = layout?.id || generateLayoutId();
+      const id = layoutId || generateLayoutId();
+      if (!layoutId) {
+        setLayoutId(id);
+      }
       const initialZones = currentZones.length > 0 ? currentZones : (layout?.zones || []);
       
       await invoke('create_zone_editor_windows', {
-        layoutId,
+        layoutId: id,
         layoutName: name.trim(),
         zones: initialZones,
       });
@@ -151,7 +157,7 @@ export const ZoneLayoutEditor: React.FC<ZoneLayoutEditorProps> = ({
       }
 
       const layoutToSave: ZoneLayout = {
-        id: layout?.id || generateLayoutId(),
+        id: layoutId ?? generateLayoutId(),
         name: name.trim(),
         zones: currentZones.sort((a, b) => a.number - b.number),
         screenWidth: screenWidth ?? null,
