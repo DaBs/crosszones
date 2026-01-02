@@ -19,6 +19,8 @@ pub struct Settings {
     pub close_to_system_tray: bool,
     #[serde(default)]
     pub show_layout_activation_notification: bool,
+    #[serde(default)]
+    pub zone_drag_modifier_key: Option<String>, // e.g., "control", "alt", "shift", "super"
 }
 
 /// The main settings store
@@ -49,6 +51,7 @@ impl SettingsStore {
         store.set("start_minimized", settings.start_minimized);
         store.set("close_to_system_tray", settings.close_to_system_tray);
         store.set("show_layout_activation_notification", settings.show_layout_activation_notification);
+        store.set("zone_drag_modifier_key", serde_json::to_value(&settings.zone_drag_modifier_key)?);
         store.save()?;
         Ok(())
     }
@@ -105,6 +108,14 @@ impl SettingsStore {
 
     pub fn set_show_layout_activation_notification(&self, value: bool) -> Result<(), SettingsError> {
         self.set("show_layout_activation_notification", value)
+    }
+
+    pub fn get_zone_drag_modifier_key(&self) -> Result<Option<String>, SettingsError> {
+        self.get("zone_drag_modifier_key")
+    }
+
+    pub fn set_zone_drag_modifier_key(&self, value: Option<String>) -> Result<(), SettingsError> {
+        self.set("zone_drag_modifier_key", value)
     }
 }
 

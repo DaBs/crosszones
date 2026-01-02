@@ -1,0 +1,219 @@
+use std::sync::Mutex;
+use tauri::AppHandle;
+use windows::{
+    Win32::{
+        Foundation::{HWND, LPARAM, LRESULT, POINT, WPARAM},
+        System::LibraryLoader::GetModuleHandleW,
+        UI::{
+            WindowsAndMessaging::{
+                CallNextHookEx, SetWindowsHookExW, UnhookWindowsHookEx, HHOOK,
+                WindowFromPoint, WH_MOUSE_LL, WM_LBUTTONDOWN, WM_LBUTTONUP, WM_MOUSEMOVE, MSLLHOOKSTRUCT,
+            },
+            Input::KeyboardAndMouse::GetAsyncKeyState,
+        },
+    },
+};
+use crate::store::settings::SettingsStore;
+use crate::store::zone_layouts;
+use crate::snapping::common::ScreenDimensions;
+use crate::snapping::action::LayoutAction;
+use crate::snapping::snap_window;
+
+static HOOK_HANDLE: Mutex<Option<isize>> = Mutex::new(None);
+static APP_HANDLE: Mutex<Option<AppHandle>> = Mutex::new(None);
+static DRAGGING: Mutex<bool> = Mutex::new(false);
+static DRAG_START_POS: Mutex<Option<(i32, i32)>> = Mutex::new(None);
+static DRAGGED_WINDOW: Mutex<Option<isize>> = Mutex::new(None);
+
+pub fn start_drag_detection(app_handle: AppHandle) -> Result<(), String> {
+    let mut app_handle_guard = APP_HANDLE.lock().unwrap();
+    *app_handle_guard = Some(app_handle.clone());
+    drop(app_handle_guard);
+
+    unsafe {
+        let hook = SetWindowsHookExW(
+            WH_MOUSE_LL,
+            Some(mouse_hook_proc),
+            None,
+            0,
+        );
+
+        if hook.is_err() {
+            return Err("Failed to set mouse hook".to_string());
+        }
+
+        let mut hook_handle = HOOK_HANDLE.lock().unwrap();
+        *hook_handle = Some(hook.unwrap().0 as *mut std::ffi::c_void as isize);
+        drop(hook_handle);
+    }
+
+    Ok(())
+}
+
+unsafe extern "system" fn mouse_hook_proc(
+    n_code: i32,
+    w_param: WPARAM,
+    l_param: LPARAM,
+) -> LRESULT {
+    if n_code >= 0 {
+        let app_handle_guard = APP_HANDLE.lock().unwrap();
+        let app_handle = match app_handle_guard.as_ref() {
+            Some(h) => h.clone(),
+            None => return CallNextHookEx(None, n_code, w_param, l_param),
+        };
+        drop(app_handle_guard);
+
+        match w_param.0 as u32 {
+            WM_LBUTTONDOWN => {
+                // Check if modifier key is pressed
+                let settings_store = match SettingsStore::new(&app_handle) {
+                    Ok(s) => s,
+                    Err(_) => return CallNextHookEx(None, n_code, w_param, l_param),
+                };
+
+                let modifier_key = match settings_store.get_zone_drag_modifier_key() {
+                    Ok(Some(key)) => key,
+                    _ => return CallNextHookEx(None, n_code, w_param, l_param),
+                };
+
+                println!("Dragging with modifier key: {}", modifier_key);
+
+                // Check if the modifier key is pressed
+                let modifier_pressed = match modifier_key.as_str() {
+                    "control" => GetAsyncKeyState(0x11) & 0x8000u16 as i16 != 0, // VK_CONTROL
+                    "alt" => GetAsyncKeyState(0x12) & 0x8000u16 as i16 != 0,     // VK_MENU
+                    "shift" => GetAsyncKeyState(0x10) & 0x8000u16 as i16 != 0,    // VK_SHIFT
+                    "super" => GetAsyncKeyState(0x5B) & 0x8000u16 as i16 != 0,   // VK_LWIN
+                    _ => false,
+                };
+
+                if modifier_pressed {
+                    let hook_struct = unsafe { &*(l_param.0 as *const MSLLHOOKSTRUCT) };
+                    let hwnd = unsafe {
+                        WindowFromPoint(POINT {
+                            x: hook_struct.pt.x,
+                            y: hook_struct.pt.y,
+                        })
+                    };
+
+                    if hwnd.0 != std::ptr::null_mut() {
+                        let mut dragging = DRAGGING.lock().unwrap();
+                        *dragging = true;
+                        drop(dragging);
+
+                        let hook_struct = unsafe { &*(l_param.0 as *const MSLLHOOKSTRUCT) };
+                        let mut drag_start = DRAG_START_POS.lock().unwrap();
+                        *drag_start = Some((hook_struct.pt.x, hook_struct.pt.y));
+                        drop(drag_start);
+
+                        let mut dragged_window = DRAGGED_WINDOW.lock().unwrap();
+                        *dragged_window = Some(hwnd.0 as *mut std::ffi::c_void as isize);
+                        drop(dragged_window);
+
+                    }
+                }
+            }
+            WM_MOUSEMOVE => {
+                let dragging = DRAGGING.lock().unwrap();
+                if !*dragging {
+                    return CallNextHookEx(None, n_code, w_param, l_param);
+                }
+                drop(dragging);
+
+            }
+            WM_LBUTTONUP => {
+                let dragging = DRAGGING.lock().unwrap();
+                if !*dragging {
+                    return CallNextHookEx(None, n_code, w_param, l_param);
+                }
+                drop(dragging);
+
+                let dragged_window = DRAGGED_WINDOW.lock().unwrap();
+                let hwnd = dragged_window.as_ref().map(|h| HWND((*h as *mut std::ffi::c_void) as *mut _));
+                drop(dragged_window);
+
+                if let Some(hwnd) = hwnd {
+                    // Get mouse position
+                    let hook_struct = unsafe { &*(l_param.0 as *const MSLLHOOKSTRUCT) };
+                    let mouse_x = hook_struct.pt.x;
+                    let mouse_y = hook_struct.pt.y;
+
+                    println!("Dropping window at mouse position: ({}, {})", mouse_x, mouse_y);
+
+                    // Find zone at position and snap window
+                    if let Err(e) = handle_drop(&app_handle, hwnd, mouse_x, mouse_y) {
+                        eprintln!("Failed to handle drop: {}", e);
+                    }
+                }
+
+                let mut dragging = DRAGGING.lock().unwrap();
+                *dragging = false;
+                drop(dragging);
+
+                let mut drag_start = DRAG_START_POS.lock().unwrap();
+                *drag_start = None;
+                drop(drag_start);
+
+                let mut dragged_window = DRAGGED_WINDOW.lock().unwrap();
+                *dragged_window = None;
+                drop(dragged_window);
+            }
+            _ => {}
+        }
+    }
+
+    CallNextHookEx(None, n_code, w_param, l_param)
+}
+
+fn handle_drop(app_handle: &AppHandle, hwnd: HWND, x: i32, y: i32) -> Result<(), String> {
+    // Get active zone layout
+    let active_layout_id = match zone_layouts::get_active_zone_layout_id(app_handle.clone()) {
+        Ok(Some(id)) => id,
+        _ => return Err("No active zone layout".to_string()),
+    };
+
+    let layout = match zone_layouts::get_zone_layout(app_handle.clone(), active_layout_id) {
+        Ok(Some(l)) => l,
+        _ => return Err("Failed to get zone layout".to_string()),
+    };
+
+    // Get screen dimensions
+    let screen = get_screen_dimensions_for_window(hwnd)?;
+
+    // Find zone at drop position
+    let zone = layout.get_zone_at_position(x, y, screen);
+    if let Some(zone) = zone {
+        // Snap window to zone
+        let action = LayoutAction::ApplyZone(zone.number);
+        // Wait a little bit for Windows to finish restoring the window to its original position
+        std::thread::sleep(std::time::Duration::from_millis(20));
+        snap_window(action, Some(app_handle.clone()))?;
+    }
+
+    Ok(())
+}
+
+fn get_screen_dimensions_for_window(hwnd: HWND) -> Result<ScreenDimensions, String> {
+    use windows::Win32::{
+        Graphics::Gdi::{GetMonitorInfoW, MonitorFromWindow, MONITOR_DEFAULTTONEAREST, MONITORINFO},
+    };
+
+    let mut monitor_info = MONITORINFO {
+        cbSize: std::mem::size_of::<MONITORINFO>() as u32,
+        ..Default::default()
+    };
+
+    unsafe {
+        let monitor = MonitorFromWindow(hwnd, MONITOR_DEFAULTTONEAREST);
+        if !GetMonitorInfoW(monitor, &mut monitor_info).as_bool() {
+            return Err("Failed to get monitor info".to_string());
+        }
+    }
+
+    Ok(ScreenDimensions {
+        width: monitor_info.rcWork.right - monitor_info.rcWork.left,
+        height: monitor_info.rcWork.bottom - monitor_info.rcWork.top,
+        x: monitor_info.rcWork.left,
+        y: monitor_info.rcWork.top,
+    })
+}

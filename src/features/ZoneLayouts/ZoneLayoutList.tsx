@@ -1,7 +1,14 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import type { ZoneLayout } from '@/types/zoneLayout';
 import { Plus, Trash2, Edit2 } from 'lucide-react';
 import { ZonePreviewCanvas } from './ZonePreviewCanvas';
@@ -9,6 +16,7 @@ import { ZoneHotkeyInput } from './ZoneHotkeyInput';
 import { DeleteConfirmDialog } from './ZoneEditor/DeleteConfirmDialog';
 import { useActiveLayout } from './hooks/useActiveLayout';
 import { showError } from '@/lib/toast';
+import { getSetting, setSettings, getSettings } from '@/lib/store/settings';
 
 interface ZoneLayoutListProps {
   layouts: ZoneLayout[];
@@ -26,7 +34,22 @@ export const ZoneLayoutList: React.FC<ZoneLayoutListProps> = ({
   const [hotkeyRefreshKey, setHotkeyRefreshKey] = useState(0);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [layoutToDelete, setLayoutToDelete] = useState<string | null>(null);
+  const [dragModifierKey, setDragModifierKey] = useState<string | null>(null);
   const activeLayoutId = useActiveLayout();
+
+  useEffect(() => {
+    // Load drag modifier key setting
+    const loadDragModifierKey = async () => {
+      try {
+        const value = await getSetting('zone_drag_modifier_key');
+        setDragModifierKey(value as string | null);
+      } catch (error) {
+        // Setting might not exist yet, that's okay
+        setDragModifierKey(null);
+      }
+    };
+    loadDragModifierKey();
+  }, []);
 
   const handleHotkeyRefresh = () => {
     setHotkeyRefreshKey(prev => prev + 1);
@@ -58,6 +81,40 @@ export const ZoneLayoutList: React.FC<ZoneLayoutListProps> = ({
     setLayoutToDelete(null);
   };
 
+  const getModifierKeyLabel = (key: string | null): string => {
+    if (!key) return 'None';
+    switch (key) {
+      case 'control':
+        return 'Ctrl';
+      case 'alt':
+        return 'Alt';
+      case 'shift':
+        return 'Shift';
+      case 'super':
+        return 'Cmd/Win';
+      default:
+        return key.charAt(0).toUpperCase() + key.slice(1);
+    }
+  };
+
+  const handleModifierKeyChange = async (value: string) => {
+    const newValue = value === 'none' ? null : value;
+    try {
+      // Load all current settings
+      const allSettings = await getSettings();
+      const settingsObj: any = {};
+      for (const [k, v] of Object.entries(allSettings)) {
+        settingsObj[k] = v;
+      }
+      // Update the specific field
+      settingsObj.zone_drag_modifier_key = newValue;
+      await setSettings(settingsObj);
+      setDragModifierKey(newValue);
+    } catch (error) {
+      showError('Failed to update drag modifier key', error);
+    }
+  };
+
   return (
     <>
       <DeleteConfirmDialog
@@ -74,6 +131,34 @@ export const ZoneLayoutList: React.FC<ZoneLayoutListProps> = ({
             New Layout
           </Button>
         </div>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Drag & Drop Settings</CardTitle>
+            <CardDescription>
+              Configure the modifier key to hold while dragging a window to show zone overlay
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Select
+              value={dragModifierKey || 'none'}
+              onValueChange={handleModifierKeyChange}
+            >
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Select modifier key">
+                  {getModifierKeyLabel(dragModifierKey)}
+                </SelectValue>
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">None</SelectItem>
+                <SelectItem value="control">Ctrl</SelectItem>
+                <SelectItem value="alt">Alt</SelectItem>
+                <SelectItem value="shift">Shift</SelectItem>
+                <SelectItem value="super">Cmd/Win</SelectItem>
+              </SelectContent>
+            </Select>
+          </CardContent>
+        </Card>
 
       {layouts.length === 0 ? (
         <Card>

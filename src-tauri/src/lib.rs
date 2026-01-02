@@ -1,4 +1,5 @@
 mod autostart;
+mod drag_drop;
 mod hotkeys;
 mod snapping;
 mod store;
@@ -43,6 +44,14 @@ pub fn run() {
             hotkeys::setup(app.handle());
             tray::setup_tray(app.handle());
             autostart::setup_autostart(app.handle());
+
+            // Start drag detection
+            #[cfg(target_os = "windows")]
+            {
+                if let Err(e) = drag_drop::start_drag_detection(app.handle().clone()) {
+                    eprintln!("Failed to start drag detection: {}", e);
+                }
+            }
 
             window::window::create_window(app);
             Ok(())
