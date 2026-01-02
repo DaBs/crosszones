@@ -7,8 +7,9 @@ use windows::{
         Foundation::{HWND, LPARAM, LRESULT, POINT, WPARAM},
         UI::{
             WindowsAndMessaging::{
-                CallNextHookEx, SetWindowsHookExW,
+                CallNextHookEx, SetWindowsHookExW, SetWindowPos,
                 WindowFromPoint, WH_MOUSE_LL, WM_LBUTTONDOWN, WM_LBUTTONUP, WM_MOUSEMOVE, MSLLHOOKSTRUCT,
+                HWND_TOPMOST, HWND_NOTOPMOST, SWP_NOMOVE, SWP_NOSIZE, SWP_NOACTIVATE,
             },
             Input::KeyboardAndMouse::GetAsyncKeyState,
         },
@@ -94,6 +95,19 @@ unsafe extern "system" fn mouse_hook_proc(
                     *dragged_window = Some(hwnd.0 as *mut std::ffi::c_void as isize);
                     drop(dragged_window);
 
+                    // Bring the dragged window to the topmost position, above the overlay
+                    unsafe {
+                        SetWindowPos(
+                            hwnd,
+                            Some(HWND_TOPMOST),
+                            0,
+                            0,
+                            0,
+                            0,
+                            SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE,
+                        );
+                    }
+
                     // Initialize modifier state
                     let mut modifier_pressed = MODIFIER_PRESSED_DURING_DRAG.lock().unwrap();
                     *modifier_pressed = false;
@@ -128,6 +142,20 @@ unsafe extern "system" fn mouse_hook_proc(
                 if let Some(hwnd_value) = dragged_window.as_ref() {
                     let hwnd = HWND((*hwnd_value as *mut std::ffi::c_void) as *mut _);
                     drop(dragged_window);
+                    
+                    // Keep dragged window above overlay during drag (maintain topmost)
+                    unsafe {
+                        SetWindowPos(
+                            hwnd,
+                            Some(HWND_TOPMOST),
+                            0,
+                            0,
+                            0,
+                            0,
+                            SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE,
+                        );
+                    }
+                    
                     check_and_update_modifier_state(&app_handle, hwnd);
                 } else {
                     drop(dragged_window);
@@ -157,6 +185,18 @@ unsafe extern "system" fn mouse_hook_proc(
                 drop(showing);
 
                 if let Some(hwnd) = hwnd {
+                    // Remove topmost flag from dragged window after drag ends
+                    unsafe {
+                        SetWindowPos(
+                            hwnd,
+                            Some(HWND_NOTOPMOST),
+                            0,
+                            0,
+                            0,
+                            0,
+                            SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE,
+                        );
+                    }
                     // Only snap if modifier was pressed at some point during the drag
                     if modifier_was_pressed {
                         // Get mouse position

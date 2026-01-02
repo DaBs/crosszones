@@ -6,6 +6,7 @@ use std::collections::HashMap;
 use std::sync::LazyLock;
 use std::sync::Mutex;
 use tauri::{Emitter, WebviewUrl, WebviewWindow, WebviewWindowBuilder};
+use base64::{engine::general_purpose::URL_SAFE, Engine as _};
 
 static OVERLAY_WINDOWS: LazyLock<Mutex<HashMap<String, WebviewWindow>>> =
     LazyLock::new(|| Mutex::new(HashMap::new()));
@@ -37,11 +38,28 @@ impl ZoneOverlay {
 
         let window_label = format!("zone-overlay-{}", screen_idx);
 
+        // Encode layout and screen data as base64 JSON for URL parameter
+        let overlay_data = serde_json::json!({
+            "layout": layout,
+            "screen": {
+                "x": screen.x,
+                "y": screen.y,
+                "width": screen.width,
+                "height": screen.height,
+            }
+        });
+        let data_json = serde_json::to_string(&overlay_data)
+            .map_err(|e| format!("Failed to serialize overlay data: {}", e))?;
+        let data_b64 = URL_SAFE.encode(data_json.as_bytes());
+        
+        // Create URL with encoded data
+        let url = format!("index.html?data={}#/zone-overlay", data_b64);
+
         // Create overlay window on the specified screen
         let mut window_builder = WebviewWindowBuilder::new(
             app_handle,
             &window_label,
-            WebviewUrl::App("index.html#/zone-overlay".into()),
+            WebviewUrl::App(url.into()),
         )
         .title("Zone Overlay")
         .inner_size(screen.width as f64, screen.height as f64)
@@ -51,28 +69,14 @@ impl ZoneOverlay {
         .decorations(true)
         .skip_taskbar(true)
         .closable(false)
-        .focused(false);
+        .focused(false)
+        .always_on_top(true);
 
         if app_handle.config().app.macos_private_api || cfg!(target_os = "windows") {
             window_builder = window_builder.transparent(true);
         }
 
         if let Ok(window) = window_builder.build() {
-            // Small delay to ensure navigation completes before emitting data
-            std::thread::sleep(std::time::Duration::from_millis(300));
-
-            // Emit overlay data to the window
-            let overlay_data = serde_json::json!({
-                "layout": layout,
-                "screen": {
-                    "x": screen.x,
-                    "y": screen.y,
-                    "width": screen.width,
-                    "height": screen.height,
-                }
-            });
-            let _ = app_handle.emit("drag-overlay-show", &overlay_data);
-
             // Store window reference
             let mut windows = OVERLAY_WINDOWS.lock().unwrap();
             windows.insert(window_label, window);
@@ -85,7 +89,7 @@ impl ZoneOverlay {
         let mut windows = OVERLAY_WINDOWS.lock().unwrap();
 
         for (_label, window) in windows.drain() {
-            //let _ = window.destroy();
+            let _ = window.destroy();
         }
 
         Ok(())

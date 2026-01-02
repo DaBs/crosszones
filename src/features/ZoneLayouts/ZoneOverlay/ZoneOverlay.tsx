@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { listen } from '@tauri-apps/api/event';
+import { useLocation } from 'wouter';
 import type { Zone, ZoneLayout } from '@/types/zoneLayout';
 import { cn } from '@/lib/utils';
 
@@ -53,38 +54,33 @@ function ZoneOverlayComponent({ zone, hoveredZone, zIndex = 1 }: ZoneOverlayProp
 }
 
 export function ZoneOverlay() {
+  const [location] = useLocation();
   const [overlayData, setOverlayData] = useState<OverlayData | null>(null);
   const [hoveredZone, setHoveredZone] = useState<string | null>(null);
   const [mousePosition, setMousePosition] = useState<{ x: number; y: number } | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
+  // Load overlay data from URL parameters
   useEffect(() => {
-    // Listen for overlay show event with layout and screen data
-    const showUnlisten = listen<OverlayData>('drag-overlay-show', (event) => {
-      setOverlayData(event.payload);
-    });
-
-    // Listen for overlay hide event
-    const hideUnlisten = listen('drag-overlay-hide', () => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const dataParam = urlParams.get('data');
+    
+    if (dataParam) {
+      try {
+        // Decode base64 data
+        const decoded = atob(dataParam);
+        const data: OverlayData = JSON.parse(decoded);
+        setOverlayData(data);
+      } catch (error) {
+        console.error('Failed to parse overlay data from URL:', error);
+        setOverlayData(null);
+      }
+    } else {
       setOverlayData(null);
-      setHoveredZone(null);
-      setMousePosition(null);
-    });
+    }
+  }, [location]);
 
-    // Listen for mouse position updates during drag
-    const mouseUnlisten = listen<{ x: number; y: number }>('drag-overlay-mouse', (event) => {
-      setMousePosition(event.payload);
-      updateHoveredZone(event.payload);
-    });
-
-    return () => {
-      showUnlisten.then((unlisten) => unlisten());
-      hideUnlisten.then((unlisten) => unlisten());
-      mouseUnlisten.then((unlisten) => unlisten());
-    };
-  }, []);
-
-  const updateHoveredZone = (pos: { x: number; y: number }) => {
+  const updateHoveredZone = React.useCallback((pos: { x: number; y: number }) => {
     if (!overlayData || !containerRef.current) {
       setHoveredZone(null);
       return;
@@ -109,13 +105,24 @@ export function ZoneOverlay() {
     });
 
     setHoveredZone(zone?.id || null);
-  };
+  }, [overlayData]);
 
   useEffect(() => {
-    if (mousePosition) {
+    // Listen for mouse position updates during drag
+    const mouseUnlisten = listen<{ x: number; y: number }>('drag-overlay-mouse', (event) => {
+      setMousePosition(event.payload);
+    });
+
+    return () => {
+      mouseUnlisten.then((unlisten) => unlisten());
+    };
+  }, []);
+
+  useEffect(() => {
+    if (mousePosition && overlayData) {
       updateHoveredZone(mousePosition);
     }
-  }, [mousePosition, overlayData]);
+  }, [mousePosition, overlayData, updateHoveredZone]);
 
   // Calculate z-index based on zone size (smaller zones get higher z-index)
   const zoneZIndices = React.useMemo(() => {
@@ -138,11 +145,8 @@ export function ZoneOverlay() {
   }, [overlayData]);
 
   if (!overlayData) {
-    console.log('No overlay data');
     return null;
   }
-
-  console.log('Overlay data', overlayData);
 
   return (
     <div
