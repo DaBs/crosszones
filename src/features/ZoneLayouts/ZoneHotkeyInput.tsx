@@ -16,15 +16,16 @@ export const ZoneHotkeyInput: React.FC<ZoneHotkeyInputProps> = ({ layoutId, onRe
   const [shortcut, setShortcut] = useState<string>('');
   const [recording, setRecording] = useState(false);
 
-  // Create ActivateLayout action as JSON string (serde uses kebab-case: activate-layout)
-  const getActionJson = () => {
-    return JSON.stringify({ "activate-layout": layoutId });
+  // Create ActivateLayout action payload
+  const getActionPayload = () => {
+    return { action: 'activate-layout', layout_id: layoutId };
   };
 
   const loadHotkey = async () => {
     try {
       const allHotkeys = await invoke<[string, string][]>('get_all_hotkeys');
-      const actionJson = getActionJson();
+      const actionPayload = getActionPayload();
+      const actionJson = JSON.stringify(actionPayload);
       
       // Find hotkey that matches this layout action
       const hotkey = allHotkeys.find(([_shortcut, action]) => action === actionJson);
@@ -43,8 +44,8 @@ export const ZoneHotkeyInput: React.FC<ZoneHotkeyInputProps> = ({ layoutId, onRe
       e,
       async (newShortcut: string) => {
         try {
-          // Pass action as object that serde will deserialize (kebab-case: activate-layout)
-          const action = { "activate-layout": layoutId };
+          // Use new ActionPayload structure
+          const action = getActionPayload();
           
           // Unregister existing hotkey for this action if any
           await invoke('unregister_hotkey_action', { action });
@@ -67,7 +68,7 @@ export const ZoneHotkeyInput: React.FC<ZoneHotkeyInputProps> = ({ layoutId, onRe
 
   const handleClear = async () => {
     try {
-      const action = { "activate-layout": layoutId };
+      const action = getActionPayload();
       await invoke('unregister_hotkey_action', { action });
       setShortcut('');
       onRefresh?.();

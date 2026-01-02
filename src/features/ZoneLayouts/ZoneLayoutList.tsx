@@ -7,6 +7,7 @@ import { Plus, Trash2, Edit2 } from 'lucide-react';
 import { ZonePreviewCanvas } from './ZonePreviewCanvas';
 import { ZoneHotkeyInput } from './ZoneHotkeyInput';
 import { DeleteConfirmDialog } from './DeleteConfirmDialog';
+import { useActiveLayout } from './useActiveLayout';
 import { showError } from '@/lib/toast';
 
 interface ZoneLayoutListProps {
@@ -25,6 +26,7 @@ export const ZoneLayoutList: React.FC<ZoneLayoutListProps> = ({
   const [hotkeyRefreshKey, setHotkeyRefreshKey] = useState(0);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [layoutToDelete, setLayoutToDelete] = useState<string | null>(null);
+  const activeLayoutId = useActiveLayout();
 
   const handleHotkeyRefresh = () => {
     setHotkeyRefreshKey(prev => prev + 1);
@@ -83,32 +85,36 @@ export const ZoneLayoutList: React.FC<ZoneLayoutListProps> = ({
         </Card>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-1 lg:grid-cols-2 gap-4">
-          {layouts.map((layout) => (
+          {layouts.map((layout) => {
+            const isActive = activeLayoutId === layout.id;
+            return (
             <Card
               key={layout.id}
-              className="cursor-pointer hover:shadow-md transition-shadow"
+              className={`cursor-pointer hover:shadow-md transition-shadow ${
+                isActive ? 'bg-primary' : ''
+              }`}
             >
               <CardHeader>
                 <CardTitle className="flex items-center justify-between">
-                  <span>{layout.name}</span>
+                  <span className={`${isActive ? 'text-primary-foreground' : ''}`}>{layout.name}</span>
                   <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
                     <Button
                       variant="ghost"
                       size="icon"
                       onClick={() => onLayoutSelect(layout)}
                     >
-                      <Edit2 className="h-4 w-4" />
+                      <Edit2 className={`h-4 w-4 ${isActive ? 'text-primary-foreground' : 'text-muted-foreground'}`} />
                     </Button>
                     <Button
                       variant="ghost"
                       size="icon"
                       onClick={(e) => handleDeleteClick(layout.id, e)}
                     >
-                      <Trash2 className="h-4 w-4" />
+                      <Trash2 className={`h-4 w-4 ${isActive ? 'text-primary-foreground' : 'text-muted-foreground'}`} />
                     </Button>
                   </div>
                 </CardTitle>
-                <CardDescription>
+                <CardDescription className={`${isActive ? 'text-primary-foreground' : ''}`}>
                   {layout.zones.length} zone{layout.zones.length !== 1 ? 's' : ''}
                 </CardDescription>
               </CardHeader>
@@ -121,7 +127,7 @@ export const ZoneLayoutList: React.FC<ZoneLayoutListProps> = ({
                   />
                   <div className="space-y-2 pt-2 border-t">
                     <div className="flex items-center justify-between text-xs">
-                      <span className="font-medium text-muted-foreground">Activate Layout</span>
+                      <span className={`font-medium ${isActive ? 'text-primary-foreground' : 'text-muted-foreground'}`}>Activate Layout</span>
                       <ZoneHotkeyInput 
                         key={`${layout.id}-${hotkeyRefreshKey}`}
                         layoutId={layout.id} 
@@ -132,7 +138,8 @@ export const ZoneLayoutList: React.FC<ZoneLayoutListProps> = ({
                 </CardContent>
               )}
             </Card>
-          ))}
+            );
+          })}
         </div>
       )}
       </div>

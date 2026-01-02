@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { getVersion } from '@tauri-apps/api/app';
+import { invoke } from '@tauri-apps/api/core';
 import { Button } from '../ui/button';
 import { getSetting, setSettings as setSettingsStore, SettingsKey } from '../../lib/store/settings';
 import { Settings } from '../../../src-tauri/bindings/Settings';
@@ -125,6 +126,8 @@ export const SettingsOverlay: React.FC<SettingsOverlayProps> = ({ open }) => {
             close_to_system_tray: false,
             show_layout_activation_notification: false,
           });
+          // Also clear all hotkeys
+          await invoke('clear_all_hotkeys');
         }}>Reset settings</Button>
       </div>
       <div className="container mx-auto p-6 max-w-2xl pt-16">

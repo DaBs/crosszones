@@ -9,6 +9,7 @@ export const HOTKEY_GROUPS = {
   FOURTH_CONTROLS: 'Fourth Controls',
   SIXTH_CONTROLS: 'Sixth Controls',
   MOVEMENT_CONTROLS: 'Movement Controls',
+  CUSTOM_LAYOUT_ZONES: 'Custom Layout Zones',
 };
 
 export const AVAILABLE_HOTKEYS: HotkeyConfig[] = [
@@ -65,4 +66,18 @@ export const AVAILABLE_HOTKEYS: HotkeyConfig[] = [
   { name: 'Bottom Left Sixth', shortcut: '', layoutAction: LayoutAction.BottomLeftSixth, group: HOTKEY_GROUPS.SIXTH_CONTROLS },
   { name: 'Bottom Middle Sixth', shortcut: '', layoutAction: LayoutAction.BottomCenterSixth, group: HOTKEY_GROUPS.SIXTH_CONTROLS },
   { name: 'Bottom Right Sixth', shortcut: '', layoutAction: LayoutAction.BottomRightSixth, group: HOTKEY_GROUPS.SIXTH_CONTROLS },
+
+  // Custom Layout Zones
+  { name: 'Zone 1', shortcut: '', layoutAction: null, zoneNumber: 1, group: HOTKEY_GROUPS.CUSTOM_LAYOUT_ZONES },
+  { name: 'Zone 2', shortcut: '', layoutAction: null, zoneNumber: 2, group: HOTKEY_GROUPS.CUSTOM_LAYOUT_ZONES },
+  { name: 'Zone 3', shortcut: '', layoutAction: null, zoneNumber: 3, group: HOTKEY_GROUPS.CUSTOM_LAYOUT_ZONES },
+  { name: 'Zone 4', shortcut: '', layoutAction: null, zoneNumber: 4, group: HOTKEY_GROUPS.CUSTOM_LAYOUT_ZONES },
+  { name: 'Zone 5', shortcut: '', layoutAction: null, zoneNumber: 5, group: HOTKEY_GROUPS.CUSTOM_LAYOUT_ZONES },
+  { name: 'Zone 6', shortcut: '', layoutAction: null, zoneNumber: 6, group: HOTKEY_GROUPS.CUSTOM_LAYOUT_ZONES },
+  { name: 'Zone 7', shortcut: '', layoutAction: null, zoneNumber: 7, group: HOTKEY_GROUPS.CUSTOM_LAYOUT_ZONES },
+  { name: 'Zone 8', shortcut: '', layoutAction: null, zoneNumber: 8, group: HOTKEY_GROUPS.CUSTOM_LAYOUT_ZONES },
+  { name: 'Zone 9', shortcut: '', layoutAction: null, zoneNumber: 9, group: HOTKEY_GROUPS.CUSTOM_LAYOUT_ZONES },
+  { name: 'Zone 10', shortcut: '', layoutAction: null, zoneNumber: 10, group: HOTKEY_GROUPS.CUSTOM_LAYOUT_ZONES },
+  { name: 'Zone 11', shortcut: '', layoutAction: null, zoneNumber: 11, group: HOTKEY_GROUPS.CUSTOM_LAYOUT_ZONES },
+  { name: 'Zone 12', shortcut: '', layoutAction: null, zoneNumber: 12, group: HOTKEY_GROUPS.CUSTOM_LAYOUT_ZONES },
 ];
