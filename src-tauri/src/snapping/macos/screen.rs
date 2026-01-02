@@ -40,7 +40,7 @@ fn rect_contained_percentage(rect: CGRect, screen: &DisplayInfo) -> f64 {
 }
 
 fn screen_with_rect(rect: CGRect, screens: Vec<DisplayInfo>) -> Result<DisplayInfo, String> {
-    let mut return_screen = screens.first().unwrap().clone();
+    let mut return_screen = screens.first().ok_or("No screens found")?.clone();
     let mut rect_contained_highest_percentage = 0.0;
     for screen in screens {
         let rect_contained_percentage = rect_contained_percentage(rect, &screen);
@@ -55,7 +55,7 @@ fn screen_with_rect(rect: CGRect, screens: Vec<DisplayInfo>) -> Result<DisplayIn
 // Helper function to get screen dimensions
 pub fn get_screen_dimensions(element: &AXUIElement) -> Result<ScreenDimensions, String> {
     let screens = DisplayInfo::all().map_err(|e| e.to_string())?;
-    let screen = screens.first().unwrap();
+    let screen = screens.first().ok_or("No screens found")?;
 
     println!("screens: {:?}", screens);
 
