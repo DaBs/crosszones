@@ -39,13 +39,13 @@ function ZoneOverlayComponent({ zone, hoveredZone, zIndex = 1 }: ZoneOverlayProp
         'absolute rounded-lg flex items-center justify-center pointer-events-none',
         isHovered
           ? 'border-[3px] border-primary/80 bg-primary/80'
-          : 'border-2 border-primary/40 bg-primary/20'
+          : 'border-2 border-primary/40 bg-secondary/60'
       )}
       style={getZoneStyle()}
     >
       {/* Zone number displayed in center */}
       <div className="flex flex-col items-center justify-center text-center">
-        <div className="text-4xl font-bold text-white drop-shadow-lg">
+        <div className="text-8xl font-bold text-white drop-shadow-lg">
           {zone.number}
         </div>
       </div>
@@ -79,6 +79,7 @@ export function ZoneOverlay() {
       setOverlayData(null);
     }
   }, [location]);
+  
 
   const updateHoveredZone = React.useCallback((pos: { x: number; y: number }) => {
     if (!overlayData || !containerRef.current) {
@@ -87,12 +88,15 @@ export function ZoneOverlay() {
     }
 
     const containerRect = containerRef.current.getBoundingClientRect();
-    const relativeX = pos.x - containerRect.left;
-    const relativeY = pos.y - containerRect.top;
+    // pos.x and pos.y are in screen coordinates
+    // containerRect is relative to viewport, but since overlay window is fullscreen at screen.x, screen.y
+    // we need to convert screen coordinates to container-relative coordinates
+    const relativeX = pos.x - overlayData.screen.x;
+    const relativeY = pos.y - overlayData.screen.y;
 
     // Convert to percentage
-    const xPercent = (relativeX / containerRect.width) * 100;
-    const yPercent = (relativeY / containerRect.height) * 100;
+    const xPercent = (relativeX / overlayData.screen.width) * 100;
+    const yPercent = (relativeY / overlayData.screen.height) * 100;
 
     // Find zone at position
     const zone = overlayData.layout.zones.find((z) => {
