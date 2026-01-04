@@ -1,14 +1,17 @@
-use std::sync::{LazyLock, Mutex};
+use std::sync::{LazyLock, Mutex, Arc};
 use std::thread;
+use std::sync::atomic::{AtomicBool, Ordering};
 use serde_json;
 use tauri::AppHandle;
+use willhook::{InputEvent, MouseButton, MouseButtonPress, MouseClick, MouseEvent, MouseEventType, MouseMoveEvent, MousePressEvent, mouse_hook};
+use windows::Win32::UI::WindowsAndMessaging::GetCursorPos;
 use windows::{
     Win32::{
-        Foundation::{HWND, LPARAM, LRESULT, POINT, WPARAM},
+        Foundation::{HWND, POINT},
         UI::{
             WindowsAndMessaging::{
-                CallNextHookEx, SetWindowsHookExW, SetWindowPos,
-                WindowFromPoint, WH_MOUSE_LL, WM_LBUTTONDOWN, WM_LBUTTONUP, WM_MOUSEMOVE, MSLLHOOKSTRUCT,
+                SetWindowPos,
+                WindowFromPoint,
                 HWND_TOPMOST, HWND_NOTOPMOST, SWP_NOMOVE, SWP_NOSIZE, SWP_NOACTIVATE,
             },
             Input::KeyboardAndMouse::GetAsyncKeyState,
@@ -22,7 +25,6 @@ use crate::snapping::action::LayoutAction;
 use crate::snapping::windows::snap_window_with_handle;
 use crate::drag_drop::overlay::ZoneOverlay;
 
-static HOOK_HANDLE: Mutex<Option<isize>> = Mutex::new(None);
 static APP_HANDLE: Mutex<Option<AppHandle>> = Mutex::new(None);
 static DRAGGING: Mutex<bool> = Mutex::new(false);
 static DRAG_START_POS: Mutex<Option<(i32, i32)>> = Mutex::new(None);
@@ -31,224 +33,264 @@ static MODIFIER_PRESSED_DURING_DRAG: Mutex<bool> = Mutex::new(false);
 static OVERLAY_SHOWING: Mutex<bool> = Mutex::new(false);
 static OVERLAY_OPERATION_LOCK: Mutex<()> = Mutex::new(());
 static OVERLAY: LazyLock<ZoneOverlay> = LazyLock::new(|| ZoneOverlay::new());
+static RUNNING: AtomicBool = AtomicBool::new(false);
 
 pub fn start_drag_detection(app_handle: AppHandle) -> Result<(), String> {
     let mut app_handle_guard = APP_HANDLE.lock().unwrap();
+    
+    // If already running, don't start again
+    if RUNNING.load(Ordering::SeqCst) {
+        return Ok(());
+    }
+    
     *app_handle_guard = Some(app_handle.clone());
     drop(app_handle_guard);
 
-    unsafe {
-        let hook = SetWindowsHookExW(
-            WH_MOUSE_LL,
-            Some(mouse_hook_proc),
-            None,
-            0,
-        );
+    // Create the mouse hook using willhook
+    let hook = match mouse_hook() {
+        Some(h) => h,
+        None => return Err("Failed to create mouse hook".to_string()),
+    };
 
-        if hook.is_err() {
-            return Err("Failed to set mouse hook".to_string());
-        }
-
-        let mut hook_handle = HOOK_HANDLE.lock().unwrap();
-        *hook_handle = Some(hook.unwrap().0 as *mut std::ffi::c_void as isize);
-        drop(hook_handle);
-    }
-
+    // Store the hook in an Arc so we can share it with the event loop thread
+    let hook_arc = Arc::new(hook);
+    let hook_for_thread = hook_arc.clone();
+    
+    RUNNING.store(true, Ordering::SeqCst);
+    let running_flag = Arc::new(AtomicBool::new(true));
+    let running_for_thread = running_flag.clone();
+    
+    // Spawn a background thread to process mouse events
+    thread::spawn(move || {
+        event_loop(hook_for_thread, running_for_thread);
+    });
+    
+    // Store the hook so it doesn't get dropped (which would unhook it)
+    // We'll keep it alive by storing it in a static or ensuring the thread keeps it alive
+    // Since the thread has the Arc, it will keep the hook alive
+    std::mem::forget(hook_arc); // Keep the hook alive for the lifetime of the program
+    
     Ok(())
 }
 
-unsafe extern "system" fn mouse_hook_proc(
-    n_code: i32,
-    w_param: WPARAM,
-    l_param: LPARAM,
-) -> LRESULT {
-    if n_code >= 0 {
-        let app_handle_guard = APP_HANDLE.lock().unwrap();
-        let app_handle = match app_handle_guard.as_ref() {
-            Some(h) => h.clone(),
-            None => return CallNextHookEx(None, n_code, w_param, l_param),
-        };
-        drop(app_handle_guard);
-
-        match w_param.0 as u32 {
-            WM_LBUTTONDOWN => {
-                // Track any window drag, regardless of modifier key state
-                let hook_struct = unsafe { &*(l_param.0 as *const MSLLHOOKSTRUCT) };
-                let hwnd = unsafe {
-                    WindowFromPoint(POINT {
-                        x: hook_struct.pt.x,
-                        y: hook_struct.pt.y,
-                    })
-                };
-
-                if hwnd.0 != std::ptr::null_mut() {
-                    // Start tracking the drag
-                    let mut dragging = DRAGGING.lock().unwrap();
-                    *dragging = true;
-                    drop(dragging);
-
-                    let hook_struct = unsafe { &*(l_param.0 as *const MSLLHOOKSTRUCT) };
-                    let mut drag_start = DRAG_START_POS.lock().unwrap();
-                    *drag_start = Some((hook_struct.pt.x, hook_struct.pt.y));
-                    drop(drag_start);
-
-                    let mut dragged_window = DRAGGED_WINDOW.lock().unwrap();
-                    *dragged_window = Some(hwnd.0 as *mut std::ffi::c_void as isize);
-                    drop(dragged_window);
-
-                    // Bring the dragged window to the topmost position, above the overlay
-                    unsafe {
-                        SetWindowPos(
-                            hwnd,
-                            Some(HWND_TOPMOST),
-                            0,
-                            0,
-                            0,
-                            0,
-                            SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE,
-                        );
-                    }
-
-                    // Initialize modifier state
-                    let mut modifier_pressed = MODIFIER_PRESSED_DURING_DRAG.lock().unwrap();
-                    *modifier_pressed = false;
-                    drop(modifier_pressed);
-
-                    // Reset overlay state
-                    let mut showing = OVERLAY_SHOWING.lock().unwrap();
-                    *showing = false;
-                    drop(showing);
-
-                    // Check initial modifier state and update overlay
-                    check_and_update_modifier_state(&app_handle, hwnd);
-                }
+fn event_loop(hook: Arc<willhook::Hook>, running: Arc<AtomicBool>) {
+    while running.load(Ordering::SeqCst) {
+        // Try to receive an event from the hook
+        if let Ok(event) = hook.try_recv() {
+            if let InputEvent::Mouse(mouse_event) = event {
+                handle_mouse_event(mouse_event);
             }
-            WM_MOUSEMOVE => {
-                let dragging = DRAGGING.lock().unwrap();
-                if !*dragging {
-                    return CallNextHookEx(None, n_code, w_param, l_param);
-                }
-                drop(dragging);
-
-                // Get mouse position
-                let hook_struct = unsafe { &*(l_param.0 as *const MSLLHOOKSTRUCT) };
-                let mouse_x = hook_struct.pt.x;
-                let mouse_y = hook_struct.pt.y;
-
-                // Update overlay with mouse position
-                let _ = OVERLAY.update_mouse_position(mouse_x, mouse_y);
-
-                // Check modifier state during drag and update overlay
-                let dragged_window = DRAGGED_WINDOW.lock().unwrap();
-                if let Some(hwnd_value) = dragged_window.as_ref() {
-                    let hwnd = HWND((*hwnd_value as *mut std::ffi::c_void) as *mut _);
-                    drop(dragged_window);
-                    
-                    // Keep dragged window above overlay during drag (maintain topmost)
-                    unsafe {
-                        SetWindowPos(
-                            hwnd,
-                            Some(HWND_TOPMOST),
-                            0,
-                            0,
-                            0,
-                            0,
-                            SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE,
-                        );
-                    }
-                    
-                    check_and_update_modifier_state(&app_handle, hwnd);
-                } else {
-                    drop(dragged_window);
-                }
-            }
-            WM_LBUTTONUP => {
-                let dragging = DRAGGING.lock().unwrap();
-                if !*dragging {
-                    return CallNextHookEx(None, n_code, w_param, l_param);
-                }
-                drop(dragging);
-
-                let dragged_window = DRAGGED_WINDOW.lock().unwrap();
-                let hwnd = dragged_window.as_ref().map(|h| HWND((*h as *mut std::ffi::c_void) as *mut _));
-                drop(dragged_window);
-
-                // Check if modifier was ever pressed during the drag
-                let modifier_was_pressed = {
-                    let modifier_pressed = MODIFIER_PRESSED_DURING_DRAG.lock().unwrap();
-                    *modifier_pressed
-                };
-
-                // Hide overlay (spawn thread to avoid blocking hook callback)
-                thread::spawn(move || {
-                    let _operation_lock = OVERLAY_OPERATION_LOCK.lock().unwrap();
-                    let _ = OVERLAY.hide();
-                    let mut showing = OVERLAY_SHOWING.lock().unwrap();
-                    *showing = false;
-                });
-
-                if let Some(hwnd) = hwnd {
-                    // Remove topmost flag from dragged window after drag ends
-                    unsafe {
-                        SetWindowPos(
-                            hwnd,
-                            Some(HWND_NOTOPMOST),
-                            0,
-                            0,
-                            0,
-                            0,
-                            SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE,
-                        );
-                    }
-                    // Only snap if modifier was pressed at some point during the drag
-                    if modifier_was_pressed {
-                        // Get mouse position
-                        let hook_struct = unsafe { &*(l_param.0 as *const MSLLHOOKSTRUCT) };
-                        let mouse_x = hook_struct.pt.x;
-                        let mouse_y = hook_struct.pt.y;
-
-                        println!("Dropping window at mouse position: ({}, {})", mouse_x, mouse_y);
-
-                        // Store HWND value as isize for thread safety
-                        let hwnd_value = hwnd.0 as isize;
-
-                        // Let Windows process WM_LBUTTONUP normally to complete the drag operation,
-                        // then handle the drop asynchronously after Windows has finished
-                        let app_handle_clone = app_handle.clone();
-                        thread::spawn(move || {
-                            // Wait for Windows to finish processing the drag operation
-                            thread::sleep(std::time::Duration::from_millis(10));
-                            // Reconstruct HWND from the stored value
-                            let hwnd = HWND(hwnd_value as *mut _);
-                            if let Err(e) = handle_drop(&app_handle_clone, hwnd, mouse_x, mouse_y) {
-                                eprintln!("Failed to handle drop: {}", e);
-                            }
-                        });
-                    }
-                }
-
-                // Clear dragging state after handling (whether hwnd was Some or None)
-                let mut dragging = DRAGGING.lock().unwrap();
-                *dragging = false;
-                drop(dragging);
-
-                let mut drag_start = DRAG_START_POS.lock().unwrap();
-                *drag_start = None;
-                drop(drag_start);
-
-                let mut dragged_window = DRAGGED_WINDOW.lock().unwrap();
-                *dragged_window = None;
-                drop(dragged_window);
-
-                let mut modifier_pressed = MODIFIER_PRESSED_DURING_DRAG.lock().unwrap();
-                *modifier_pressed = false;
-                drop(modifier_pressed);
-            }
-            _ => {}
+        } else {
+            // No event available, yield to avoid busy-waiting
+            thread::yield_now();
         }
     }
+}
 
-    CallNextHookEx(None, n_code, w_param, l_param)
+fn handle_mouse_event(mouse_event: MouseEvent) {
+    let app_handle_guard = APP_HANDLE.lock().unwrap();
+    let app_handle = match app_handle_guard.as_ref() {
+        Some(h) => h.clone(),
+        None => return,
+    };
+    drop(app_handle_guard);
+    
+    // Match on the mouse event type
+    match mouse_event.event {
+        MouseEventType::Press(MousePressEvent { pressed, button }) => {
+          if button != MouseButton::Left(MouseClick::SingleClick) {
+            return;
+          }
+
+          let mut point = POINT { x: 0, y: 0 };
+          unsafe { GetCursorPos(&mut point) };
+          let x = point.x;
+          let y = point.y;
+
+          match pressed {
+            MouseButtonPress::Down => {
+              handle_left_button_down(&app_handle, x, y);
+            }
+            MouseButtonPress::Up => {
+              handle_left_button_up(&app_handle, x, y);
+            }
+            _ => {
+              // Ignore other mouse button press events
+            }
+          }
+        }
+        MouseEventType::Move(MouseMoveEvent { point }) => {
+            if let Some(point) = point {
+                handle_mouse_move(&app_handle, point.x, point.y);
+            }
+        },
+        _ => {
+            // Ignore other mouse events
+        }
+    }
+}
+
+fn handle_left_button_down(app_handle: &AppHandle, x: i32, y: i32) {
+    // Get the window under the mouse cursor
+    let hwnd = unsafe {
+        WindowFromPoint(POINT { x, y })
+    };
+    
+    if hwnd.0 == std::ptr::null_mut() {
+        return;
+    }
+    
+    // Start tracking the drag
+    let mut dragging = DRAGGING.lock().unwrap();
+    *dragging = true;
+    drop(dragging);
+    
+    let mut drag_start = DRAG_START_POS.lock().unwrap();
+    *drag_start = Some((x, y));
+    drop(drag_start);
+    
+    let mut dragged_window = DRAGGED_WINDOW.lock().unwrap();
+    *dragged_window = Some(hwnd.0 as isize);
+    drop(dragged_window);
+    
+    // Bring the dragged window to the topmost position, above the overlay
+    unsafe {
+        SetWindowPos(
+            hwnd,
+            Some(HWND_TOPMOST),
+            0,
+            0,
+            0,
+            0,
+            SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE,
+        );
+    }
+    
+    // Initialize modifier state
+    let mut modifier_pressed = MODIFIER_PRESSED_DURING_DRAG.lock().unwrap();
+    *modifier_pressed = false;
+    drop(modifier_pressed);
+    
+    // Reset overlay state
+    let mut showing = OVERLAY_SHOWING.lock().unwrap();
+    *showing = false;
+    drop(showing);
+    
+    // Check initial modifier state and update overlay
+    check_and_update_modifier_state(app_handle, hwnd);
+}
+
+fn handle_mouse_move(app_handle: &AppHandle, x: i32, y: i32) {
+    let dragging = DRAGGING.lock().unwrap();
+    if !*dragging {
+        return;
+    }
+    drop(dragging);
+    
+    // Update overlay with mouse position
+    let _ = OVERLAY.update_mouse_position(x, y);
+    
+    // Check modifier state during drag and update overlay
+    let dragged_window = DRAGGED_WINDOW.lock().unwrap();
+    if let Some(hwnd_value) = dragged_window.as_ref() {
+        let hwnd = HWND(*hwnd_value as *mut _);
+        drop(dragged_window);
+        
+        // Keep dragged window above overlay during drag (maintain topmost)
+        unsafe {
+            SetWindowPos(
+                hwnd,
+                Some(HWND_TOPMOST),
+                0,
+                0,
+                0,
+                0,
+                SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE,
+            );
+        }
+        
+        check_and_update_modifier_state(app_handle, hwnd);
+    } else {
+        drop(dragged_window);
+    }
+}
+
+fn handle_left_button_up(app_handle: &AppHandle, x: i32, y: i32) {
+    let dragging = DRAGGING.lock().unwrap();
+    if !*dragging {
+        return;
+    }
+    drop(dragging);
+    
+    let dragged_window = DRAGGED_WINDOW.lock().unwrap();
+    let hwnd = dragged_window.as_ref().map(|h| HWND(*h as *mut _));
+    drop(dragged_window);
+    
+    // Check if modifier was ever pressed during the drag
+    let modifier_was_pressed = {
+        let modifier_pressed = MODIFIER_PRESSED_DURING_DRAG.lock().unwrap();
+        *modifier_pressed
+    };
+    
+    // Hide overlay (spawn thread to avoid blocking)
+    thread::spawn(move || {
+        let _operation_lock = OVERLAY_OPERATION_LOCK.lock().unwrap();
+        let _ = OVERLAY.hide();
+        let mut showing = OVERLAY_SHOWING.lock().unwrap();
+        *showing = false;
+    });
+    
+    if let Some(hwnd) = hwnd {
+        // Remove topmost flag from dragged window after drag ends
+        unsafe {
+            SetWindowPos(
+                hwnd,
+                Some(HWND_NOTOPMOST),
+                0,
+                0,
+                0,
+                0,
+                SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE,
+            );
+        }
+        // Only snap if modifier was pressed at some point during the drag
+        if modifier_was_pressed {
+            println!("Dropping window at mouse position: ({}, {})", x, y);
+            
+            // Store HWND value as isize for thread safety
+            let hwnd_value = hwnd.0 as isize;
+            
+            // Let Windows process the button up event normally,
+            // then handle the drop asynchronously after Windows has finished
+            let app_handle_clone = app_handle.clone();
+            thread::spawn(move || {
+                // Wait for Windows to finish processing the drag operation
+                thread::sleep(std::time::Duration::from_millis(10));
+                // Reconstruct HWND from the stored value
+                let hwnd = HWND(hwnd_value as *mut _);
+                if let Err(e) = handle_drop(&app_handle_clone, hwnd, x, y) {
+                    eprintln!("Failed to handle drop: {}", e);
+                }
+            });
+        }
+    }
+    
+    // Clear dragging state after handling (whether hwnd was Some or None)
+    let mut dragging = DRAGGING.lock().unwrap();
+    *dragging = false;
+    drop(dragging);
+    
+    let mut drag_start = DRAG_START_POS.lock().unwrap();
+    *drag_start = None;
+    drop(drag_start);
+    
+    let mut dragged_window = DRAGGED_WINDOW.lock().unwrap();
+    *dragged_window = None;
+    drop(dragged_window);
+    
+    let mut modifier_pressed = MODIFIER_PRESSED_DURING_DRAG.lock().unwrap();
+    *modifier_pressed = false;
+    drop(modifier_pressed);
 }
 
 fn check_and_update_modifier_state(app_handle: &AppHandle, hwnd: HWND) {
@@ -279,7 +321,7 @@ fn check_and_update_modifier_state(app_handle: &AppHandle, hwnd: HWND) {
         drop(modifier_flag);
     }
 
-    // Spawn thread for expensive overlay operations so we can return to Windows quickly
+    // Spawn thread for expensive overlay operations so we can return quickly
     let app_handle_clone = app_handle.clone();
     let hwnd_value = hwnd.0 as isize; // Store HWND as isize for thread safety
     
