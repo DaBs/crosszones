@@ -29,6 +29,7 @@ static DRAG_START_POS: Mutex<Option<(i32, i32)>> = Mutex::new(None);
 static DRAGGED_WINDOW: Mutex<Option<isize>> = Mutex::new(None);
 static MODIFIER_PRESSED_DURING_DRAG: Mutex<bool> = Mutex::new(false);
 static OVERLAY_SHOWING: Mutex<bool> = Mutex::new(false);
+static OVERLAY_OPERATION_LOCK: Mutex<()> = Mutex::new(());
 static OVERLAY: LazyLock<ZoneOverlay> = LazyLock::new(|| ZoneOverlay::new());
 
 pub fn start_drag_detection(app_handle: AppHandle) -> Result<(), String> {
@@ -178,11 +179,13 @@ unsafe extern "system" fn mouse_hook_proc(
                     *modifier_pressed
                 };
 
-                // Hide overlay
-                let _ = OVERLAY.hide();
-                let mut showing = OVERLAY_SHOWING.lock().unwrap();
-                *showing = false;
-                drop(showing);
+                // Hide overlay (spawn thread to avoid blocking hook callback)
+                thread::spawn(move || {
+                    let _operation_lock = OVERLAY_OPERATION_LOCK.lock().unwrap();
+                    let _ = OVERLAY.hide();
+                    let mut showing = OVERLAY_SHOWING.lock().unwrap();
+                    *showing = false;
+                });
 
                 if let Some(hwnd) = hwnd {
                     // Remove topmost flag from dragged window after drag ends
@@ -249,6 +252,7 @@ unsafe extern "system" fn mouse_hook_proc(
 }
 
 fn check_and_update_modifier_state(app_handle: &AppHandle, hwnd: HWND) {
+    // Fast path: Check modifier key state quickly
     let settings_store = match SettingsStore::new(app_handle) {
         Ok(s) => s,
         Err(_) => return,
@@ -259,7 +263,7 @@ fn check_and_update_modifier_state(app_handle: &AppHandle, hwnd: HWND) {
         _ => return,
     };
 
-    // Check if the modifier key is currently pressed
+    // Check if the modifier key is currently pressed (fast operation)
     let modifier_pressed = match modifier_key.as_str() {
         "control" => unsafe { GetAsyncKeyState(0x11) & 0x8000u16 as i16 != 0 }, // VK_CONTROL
         "alt" => unsafe { GetAsyncKeyState(0x12) & 0x8000u16 as i16 != 0 },     // VK_MENU
@@ -268,42 +272,54 @@ fn check_and_update_modifier_state(app_handle: &AppHandle, hwnd: HWND) {
         _ => false,
     };
 
-    // Update the flag if modifier is pressed
+    // Update the flag if modifier is pressed (fast operation)
     if modifier_pressed {
         let mut modifier_flag = MODIFIER_PRESSED_DURING_DRAG.lock().unwrap();
         *modifier_flag = true;
         drop(modifier_flag);
     }
 
-    // Show or hide overlay based on modifier state
-    let overlay_showing = {
-        let showing = OVERLAY_SHOWING.lock().unwrap();
-        *showing
-    };
-
-    if modifier_pressed {
-        // Only show overlay if it's not already showing
-        if !overlay_showing {
-            // Get active zone layout for overlay
-            if let Ok(Some(active_layout_id)) = zone_layouts::get_active_zone_layout_id(app_handle.clone()) {
-                if let Ok(Some(layout)) = zone_layouts::get_zone_layout(app_handle.clone(), active_layout_id) {
-                    if let Ok(screen) = get_screen_dimensions_for_window(hwnd) {
-                        if OVERLAY.show(app_handle, &layout, screen).is_ok() {
-                            let mut showing = OVERLAY_SHOWING.lock().unwrap();
-                            *showing = true;
+    // Spawn thread for expensive overlay operations so we can return to Windows quickly
+    let app_handle_clone = app_handle.clone();
+    let hwnd_value = hwnd.0 as isize; // Store HWND as isize for thread safety
+    
+    thread::spawn(move || {
+        // Reconstruct HWND from stored value
+        let hwnd = HWND(hwnd_value as *mut _);
+        
+        // Serialize overlay operations to prevent race conditions
+        let _operation_lock = OVERLAY_OPERATION_LOCK.lock().unwrap();
+        
+        // Check overlay state inside thread to get most up-to-date value
+        let overlay_showing = {
+            let showing = OVERLAY_SHOWING.lock().unwrap();
+            *showing
+        };
+        
+        if modifier_pressed {
+            // Only show overlay if it's not already showing
+            if !overlay_showing {
+                // Get active zone layout for overlay (expensive operation)
+                if let Ok(Some(active_layout_id)) = zone_layouts::get_active_zone_layout_id(app_handle_clone.clone()) {
+                    if let Ok(Some(layout)) = zone_layouts::get_zone_layout(app_handle_clone.clone(), active_layout_id) {
+                        if let Ok(screen) = get_screen_dimensions_for_window(hwnd) {
+                            if OVERLAY.show(&app_handle_clone, &layout, screen).is_ok() {
+                                let mut showing = OVERLAY_SHOWING.lock().unwrap();
+                                *showing = true;
+                            }
                         }
                     }
                 }
             }
+        } else {
+            // Hide overlay if modifier is not pressed and overlay is showing
+            if overlay_showing {
+                let _ = OVERLAY.hide();
+                let mut showing = OVERLAY_SHOWING.lock().unwrap();
+                *showing = false;
+            }
         }
-    } else {
-        // Hide overlay if modifier is not pressed and overlay is showing
-        if overlay_showing {
-            let _ = OVERLAY.hide();
-            let mut showing = OVERLAY_SHOWING.lock().unwrap();
-            *showing = false;
-        }
-    }
+    });
 }
 
 fn handle_drop(app_handle: &AppHandle, hwnd: HWND, x: i32, y: i32) -> Result<(), String> {
