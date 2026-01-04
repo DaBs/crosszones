@@ -236,10 +236,7 @@ fn handle_left_button_up() {
     drop(dragging);
     
     // Get current mouse position
-    let (x, y) = match get_current_mouse_position() {
-        Some(pos) => pos,
-        None => (0.0, 0.0), // Fallback
-    };
+    let (x, y) = get_current_mouse_position().unwrap_or((0.0, 0.0));
     
     // Check if modifier was ever pressed during the drag
     let modifier_was_pressed = {
@@ -335,32 +332,43 @@ fn check_and_update_modifier_state(app_handle: &AppHandle, _window: &AXUIElement
         
         // Get the frontmost window - this is called from a thread spawned from handle_event_on_main_thread
         // which runs on main thread, so we're already on main thread
-        let overlay_window = get_frontmost_window().ok();
-        
-        if modifier_pressed {
-            // Only show overlay if it's not already showing
-            if !overlay_showing {
-                if let Some(ref win) = overlay_window {
-                    // Get active zone layout for overlay (expensive operation)
-                    if let Ok(Some(active_layout_id)) = zone_layouts::get_active_zone_layout_id(app_handle_clone.clone()) {
-                        if let Ok(Some(layout)) = zone_layouts::get_zone_layout(app_handle_clone.clone(), active_layout_id) {
-                            if let Ok(screen) = get_screen_dimensions_for_window(win) {
-                                if OVERLAY.show(&app_handle_clone, &layout, screen).is_ok() {
-                                    let mut showing = OVERLAY_SHOWING.lock().unwrap();
-                                    *showing = true;
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        } else {
-            // Hide overlay if modifier is not pressed and overlay is showing
-            if overlay_showing {
-                let _ = OVERLAY.hide();
-                let mut showing = OVERLAY_SHOWING.lock().unwrap();
-                *showing = false;
-            }
+        let dragged_window = get_frontmost_window().ok();
+
+        // If no modifier, handle it here, potentially hiding the overlay
+        if !modifier_pressed {
+          if overlay_showing {
+            let _ = OVERLAY.hide();
+            let mut showing = OVERLAY_SHOWING.lock().unwrap();
+            *showing = false;
+          }
+          return;
+        }
+
+        // Else, if the overlay is showing or the dragged window is not found, just return
+        if overlay_showing || dragged_window.is_none() {
+          return;
+        }
+
+        // Get active zone layout, or return if not found
+        let active_layout_id = match zone_layouts::get_active_zone_layout_id(app_handle_clone.clone()) {
+          Ok(Some(id)) => id,
+          _ => return,
+        };
+
+        // Get zone layout, or return if not found
+        let layout = match zone_layouts::get_zone_layout(app_handle_clone.clone(), active_layout_id) {
+          Ok(Some(l)) => l,
+          _ => return,
+        };
+
+        let screen = match get_screen_dimensions_for_window(dragged_window.as_ref().unwrap()) {
+          Ok(s) => s,
+          _ => return,
+        };
+
+        if OVERLAY.show(&app_handle_clone, &layout, screen).is_ok() {
+          let mut showing = OVERLAY_SHOWING.lock().unwrap();
+          *showing = true;
         }
     });
 }

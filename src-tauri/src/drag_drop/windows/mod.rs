@@ -338,28 +338,41 @@ fn check_and_update_modifier_state(app_handle: &AppHandle, hwnd: HWND) {
             *showing
         };
         
-        if modifier_pressed {
-            // Only show overlay if it's not already showing
-            if !overlay_showing {
-                // Get active zone layout for overlay (expensive operation)
-                if let Ok(Some(active_layout_id)) = zone_layouts::get_active_zone_layout_id(app_handle_clone.clone()) {
-                    if let Ok(Some(layout)) = zone_layouts::get_zone_layout(app_handle_clone.clone(), active_layout_id) {
-                        if let Ok(screen) = get_screen_dimensions_for_window(hwnd) {
-                            if OVERLAY.show(&app_handle_clone, &layout, screen).is_ok() {
-                                let mut showing = OVERLAY_SHOWING.lock().unwrap();
-                                *showing = true;
-                            }
-                        }
-                    }
-                }
-            }
-        } else {
-            // Hide overlay if modifier is not pressed and overlay is showing
+        // If no modifier, handle it here, potentially hiding the overlay
+        if !modifier_pressed {
             if overlay_showing {
                 let _ = OVERLAY.hide();
                 let mut showing = OVERLAY_SHOWING.lock().unwrap();
                 *showing = false;
             }
+            return;
+        }
+
+        // Else, if the overlay is showing, just return
+        if overlay_showing {
+            return;
+        }
+
+        // Get active zone layout, or return if not found
+        let active_layout_id = match zone_layouts::get_active_zone_layout_id(app_handle_clone.clone()) {
+            Ok(Some(id)) => id,
+            _ => return,
+        };
+
+        // Get zone layout, or return if not found
+        let layout = match zone_layouts::get_zone_layout(app_handle_clone.clone(), active_layout_id) {
+            Ok(Some(l)) => l,
+            _ => return,
+        };
+
+        let screen = match get_screen_dimensions_for_window(hwnd) {
+            Ok(s) => s,
+            _ => return,
+        };
+
+        if OVERLAY.show(&app_handle_clone, &layout, screen).is_ok() {
+            let mut showing = OVERLAY_SHOWING.lock().unwrap();
+            *showing = true;
         }
     });
 }
