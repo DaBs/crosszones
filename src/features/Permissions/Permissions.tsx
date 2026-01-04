@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { checkAccessibilityPermission, requestAccessibilityPermission } from "tauri-plugin-macos-permissions-api";
+import { checkAccessibilityPermission, requestAccessibilityPermission, checkInputMonitoringPermission, requestInputMonitoringPermission } from "tauri-plugin-macos-permissions-api";
 import { showError } from '@/lib/toast';
 import './Permissions.css';
 
@@ -14,9 +14,14 @@ export const Permissions: React.FC<PermissionsProps> = ({ onPermissionsGranted }
   const checkPermission = async () => {
     try {
       const isGranted = await checkAccessibilityPermission();
-      setHasPermission(isGranted);
+      const isInputMonitoringGranted = await checkInputMonitoringPermission();
+      setHasPermission(isGranted && isInputMonitoringGranted);
       if (isGranted) {
-        onPermissionsGranted();
+        if (isInputMonitoringGranted) {
+          onPermissionsGranted();
+        } else {
+          await requestInputMonitoringPermission();
+        }
       }
     } catch (error) {
       showError('Failed to check permission', error);
@@ -28,6 +33,16 @@ export const Permissions: React.FC<PermissionsProps> = ({ onPermissionsGranted }
   const requestPermission = async () => {
     try {
       await requestAccessibilityPermission();
+      await requestInputMonitoringPermission();
+      await checkPermission();
+    } catch (error) {
+      showError('Failed to request permission', error);
+    }
+  };
+
+  const requestInputMonitoringPermission = async () => {
+    try {
+      await requestInputMonitoringPermission();
       await checkPermission();
     } catch (error) {
       showError('Failed to request permission', error);

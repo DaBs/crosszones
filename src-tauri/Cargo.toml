@@ -37,10 +37,11 @@ ts-rs = "11.0.1"
 display-info = "0.5.4"
 tauri-plugin-notification = "2"
 tauri-plugin-decorum = "1.1.1"
-willhook = "0.6.3"
+rdev = { version = "0.5.3", features = ["unstable_grab"] }
 
 [target.'cfg(any(target_os = "windows"))'.dependencies]
 windows = { version = "0.61.1", features = ["Graphics", "Win32_Graphics_Gdi", "Win32_Graphics_Dwm", "Win32_UI_WindowsAndMessaging", "Win32_UI_Input_KeyboardAndMouse"] }
+willhook = "0.6.3"
 
 [target.'cfg(target_os = "macos")'.dependencies]
 core-graphics-types = "0.1.3"

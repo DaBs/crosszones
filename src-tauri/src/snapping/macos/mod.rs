@@ -102,6 +102,37 @@ fn set_window_rect(window: &AXUIElement, rect: WindowRect) -> Result<(), String>
     Ok(())
 }
 
+// Public function to snap a specific window by element
+// This is used by drag-drop where we know the exact window element
+pub fn snap_window_with_element(
+    action: LayoutAction,
+    app_handle: Option<tauri::AppHandle>,
+    window: &AXUIElement,
+) -> Result<(), String> {
+    // Get the current window position and size
+    let current_rect = get_window_rect(window)?;
+
+    // Get screen dimensions
+    let screen_dimensions = get_screen_dimensions(window)?;
+
+    let identifier = "blabla";
+    let identifier_string = identifier.to_string();
+
+    // Calculate new position and size based on the action
+    let new_rect = calculate_window_rect(
+        &identifier_string,
+        action,
+        screen_dimensions,
+        Some(current_rect),
+        app_handle.as_ref(),
+    );
+
+    // Apply the new position and size
+    set_window_rect(window, new_rect)?;
+
+    Ok(())
+}
+
 // Helper function to get all visible windows
 pub fn get_visible_windows() -> Vec<AXUIElement> {
     // TODO: Implement
