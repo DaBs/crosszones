@@ -21,7 +21,6 @@ pub fn run() {
             hotkeys::unregister_hotkey_action,
             hotkeys::get_all_hotkeys,
             hotkeys::clear_all_hotkeys,
-            store::settings::set_settings,
             store::zone_layouts::get_all_zone_layouts,
             store::zone_layouts::save_zone_layout,
             store::zone_layouts::delete_zone_layout,

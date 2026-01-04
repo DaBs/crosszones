@@ -118,12 +118,3 @@ impl SettingsStore {
         self.set("zone_drag_modifier_key", value)
     }
 }
-
-#[tauri::command]
-pub fn set_settings(app_handle: tauri::AppHandle, settings: Settings) -> Result<(), String> {
-    let settings_store = SettingsStore::new(&app_handle).map_err(|e| e.to_string())?;
-    settings_store
-        .save_all(&settings)
-        .map_err(|e| e.to_string())?;
-    Ok(())
-}
