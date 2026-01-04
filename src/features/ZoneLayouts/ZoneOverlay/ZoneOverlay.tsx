@@ -112,8 +112,10 @@ export function ZoneOverlay() {
   }, [overlayData]);
 
   useEffect(() => {
-    // Listen for mouse position updates during drag
-    const mouseUnlisten = listen<{ x: number; y: number }>('drag-overlay-mouse', (event) => {
+    // Listen for virtual cursor position updates during drag
+    // The webview can't receive real mouse events because the dragged window is above it,
+    // so we receive virtual cursor position events emitted from the Rust backend
+    const mouseUnlisten = listen<{ x: number; y: number }>('virtual-cursor', (event) => {
       setMousePosition(event.payload);
     });
 

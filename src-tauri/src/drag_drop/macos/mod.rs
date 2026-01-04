@@ -4,7 +4,7 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use tauri::AppHandle;
 use rdev::{listen, Event, EventType, Key, Button};
 use ::accessibility::AXUIElement;
-use accessibility::AXUIElementAttributes;
+use accessibility::{AXUIElementActions, AXUIElementAttributes};
 use crate::store::settings::SettingsStore;
 use crate::store::zone_layouts;
 use crate::snapping::common::ScreenDimensions;
@@ -146,7 +146,22 @@ fn handle_event_on_main_thread(event: DragEvent) {
         DragEvent::ButtonUp => {
             handle_left_button_up();
         }
-        _ => {} // Key events already handled above
+        DragEvent::KeyPress(_) | DragEvent::KeyRelease(_) => {
+            // Key events already updated modifier state above
+            // If we're dragging, check and update overlay state based on new modifier state
+            let dragging = DRAGGING.lock().unwrap();
+            if *dragging {
+                drop(dragging);
+                
+                // Get the frontmost window and update overlay based on current modifier state
+                let app_handle_guard = APP_HANDLE.lock().unwrap();
+                if let Some(app_handle) = app_handle_guard.as_ref() {
+                    if let Ok(window) = get_frontmost_window() {
+                        check_and_update_modifier_state(app_handle, &window);
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -168,6 +183,9 @@ fn handle_left_button_down() {
     let mut dragging = DRAGGING.lock().unwrap();
     *dragging = true;
     drop(dragging);
+    
+    // Bring the dragged window to the front, above the overlay
+    let _ = raise_window(&window);
     
     // Initialize modifier state
     let mut modifier_pressed = MODIFIER_PRESSED_DURING_DRAG.lock().unwrap();
@@ -193,7 +211,7 @@ fn handle_mouse_move(x: f64, y: f64) {
     }
     drop(dragging);
     
-    // Update overlay with mouse position
+    // Update overlay with mouse position for hover effects
     let _ = OVERLAY.update_mouse_position(x as i32, y as i32);
     
     // Check modifier state during drag and update overlay
@@ -202,6 +220,9 @@ fn handle_mouse_move(x: f64, y: f64) {
     if let Some(app_handle) = app_handle_guard.as_ref() {
         // Get the frontmost window (the dragged window should remain frontmost)
         if let Ok(window) = get_frontmost_window() {
+            // Keep dragged window above overlay during drag
+            let _ = raise_window(&window);
+            
             check_and_update_modifier_state(app_handle, &window);
         }
     }
@@ -470,6 +491,18 @@ fn get_frontmost_window() -> Result<AXUIElement, String> {
     }
 
     Err("No window found".to_string())
+}
+
+// Helper function to raise/bring window to front on macOS
+// This ensures the dragged window stays above the overlay
+fn raise_window(window: &AXUIElement) -> Result<(), String> {    
+    // Try to perform the AXRaise action to bring window to front
+    // This should work for most windows
+    if let Ok(_) = window.raise().map_err(|e| e.to_string()) {
+        return Ok(());
+    }
+    
+    Ok(())
 }
 
 

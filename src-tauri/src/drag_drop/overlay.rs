@@ -69,8 +69,7 @@ impl ZoneOverlay {
         .decorations(false)
         .skip_taskbar(true)
         .closable(false)
-        .focused(false)
-        .always_on_top(true);
+        .focused(false);
 
         if app_handle.config().app.macos_private_api || cfg!(target_os = "windows") {
             window_builder = window_builder.transparent(true);
@@ -103,7 +102,10 @@ impl ZoneOverlay {
         let windows = OVERLAY_WINDOWS.lock().unwrap();
 
         for (_label, window) in windows.iter() {
-            let _ = window.emit("drag-overlay-mouse", serde_json::json!({ "x": x, "y": y }));
+            // Emit virtual cursor position event for hover effects
+            // The webview can't receive real mouse events because the window is above it,
+            // so we emit the cursor position as a virtual cursor event
+            let _ = window.emit("virtual-cursor", serde_json::json!({ "x": x, "y": y }));
         }
 
         Ok(())
