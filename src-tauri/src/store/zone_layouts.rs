@@ -2,6 +2,8 @@ use serde::{Deserialize, Serialize};
 use tauri_plugin_store::StoreExt;
 use ts_rs::TS;
 
+use crate::snapping::common::ScreenDimensions;
+
 pub const ZONE_LAYOUTS_STORE_NAME: &str = "zone_layouts.json";
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
@@ -27,6 +29,21 @@ pub struct ZoneLayout {
     pub screen_height: Option<u32>,
 }
 
+impl ZoneLayout {
+    pub fn get_zone_at_position(&self, x: i32, y: i32, screen: ScreenDimensions) -> Option<&Zone> {
+        // Convert screen coordinates to percentage (0-100)
+        let x_percent = ((x - screen.x) as f64 / screen.width as f64) * 100.0;
+        let y_percent = ((y - screen.y) as f64 / screen.height as f64) * 100.0;
+
+        // Find zone containing this position
+        self.zones.iter().find(|zone| {
+            x_percent >= zone.x
+                && x_percent <= zone.x + zone.width
+                && y_percent >= zone.y
+                && y_percent <= zone.y + zone.height
+        })
+    }
+}
 #[tauri::command]
 pub fn get_all_zone_layouts(app: tauri::AppHandle) -> Result<Vec<ZoneLayout>, String> {
     let store = app

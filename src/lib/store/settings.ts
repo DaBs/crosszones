@@ -7,7 +7,9 @@ export type SettingsKey = keyof Settings;
 export const store = new LazyStore('settings.json');
 
 export const setSettings = async (settings: Settings) => {
-  await invoke('set_settings', { settings });
+  return Promise.all(Object.entries(settings).map(([key, value]) => {
+    return store.set(key, value);
+  }));
 };
 
 export const getSetting = async (key: SettingsKey) => {

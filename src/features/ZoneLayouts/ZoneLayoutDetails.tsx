@@ -39,6 +39,7 @@ export const ZoneLayoutEditor: React.FC<ZoneLayoutEditorProps> = ({
     }
   }, [layout]);
 
+
   useEffect(() => {
     // Listen for zone update events when editor is open
     if (!editorOpen) return;
