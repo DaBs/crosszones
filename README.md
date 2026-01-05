@@ -26,6 +26,8 @@ Download the latest release installer for your OS in the [Release](https://githu
 | Fourth Controls    | ✅       | ✅     | ❌     |
 | Sixth Controls     | ✅       | ✅     | ❌     |
 | Movement Controls  | ✅**     | ✅**   | ❌     |
+| Zone layouts       | ✅       | ✅     | ❌     |
+| Zone drag-and-drop | 🚧       | 🚧     | ❌     |
 
 (* Restore functionality not implemented yet)
 (** Moving display not implemented yet)
