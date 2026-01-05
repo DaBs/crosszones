@@ -8,18 +8,22 @@ interface LayoutProps extends React.HTMLAttributes<HTMLDivElement> {
   showTabs?: boolean;
 }
 
+// TODO: Refactor titlebar to handle this more gracefully in terms of where tabs live.
 export function Layout({ children, activeTab, onTabChange, showTabs = true }: LayoutProps) {
-  const hasTabs = showTabs && activeTab && onTabChange;
+  const hasTabs = showTabs;
 
   return (
     <div className="flex flex-col h-screen">
-      <TitleBar showTabs={hasTabs} />
       {hasTabs ? (
         <Tabs value={activeTab} onValueChange={onTabChange} className="flex flex-col flex-1 overflow-hidden">
+          <TitleBar showTabs={true} />
           <main className="flex-1 overflow-hidden">{children}</main>
         </Tabs>
       ) : (
-        <main className="flex-1 overflow-hidden">{children}</main>
+        <>
+          <TitleBar showTabs={false} />
+          <main className="flex-1 overflow-hidden">{children}</main>
+        </>
       )}
     </div>
   )
