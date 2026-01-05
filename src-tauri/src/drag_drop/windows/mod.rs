@@ -24,6 +24,7 @@ use crate::snapping::common::ScreenDimensions;
 use crate::snapping::action::LayoutAction;
 use crate::snapping::windows::snap_window_with_handle;
 use crate::drag_drop::overlay::ZoneOverlay;
+use crate::window::windows::get_screen_dimensions_for_window;
 
 static APP_HANDLE: Mutex<Option<AppHandle>> = Mutex::new(None);
 static DRAGGING: Mutex<bool> = Mutex::new(false);
@@ -401,29 +402,4 @@ fn handle_drop(app_handle: &AppHandle, hwnd: HWND, x: i32, y: i32) -> Result<(),
     }
 
     Ok(())
-}
-
-fn get_screen_dimensions_for_window(hwnd: HWND) -> Result<ScreenDimensions, String> {
-    use windows::Win32::{
-        Graphics::Gdi::{GetMonitorInfoW, MonitorFromWindow, MONITOR_DEFAULTTONEAREST, MONITORINFO},
-    };
-
-    let mut monitor_info = MONITORINFO {
-        cbSize: std::mem::size_of::<MONITORINFO>() as u32,
-        ..Default::default()
-    };
-
-    unsafe {
-        let monitor = MonitorFromWindow(hwnd, MONITOR_DEFAULTTONEAREST);
-        if !GetMonitorInfoW(monitor, &mut monitor_info).as_bool() {
-            return Err("Failed to get monitor info".to_string());
-        }
-    }
-
-    Ok(ScreenDimensions {
-        width: monitor_info.rcWork.right - monitor_info.rcWork.left,
-        height: monitor_info.rcWork.bottom - monitor_info.rcWork.top,
-        x: monitor_info.rcWork.left,
-        y: monitor_info.rcWork.top,
-    })
 }

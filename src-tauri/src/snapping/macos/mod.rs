@@ -1,18 +1,13 @@
-use std::ffi::os_str::Display;
-
 use ::accessibility::{AXAttribute, AXUIElement};
 use accessibility::value::AXValue;
 use accessibility::AXUIElementAttributes;
 use core_graphics_types::geometry::{CGPoint, CGSize};
-use objc2_app_kit::NSWorkspace;
-
-mod screen;
 
 use super::action::LayoutAction;
 use super::common::calculate_window_rect;
 use super::common::ScreenDimensions;
 use super::window_rect::WindowRect;
-use screen::get_screen_dimensions;
+use crate::window::macos::{get_frontmost_window, get_screen_dimensions_for_window};
 
 // Function to snap a window according to the specified layout action
 pub fn snap_window(
@@ -26,7 +21,7 @@ pub fn snap_window(
     let current_rect = get_window_rect(&window)?;
 
     // Get screen dimensions
-    let screen_dimensions = get_screen_dimensions(&window)?;
+    let screen_dimensions = get_screen_dimensions_for_window(&window)?;
 
     let identifier = "blabla";
     let identifier_string = identifier.to_string();
@@ -46,23 +41,6 @@ pub fn snap_window(
     Ok(())
 }
 
-// Helper function to get the frontmost window
-fn get_frontmost_window() -> Result<AXUIElement, String> {
-    let workspace = unsafe { NSWorkspace::sharedWorkspace() };
-    let frontmost_application = unsafe { workspace.frontmostApplication().unwrap() };
-
-    let frontmost_application_pid = unsafe { frontmost_application.processIdentifier() };
-
-    let app = AXUIElement::application(frontmost_application_pid);
-
-    if app.focused_window().is_ok() {
-        let focused_window = app.focused_window().unwrap().clone();
-        return Ok(focused_window);
-    }
-
-    let window = app.windows().unwrap().iter().next().unwrap().clone();
-    Ok(window)
-}
 
 // Helper function to get window rectangle
 fn get_window_rect(window: &AXUIElement) -> Result<WindowRect, String> {
@@ -113,7 +91,7 @@ pub fn snap_window_with_element(
     let current_rect = get_window_rect(window)?;
 
     // Get screen dimensions
-    let screen_dimensions = get_screen_dimensions(window)?;
+    let screen_dimensions = get_screen_dimensions_for_window(window)?;
 
     let identifier = "blabla";
     let identifier_string = identifier.to_string();

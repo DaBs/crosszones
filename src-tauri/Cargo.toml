@@ -37,7 +37,7 @@ ts-rs = "11.0.1"
 display-info = "0.5.4"
 tauri-plugin-notification = "2"
 tauri-plugin-decorum = "1.1.1"
-rdev = { git = "https://github.com/Narsil/rdev.git", branch = "main" }
+rdev = { git = "https://github.com/Narsil/rdev.git", rev = "c14f2dc" }
 
 [target.'cfg(any(target_os = "windows"))'.dependencies]
 windows = { version = "0.61.1", features = ["Graphics", "Win32_Graphics_Gdi", "Win32_Graphics_Dwm", "Win32_UI_WindowsAndMessaging", "Win32_UI_Input_KeyboardAndMouse"] }
