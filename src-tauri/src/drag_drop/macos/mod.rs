@@ -22,7 +22,7 @@ static OVERLAY: LazyLock<ZoneOverlay> = LazyLock::new(|| ZoneOverlay::new());
 static RUNNING: AtomicBool = AtomicBool::new(false);
 static MODIFIER_STATE: LazyLock<Mutex<ModifierState>> = LazyLock::new(|| Mutex::new(ModifierState::default()));
 static LAST_MOUSE_POS: Mutex<Option<(f64, f64)>> = Mutex::new(None);
-static EVENT_SENDER: Mutex<Option<mpsc::Sender<DragEvent>>> = Mutex::new(None);
+static EVENT_SENDER: Mutex<Option<mpsc::Sender<InputEvent>>> = Mutex::new(None);
 
 #[derive(Default)]
 struct ModifierState {
@@ -44,7 +44,8 @@ impl ModifierState {
     }
 }
 
-enum DragEvent {
+#[derive(PartialEq)]
+enum InputEvent {
     ButtonDown,
     ButtonUp,
     MouseMove { x: f64, y: f64 },
@@ -68,7 +69,7 @@ pub fn start_drag_detection(app_handle: AppHandle) -> Result<(), String> {
     let running_for_thread = running_flag.clone();
     
     // Create a channel for events from listener (main thread) to processor (background thread)
-    let (processor_tx, processor_rx) = mpsc::channel::<DragEvent>();
+    let (processor_tx, processor_rx) = mpsc::channel::<InputEvent>();
     
     // Store the sender for potential external use
     {
@@ -84,11 +85,11 @@ pub fn start_drag_detection(app_handle: AppHandle) -> Result<(), String> {
             
             // Convert rdev event to DragEvent
             let drag_event = match event.event_type {
-                EventType::ButtonPress(Button::Left) => DragEvent::ButtonDown,
-                EventType::ButtonRelease(Button::Left) => DragEvent::ButtonUp,
-                EventType::MouseMove { x, y } => DragEvent::MouseMove { x, y },
-                EventType::KeyPress(key) => DragEvent::KeyPress(key),
-                EventType::KeyRelease(key) => DragEvent::KeyRelease(key),
+                EventType::ButtonPress(Button::Left) => InputEvent::ButtonDown,
+                EventType::ButtonRelease(Button::Left) => InputEvent::ButtonUp,
+                EventType::MouseMove { x, y } => InputEvent::MouseMove { x, y },
+                EventType::KeyPress(key) => InputEvent::KeyPress(key),
+                EventType::KeyRelease(key) => InputEvent::KeyRelease(key),
                 _ => return, // Ignore other events
             };
             
@@ -106,10 +107,10 @@ pub fn start_drag_detection(app_handle: AppHandle) -> Result<(), String> {
     Ok(())
 }
 
-fn handle_event_on_main_thread(event: DragEvent) {
+fn handle_event_on_main_thread(event: InputEvent) {
     // Update modifier state
     match &event {
-        DragEvent::KeyPress(key) => {
+        InputEvent::KeyPress(key) => {
             let mut state = MODIFIER_STATE.lock().unwrap();
             match key {
                 Key::ControlLeft | Key::ControlRight => state.control = true,
@@ -119,7 +120,7 @@ fn handle_event_on_main_thread(event: DragEvent) {
                 _ => {}
             }
         }
-        DragEvent::KeyRelease(key) => {
+        InputEvent::KeyRelease(key) => {
             let mut state = MODIFIER_STATE.lock().unwrap();
             match key {
                 Key::ControlLeft | Key::ControlRight => state.control = false,
@@ -134,19 +135,28 @@ fn handle_event_on_main_thread(event: DragEvent) {
     
     // Handle the event
     match event {
-        DragEvent::MouseMove { x, y } => {
+        InputEvent::MouseMove { x, y } => {
             let mut pos = LAST_MOUSE_POS.lock().unwrap();
             *pos = Some((x, y));
             drop(pos);
             handle_mouse_move(x, y);
         }
-        DragEvent::ButtonDown => {
+        InputEvent::ButtonDown => {
             handle_left_button_down();
         }
-        DragEvent::ButtonUp => {
+        InputEvent::ButtonUp => {
             handle_left_button_up();
         }
-        DragEvent::KeyPress(_) | DragEvent::KeyRelease(_) => {
+        InputEvent::KeyPress(key) | InputEvent::KeyRelease(key) => {
+            let mut state = MODIFIER_STATE.lock().unwrap();
+            match key {
+                Key::ControlLeft | Key::ControlRight => state.control = event == InputEvent::KeyPress(key),
+                Key::Alt | Key::AltGr => state.alt = event == InputEvent::KeyPress(key),
+                Key::ShiftLeft | Key::ShiftRight => state.shift = event == InputEvent::KeyPress(key),
+                Key::MetaLeft | Key::MetaRight => state.super_key = event == InputEvent::KeyPress(key),
+                _ => {}
+            }
+
             // Key events already updated modifier state above
             // If we're dragging, check and update overlay state based on new modifier state
             let dragging = DRAGGING.lock().unwrap();
@@ -167,8 +177,13 @@ fn handle_event_on_main_thread(event: DragEvent) {
 
 
 fn get_current_mouse_position() -> Option<(f64, f64)> {
+    // Use the stored mouse position
     let pos = LAST_MOUSE_POS.lock().unwrap();
-    pos.clone()
+    if let Some((x, y)) = *pos {
+        Some((x, y))
+    } else {
+        None
+    }
 }
 
 fn handle_left_button_down() {
@@ -205,14 +220,14 @@ fn handle_left_button_down() {
 }
 
 fn handle_mouse_move(x: f64, y: f64) {
+    // Update overlay with mouse position for hover effects
+    let _ = OVERLAY.update_mouse_position(x as i32, y as i32);
+
     let dragging = DRAGGING.lock().unwrap();
     if !*dragging {
         return;
     }
     drop(dragging);
-    
-    // Update overlay with mouse position for hover effects
-    let _ = OVERLAY.update_mouse_position(x as i32, y as i32);
     
     // Check modifier state during drag and update overlay
     // This function is already called on the main thread via handle_event_on_main_thread
@@ -458,8 +473,8 @@ fn get_screen_dimensions_for_window(window: &AXUIElement) -> Result<ScreenDimens
 
     if screens.len() == 1 {
         return Ok(ScreenDimensions {
-            x: screen.x as i32,
-            y: screen.y as i32,
+            x: screen.x,
+            y: screen.y,
             width: screen.width as i32,
             height: screen.height as i32,
         });
