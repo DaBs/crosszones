@@ -152,7 +152,7 @@ export const SettingsTab: React.FC = () => {
                   start_minimized: false,
                   close_to_system_tray: false,
                   show_layout_activation_notification: false,
-                  zone_drag_modifier_key: '',
+                  zone_drag_modifier_key: null,
                 });
                 // Also clear all hotkeys
                 await invoke('clear_all_hotkeys');

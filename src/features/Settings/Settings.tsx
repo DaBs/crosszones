@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { getVersion } from '@tauri-apps/api/app';
 import { invoke } from '@tauri-apps/api/core';
-import { Button } from '../../components/ui/button';
+import { Button } from '@/components/ui/button';
 import { getSetting, setSettings as setSettingsStore, SettingsKey } from '../../lib/store/settings';
 import { Settings } from '../../../src-tauri/bindings/Settings';
-import { Checkbox } from '../../components/ui/checkbox';
-import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 interface SettingsOverlayProps {
   open: boolean;
@@ -106,7 +106,7 @@ export const SettingsOverlay: React.FC<SettingsOverlayProps> = ({ open }) => {
                         </p>
                       </div>
                       <Checkbox
-                        checked={settings[setting.key]}
+                        checked={settings[setting.key] as boolean}
                         onCheckedChange={(checked) => handleToggle(setting.key, checked as boolean)}
                       />
                     </div>
@@ -119,12 +119,13 @@ export const SettingsOverlay: React.FC<SettingsOverlayProps> = ({ open }) => {
       </div>
       <div className="container mx-auto p-6 max-w-2xl pt-16">
         <Button variant="outline" onClick={async () => {
-          setSettings(prev => ({ ...prev, auto_start: false, start_minimized: false, close_to_system_tray: false, show_layout_activation_notification: false }));
+          setSettings(prev => ({ ...prev, auto_start: false, start_minimized: false, close_to_system_tray: false, show_layout_activation_notification: false, zone_drag_modifier_key: null }));
           await setSettingsStore({
             auto_start: false,
             start_minimized: false,
             close_to_system_tray: false,
             show_layout_activation_notification: false,
+            zone_drag_modifier_key: null,
           });
           // Also clear all hotkeys
           await invoke('clear_all_hotkeys');
