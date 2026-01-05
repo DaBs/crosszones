@@ -2,7 +2,7 @@ import "@/App.css";
 
 import { OsType, type } from "@tauri-apps/plugin-os";
 import { Route, Router, Switch } from "wouter";
-import { useHashLocation, navigate } from "wouter/use-hash-location";
+import { useHashLocation } from "wouter/use-hash-location";
 import { Permissions } from "@/features/Permissions/Permissions";
 import { Layout } from "@/components/ui/layout";
 import { ThemeProvider } from "@/lib/theme-provider";
@@ -35,7 +35,11 @@ function App() {
             <ZoneOverlay />
           </Route>
           <Route path="/">
-            <Layout activeTab={activeTab} onTabChange={setActiveTab}>
+            <Layout 
+              activeTab={activeTab} 
+              onTabChange={setActiveTab}
+              showTabs={hasPermissions}
+            >
               {!hasPermissions ? (
                 <Permissions onPermissionsGranted={() => setHasPermissions(true)} />
               ) : (
