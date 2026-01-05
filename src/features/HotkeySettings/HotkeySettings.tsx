@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import { AVAILABLE_HOTKEYS, HOTKEY_GROUPS } from './constants';
-import { type LayoutAction } from '@/types/snapping';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { HotkeyConfigComponent } from './HotkeyConfig';

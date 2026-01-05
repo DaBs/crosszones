@@ -1,5 +1,3 @@
-import { useCallback } from 'react';
-
 /**
  * Shared utility function for handling hotkey recording keydown events
  * Extracts modifiers and non-modifier keys from keyboard events

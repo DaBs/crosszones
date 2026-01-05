@@ -118,9 +118,6 @@ export function preventOverlaps(zone: Zone, zones: Zone[], excludeZoneId: string
     if (otherZone.id === excludeZoneId) continue;
 
     if (zonesOverlap(adjustedZone, otherZone)) {
-      // Try to snap to boundaries to resolve overlap
-      const snapPoints = getSnapPoints(zones, excludeZoneId);
-
       // Try snapping left edge to other zone's right edge
       if (adjustedZone.x < otherZone.x + otherZone.width && adjustedZone.x + adjustedZone.width > otherZone.x) {
         const distanceToRight = Math.abs(adjustedZone.x - (otherZone.x + otherZone.width));

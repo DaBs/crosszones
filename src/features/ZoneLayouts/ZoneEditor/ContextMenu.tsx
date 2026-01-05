@@ -1,12 +1,10 @@
-import React from 'react';
-
 interface ContextMenuProps {
   position: { x: number; y: number } | null;
   onClose: () => void;
   onCloseEditor: () => void;
 }
 
-export function ContextMenu({ position, onClose, onCloseEditor }: ContextMenuProps) {
+export function ContextMenu({ position, onCloseEditor }: ContextMenuProps) {
   if (!position) return null;
 
   return (

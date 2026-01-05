@@ -1,4 +1,3 @@
-import React from 'react';
 import {
   Dialog,
   DialogContent,
@@ -21,6 +20,7 @@ export function MergeDialog({ open, onOpenChange, onConfirm, onCancel }: MergeDi
     <Dialog
       open={open}
       onOpenChange={(open) => {
+        onOpenChange(open);
         if (!open) {
           onCancel();
         }

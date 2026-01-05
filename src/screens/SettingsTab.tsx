@@ -122,11 +122,12 @@ export const SettingsTab: React.FC = () => {
             variant="outline" 
             onClick={async () => {
               try {
-                setSettings(prev => ({ ...prev, auto_start: false, start_minimized: false, close_to_system_tray: false }));
+                setSettings(prev => ({ ...prev, auto_start: false, start_minimized: false, close_to_system_tray: false, show_layout_activation_notification: false }));
                 await setSettingsStore({
                   auto_start: false,
                   start_minimized: false,
                   close_to_system_tray: false,
+                  show_layout_activation_notification: false,
                 });
                 // Also clear all hotkeys
                 await invoke('clear_all_hotkeys');

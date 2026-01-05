@@ -51,7 +51,6 @@ function FullscreenZoneEditor() {
     zones,
     setZones,
     containerRef,
-    zonesStateRef,
     snapEnabled,
   });
 

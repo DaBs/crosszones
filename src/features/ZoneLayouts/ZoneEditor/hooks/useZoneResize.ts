@@ -7,7 +7,6 @@ interface UseZoneResizeProps {
   zones: Zone[];
   setZones: React.Dispatch<React.SetStateAction<Zone[]>>;
   containerRef: React.RefObject<HTMLDivElement>;
-  zonesStateRef: React.MutableRefObject<Zone[]>;
   snapEnabled?: boolean;
 }
 
@@ -15,7 +14,6 @@ export function useZoneResize({
   zones,
   setZones,
   containerRef,
-  zonesStateRef,
   snapEnabled = true,
 }: UseZoneResizeProps) {
   const [resizingZone, setResizingZone] = useState<string | null>(null);
