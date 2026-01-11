@@ -26,15 +26,24 @@ use super::common::{calculate_window_rect, ScreenDimensions};
 use super::window_rect::WindowRect;
 
 // Function to snap a window according to the specified layout action
+// Uses the foreground window by default
 pub fn snap_window(
     action: LayoutAction,
     app_handle: Option<tauri::AppHandle>,
 ) -> Result<(), String> {
-    let hwnd = unsafe { GetForegroundWindow() };
-    if hwnd.0 == std::ptr::null_mut() {
+    let fg = unsafe { GetForegroundWindow() };
+    if fg.0 == std::ptr::null_mut() {
         return Err("Failed to get foreground window".to_string());
     }
+    snap_window_internal(action, app_handle, fg)
+}
 
+// Internal function to snap a specific window by handle, or foreground window if None
+fn snap_window_internal(
+    action: LayoutAction,
+    app_handle: Option<tauri::AppHandle>,
+    hwnd: HWND,
+) -> Result<(), String> {
     // Check if the window is maximized and restore it first
     // On Windows, you cannot resize a maximized window directly with SetWindowPos
     let is_maximized = unsafe { IsZoomed(hwnd).as_bool() };
@@ -153,6 +162,16 @@ pub fn snap_window(
     }
 
     Ok(())
+}
+
+// Public function to snap a specific window by handle
+// This is used by drag-drop where we know the exact window handle
+pub fn snap_window_with_handle(
+    action: LayoutAction,
+    app_handle: Option<tauri::AppHandle>,
+    hwnd: HWND,
+) -> Result<(), String> {
+    snap_window_internal(action, app_handle, hwnd)
 }
 
 // Helper function to get all visible windows

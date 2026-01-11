@@ -173,10 +173,10 @@ export function ZoneComponent({
     >
       {/* Zone info displayed prominently in center */}
       <div className="flex flex-col items-center justify-center text-center pointer-events-none">
-        <div className="text-6xl font-bold text-white drop-shadow-lg">
+        <div className="text-[12rem] font-bold text-white drop-shadow-lg leading-none">
           {zone.number.toString().slice(0, 8)}
         </div>
-        <div className="text-2xl font-semibold text-white mt-2">
+        <div className="text-4xl font-semibold text-white mt-4">
           {sizeLabel}
         </div>
       </div>

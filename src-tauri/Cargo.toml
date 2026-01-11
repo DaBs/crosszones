@@ -22,6 +22,7 @@ tauri = { version = "2", features = ["macos-private-api", "tray-icon", "image-pn
 tauri-plugin-opener = "2"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
+base64 = "0.22"
 strum = "0.27.1"
 strum_macros = "0.27.1"
 tauri-plugin-persisted-scope = "2"
@@ -36,9 +37,11 @@ ts-rs = "11.0.1"
 display-info = "0.5.4"
 tauri-plugin-notification = "2"
 tauri-plugin-decorum = "1.1.1"
+rdev = { git = "https://github.com/Narsil/rdev.git", rev = "c14f2dc" }
 
 [target.'cfg(any(target_os = "windows"))'.dependencies]
-windows = { version = "0.61.1", features = ["Graphics", "Win32_Graphics_Gdi", "Win32_Graphics_Dwm", "Win32_UI_WindowsAndMessaging"] }
+windows = { version = "0.61.1", features = ["Graphics", "Win32_Graphics_Gdi", "Win32_Graphics_Dwm", "Win32_UI_WindowsAndMessaging", "Win32_UI_Input_KeyboardAndMouse"] }
+willhook = "0.6.3"
 
 [target.'cfg(target_os = "macos")'.dependencies]
 core-graphics-types = "0.1.3"
