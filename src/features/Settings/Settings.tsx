@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { getVersion } from '@tauri-apps/api/app';
 import { invoke } from '@tauri-apps/api/core';
 import { Button } from '@/components/ui/button';
-import { getSetting, setSettings as setSettingsStore, SettingsKey } from '@/lib/store/settings';
+import { getSetting, getSettings, resetSettings, setSetting, SettingsKey } from '@/lib/store/settings';
 import { Settings as SettingsType } from '../../../src-tauri/bindings/Settings';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -55,13 +55,6 @@ const SETTINGS_SCHEMA: SettingDefinition[] = [
     type: 'boolean',
     category: SettingCategory.Zones
   },
-  {
-    key: 'zone_drag_modifier_key',
-    label: 'Zone drag modifier key',
-    description: 'The key to hold while dragging a window to show zone overlay',
-    type: 'string',
-    category: SettingCategory.Zones
-  },
 ];
 
 export const Settings: React.FC = () => {
@@ -69,20 +62,20 @@ export const Settings: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [version, setVersion] = useState('');
 
-  useEffect(() => {
-    setLoading(true);
-    Promise.all(
-      SETTINGS_SCHEMA.map(setting => 
-        getSetting(setting.key).then(value => [setting.key, setting.type === 'boolean' ? value : false])
-      )
-    ).then(results => {
-      setSettings(Object.fromEntries(results) as SettingsType);
+
+  const loadSettings = async () => {
+    try {
+      const settings = await getSettings();
+      setSettings(Object.fromEntries(settings.map(([key, value]) => [key, value as any])) as SettingsType);
       setLoading(false);
-    })
-    .catch(error => {
+    } catch (error) {
       showError('Failed to load settings', error);
       setLoading(false);
-    });
+    }
+  };
+
+  useEffect(() => {
+    loadSettings();
     
     getVersion()
       .then(setVersion)
@@ -92,9 +85,8 @@ export const Settings: React.FC = () => {
   }, []);
 
   const handleToggle = async (key: SettingsKey, value: boolean | string) => {
-    const newSettings = { ...settings, [key]: value };
     try {
-      await setSettingsStore(newSettings);
+      await setSetting(key, value);
       setSettings(prev => ({ ...prev, [key]: value }) as SettingsType);
     } catch (error) {
       showError('Failed to update setting', error);
@@ -146,14 +138,8 @@ export const Settings: React.FC = () => {
             variant="outline" 
             onClick={async () => {
               try {
-                setSettings(prev => ({ ...prev, auto_start: false, start_minimized: false, close_to_system_tray: false, show_layout_activation_notification: false, zone_drag_modifier_key: null }) as SettingsType);
-                await setSettingsStore({
-                  auto_start: false,
-                  start_minimized: false,
-                  close_to_system_tray: false,
-                  show_layout_activation_notification: false,
-                  zone_drag_modifier_key: null,
-                });
+                await resetSettings();
+                await loadSettings();
                 // Also clear all hotkeys
                 await invoke('clear_all_hotkeys');
               } catch (error) {

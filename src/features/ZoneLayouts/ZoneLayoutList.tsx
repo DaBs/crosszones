@@ -16,7 +16,7 @@ import { ZoneHotkeyInput } from './ZoneHotkeyInput';
 import { DeleteConfirmDialog } from './ZoneEditor/DeleteConfirmDialog';
 import { useActiveLayout } from './hooks/useActiveLayout';
 import { showError } from '@/lib/toast';
-import { getSetting, setSettings, getSettings } from '@/lib/store/settings';
+import { getSetting, setSetting } from '@/lib/store/settings';
 
 interface ZoneLayoutListProps {
   layouts: ZoneLayout[];
@@ -100,15 +100,7 @@ export const ZoneLayoutList: React.FC<ZoneLayoutListProps> = ({
   const handleModifierKeyChange = async (value: string) => {
     const newValue = value === 'none' ? null : value;
     try {
-      // Load all current settings
-      const allSettings = await getSettings();
-      const settingsObj: any = {};
-      for (const [k, v] of Object.entries(allSettings)) {
-        settingsObj[k] = v;
-      }
-      // Update the specific field
-      settingsObj.zone_drag_modifier_key = newValue;
-      await setSettings(settingsObj);
+      await setSetting('zone_drag_modifier_key', newValue);
       setDragModifierKey(newValue);
     } catch (error) {
       showError('Failed to update drag modifier key', error);

@@ -60,7 +60,18 @@ export function ZoneOverlay() {
   const [mousePosition, setMousePosition] = useState<{ x: number; y: number } | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Load overlay data from URL parameters
+  // Load overlay data from events (primary method)
+  useEffect(() => {
+    const unlisten = listen<OverlayData>('overlay-data', (event) => {
+      setOverlayData(event.payload);
+    });
+
+    return () => {
+      unlisten.then((fn) => fn());
+    };
+  }, []);
+
+  // Also support URL parameters for backwards compatibility (fallback)
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const dataParam = urlParams.get('data');
@@ -73,10 +84,7 @@ export function ZoneOverlay() {
         setOverlayData(data);
       } catch (error) {
         console.error('Failed to parse overlay data from URL:', error);
-        setOverlayData(null);
       }
-    } else {
-      setOverlayData(null);
     }
   }, [location]);
   
@@ -87,7 +95,6 @@ export function ZoneOverlay() {
       return;
     }
 
-    const containerRect = containerRef.current.getBoundingClientRect();
     // pos.x and pos.y are in screen coordinates
     // containerRect is relative to viewport, but since overlay window is fullscreen at screen.x, screen.y
     // we need to convert screen coordinates to container-relative coordinates
