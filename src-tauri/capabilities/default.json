@@ -2,7 +2,7 @@
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "default",
   "description": "Capability for the main window",
-  "windows": ["main", "crosszones", "zone-editor-0", "zone-editor-1", "zone-editor-2", "zone-editor-3", "zone-editor-4", "zone-editor-5", "zone-editor-6", "zone-editor-7", "zone-editor-8", "zone-editor-9"],
+  "windows": ["main", "crosszones", "zone-editor-0", "zone-editor-1", "zone-editor-2", "zone-editor-3", "zone-editor-4", "zone-editor-5", "zone-editor-6", "zone-editor-7", "zone-editor-8", "zone-editor-9", "zone-overlay-0", "zone-overlay-1", "zone-overlay-2", "zone-overlay-3", "zone-overlay-4", "zone-overlay-5", "zone-overlay-6", "zone-overlay-7", "zone-overlay-8", "zone-overlay-9"],
   "permissions": [
     "core:default",
     "core:event:allow-listen",

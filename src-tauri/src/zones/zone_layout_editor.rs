@@ -67,7 +67,7 @@ pub fn create_zone_editor_windows(
             let mut window_builder = WebviewWindowBuilder::new(
                 &app_handle,
                 &window_label,
-                WebviewUrl::App("index.html".into()),
+                WebviewUrl::App("index.html#/zone-editor".into()),
             )
             .title(&format!("Zone Editor - {}", layout_name_clone))
             .inner_size(screen_width as f64, screen_height as f64)
@@ -84,10 +84,6 @@ pub fn create_zone_editor_windows(
             }
 
             if let Ok(window) = window_builder.build() {
-                // Navigate to the zone editor route using client-side routing
-                // wouter uses path-based routing, so we use history API
-                let _ = window.eval("window.history.pushState({}, '', '/zone-editor'); window.dispatchEvent(new PopStateEvent('popstate'));");
-
                 // Small delay to ensure navigation completes before emitting data
                 std::thread::sleep(std::time::Duration::from_millis(300));
 

@@ -2,11 +2,13 @@ import "@/App.css";
 
 import { OsType, type } from "@tauri-apps/plugin-os";
 import { Route, Router, Switch } from "wouter";
+import { useHashLocation } from "wouter/use-hash-location";
 import { Permissions } from "@/features/Permissions/Permissions";
 import { Layout } from "@/components/ui/layout";
 import { ThemeProvider } from "@/lib/theme-provider";
 import { MainView } from "@/screens/MainView";
 import { FullscreenZoneEditor } from "@/features/ZoneLayouts/ZoneEditor/FullscreenZoneEditor";
+import { ZoneOverlay } from "@/features/ZoneLayouts/ZoneOverlay/ZoneOverlay";
 import { useState } from "react";
 import { Toaster } from "sonner";
 
@@ -24,13 +26,20 @@ function App() {
 
   return (
     <ThemeProvider defaultTheme="system" storageKey="crosszones-theme">
-      <Router>
+      <Router hook={useHashLocation}>
         <Switch>
           <Route path="/zone-editor">
             <FullscreenZoneEditor />
           </Route>
+          <Route path="/zone-overlay">
+            <ZoneOverlay />
+          </Route>
           <Route path="/">
-            <Layout activeTab={activeTab} onTabChange={setActiveTab}>
+            <Layout 
+              activeTab={activeTab} 
+              onTabChange={setActiveTab}
+              showTabs={hasPermissions}
+            >
               {!hasPermissions ? (
                 <Permissions onPermissionsGranted={() => setHasPermissions(true)} />
               ) : (
