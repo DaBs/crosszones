@@ -1,5 +1,6 @@
 use std::sync::{LazyLock, Mutex, Arc};
 use std::thread;
+use std::time::Duration;
 use std::sync::atomic::{AtomicBool, Ordering};
 use serde_json;
 use tauri::AppHandle;
@@ -75,15 +76,57 @@ pub fn start_drag_detection(app_handle: AppHandle) -> Result<(), String> {
 }
 
 fn event_loop(hook: Arc<willhook::Hook>, running: Arc<AtomicBool>) {
+    // Sleep when idle to avoid burning CPU (busy-wait). 2–3 ms keeps drag responsive.
+    const IDLE_SLEEP: Duration = Duration::from_millis(2);
+
     while running.load(Ordering::SeqCst) {
-        // Try to receive an event from the hook
-        if let Ok(event) = hook.try_recv() {
-            if let InputEvent::Mouse(mouse_event) = event {
-                handle_mouse_event(mouse_event);
+        let event = match hook.try_recv() {
+            Ok(e) => e,
+            Err(_) => {
+                thread::sleep(IDLE_SLEEP);
+                continue;
+            }
+        };
+
+        let app_handle = match APP_HANDLE.lock().unwrap().as_ref() {
+            Some(h) => h.clone(),
+            None => continue,
+        };
+
+        // Coalesce move events: drain queued moves and only process the latest position,
+        // so the overlay tracks the current cursor instead of a backlog of stale positions.
+        let mut pending_non_move = None;
+        let mut latest_move = None;
+
+        if let InputEvent::Mouse(MouseEvent {
+            event: MouseEventType::Move(MouseMoveEvent { point: Some(p), .. }),
+            ..
+        }) = event
+        {
+            latest_move = Some((p.x, p.y));
+            while let Ok(next) = hook.try_recv() {
+                if let InputEvent::Mouse(MouseEvent {
+                    event: MouseEventType::Move(MouseMoveEvent { point: Some(p), .. }),
+                    ..
+                }) = next
+                {
+                    latest_move = Some((p.x, p.y));
+                } else {
+                    pending_non_move = Some(next);
+                    break;
+                }
             }
         } else {
-            // No event available, yield to avoid busy-waiting
-            thread::yield_now();
+            pending_non_move = Some(event);
+        }
+
+        if let Some((x, y)) = latest_move {
+            handle_mouse_move(&app_handle, x, y);
+        }
+        if let Some(non_move) = pending_non_move {
+            if let InputEvent::Mouse(mouse_event) = non_move {
+                handle_mouse_event(mouse_event);
+            }
         }
     }
 }
