@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { getVersion } from '@tauri-apps/api/app';
 import { invoke } from '@tauri-apps/api/core';
 import { Button } from '@/components/ui/button';
-import { getSetting, getSettings, resetSettings, setSetting, SettingsKey } from '@/lib/store/settings';
+import { getSettings, resetSettings, setSetting, SettingsKey } from '@/lib/store/settings';
 import { Settings as SettingsType } from '../../../src-tauri/bindings/Settings';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
