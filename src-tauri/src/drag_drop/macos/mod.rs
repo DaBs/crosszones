@@ -329,6 +329,18 @@ fn check_and_update_modifier_state(app_handle: &AppHandle, _window: &AXUIElement
           return;
         }
 
+        // Respect setting: don't show overlay if user disabled visual indicators
+        let settings_store = match SettingsStore::new(&app_handle_clone) {
+            Ok(s) => s,
+            Err(_) => return,
+        };
+        if match settings_store.get_show_zone_drag_overlay() {
+            Ok(show) => !show,
+            _ => false,
+        } {
+            return;
+        }
+
         // Get active zone layout, or return if not found
         let active_layout_id = match zone_layouts::get_active_zone_layout_id(app_handle_clone.clone()) {
           Ok(Some(id)) => id,

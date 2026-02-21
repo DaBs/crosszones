@@ -55,6 +55,13 @@ const SETTINGS_SCHEMA: SettingDefinition[] = [
     type: 'boolean',
     category: SettingCategory.Zones
   },
+  {
+    key: 'show_zone_drag_overlay',
+    label: 'Show zone overlay during drag',
+    description: 'Show visual zone indicators when dragging a window with the zone modifier key held',
+    type: 'boolean',
+    category: SettingCategory.Zones
+  },
 ];
 
 export const Settings: React.FC = () => {
@@ -125,7 +132,7 @@ export const Settings: React.FC = () => {
                     </p>
                   </div>
                   <Checkbox
-                    checked={settings[setting.key] as boolean}
+                    checked={(setting.key === 'show_zone_drag_overlay' ? (settings[setting.key] ?? true) : settings[setting.key]) as boolean}
                     onCheckedChange={(checked) => handleToggle(setting.key, setting.type === 'boolean' ? checked as boolean : checked as string)}
                   />
                 </div>

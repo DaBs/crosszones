@@ -21,6 +21,9 @@ pub struct Settings {
     pub show_layout_activation_notification: bool,
     #[serde(default)]
     pub zone_drag_modifier_key: Option<String>, // e.g., "control", "alt", "shift", "super"
+    /// When true, show the zone overlay during drag-and-drop (when modifier is held). When false, zones still apply on drop but no visual indicator is shown.
+    #[serde(default)]
+    pub show_zone_drag_overlay: bool,
 }
 
 /// The main settings store
@@ -52,6 +55,7 @@ impl SettingsStore {
         store.set("close_to_system_tray", settings.close_to_system_tray);
         store.set("show_layout_activation_notification", settings.show_layout_activation_notification);
         store.set("zone_drag_modifier_key", serde_json::to_value(&settings.zone_drag_modifier_key)?);
+        store.set("show_zone_drag_overlay", settings.show_zone_drag_overlay);
         store.save()?;
         Ok(())
     }
@@ -116,5 +120,14 @@ impl SettingsStore {
 
     pub fn set_zone_drag_modifier_key(&self, value: Option<String>) -> Result<(), SettingsError> {
         self.set("zone_drag_modifier_key", value)
+    }
+
+    /// Whether to show the zone overlay during drag-and-drop when the modifier key is held. Defaults to true when unset.
+    pub fn get_show_zone_drag_overlay(&self) -> Result<bool, SettingsError> {
+        self.get("show_zone_drag_overlay").map(|v| v.unwrap_or(true))
+    }
+
+    pub fn set_show_zone_drag_overlay(&self, value: bool) -> Result<(), SettingsError> {
+        self.set("show_zone_drag_overlay", value)
     }
 }
