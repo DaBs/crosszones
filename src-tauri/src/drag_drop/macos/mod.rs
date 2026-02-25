@@ -2,14 +2,16 @@ use std::sync::{LazyLock, Mutex, Arc};
 use std::thread;
 use std::sync::atomic::{AtomicBool, Ordering};
 use tauri::AppHandle;
-use rdev::{listen, Event, EventType, Key, Button};
-use ::accessibility::AXUIElement;
-use accessibility::{AXUIElementActions, AXUIElementAttributes};
+use tauri::ipc::{Channel, InvokeResponseBody};
+use tauri_plugin_user_input::{EventType, InputEvent, InputEventData, UserInputExt};
+use monio::Key;
+use accessibility::AXUIElement;
 use crate::store::settings::SettingsStore;
 use crate::store::zone_layouts;
 use crate::snapping::action::LayoutAction;
 use crate::snapping::macos::snap_window_with_element;
 use crate::drag_drop::overlay::ZoneOverlay;
+use crate::window::PRIMARY_WINDOW_NAME;
 use crate::window::macos::{get_frontmost_window, get_screen_dimensions_for_window, raise_window};
 
 static APP_HANDLE: Mutex<Option<AppHandle>> = Mutex::new(None);
@@ -44,85 +46,160 @@ impl ModifierState {
 }
 
 #[derive(PartialEq)]
-enum InputEvent {
-    ButtonDown,
-    ButtonUp,
+enum UserInputEvent {
+    ButtonDown(monio::Button),
+    ButtonUp(monio::Button),
     MouseMove { x: f64, y: f64 },
-    KeyPress(Key),
-    KeyRelease(Key),
+    KeyPress(monio::Key),
+    KeyRelease(monio::Key),
 }
 
-pub fn start_drag_detection(app_handle: AppHandle) -> Result<(), String> {
-    let mut app_handle_guard = APP_HANDLE.lock().unwrap();
-    
-    // If already running, don't start again
+pub fn start_drag_detection(app_handle: &AppHandle) -> Result<(), String> {
+    {
+        let mut app_handle_guard = APP_HANDLE.lock().unwrap();
+        *app_handle_guard = Some(app_handle.clone());
+    }
+
+    // Avoid starting drag detection more than once
     if RUNNING.load(Ordering::SeqCst) {
         return Ok(());
     }
-    
-    *app_handle_guard = Some(app_handle.clone());
-    drop(app_handle_guard);
-
     RUNNING.store(true, Ordering::SeqCst);
-    let running_flag = Arc::new(AtomicBool::new(true));
-    let running_for_thread = running_flag.clone();
 
-    let result = app_handle.run_on_main_thread(move || {
-        let callback = move |event: Event| {
-            if !running_for_thread.load(Ordering::SeqCst) {
-                return;
+    let user_input = app_handle.user_input();
+    let app_handle_clone = app_handle.clone();
+
+    let channel = Channel::new(move |event: InvokeResponseBody| {
+        // println!("Received event: {:?}", event);
+
+        let json_event = match event {
+            InvokeResponseBody::Json(event) => event,
+            _ => {
+                eprintln!("Received non-JSON event: {:?}", event);
+                return Ok(());
             }
-            
-            // Convert rdev event to DragEvent
-            let drag_event = match event.event_type {
-                EventType::ButtonPress(Button::Left) => InputEvent::ButtonDown,
-                EventType::ButtonRelease(Button::Left) => InputEvent::ButtonUp,
-                EventType::MouseMove { x, y } => InputEvent::MouseMove { x, y },
-                EventType::KeyPress(key) => InputEvent::KeyPress(key),
-                EventType::KeyRelease(key) => InputEvent::KeyRelease(key),
-                _ => return, // Ignore other events
-            };
-            
-            let event_clone = drag_event;
-            handle_event_on_main_thread(event_clone);
         };
-        
-        let _ = listen(callback).map_err(|e| eprintln!("Failed to listen for events: {:?}", e));
+
+        let event: InputEvent = match serde_json::from_str(&json_event) {
+            Ok(event) => event,
+            Err(err) => {
+                eprintln!(
+                    "Failed to deserialize user input event: {}. Payload: {}",
+                    err, json_event
+                );
+                return Ok(());
+            }
+        };
+
+        let user_input_event = match &event.data {
+            InputEventData::Button(button) => {
+                let button = *button;
+                if event.event_type == EventType::ButtonPress {
+                    Some(UserInputEvent::ButtonDown(button))
+                } else if event.event_type == EventType::ButtonRelease {
+                    Some(UserInputEvent::ButtonUp(button))
+                } else {
+                    None
+                }
+            }
+            InputEventData::Position { x, y } => {
+                let x = *x;
+                let y = *y;
+                Some(UserInputEvent::MouseMove { x, y })
+            },
+            InputEventData::Key(key) => {
+                let key = *key;
+                match event.event_type {
+                    EventType::KeyPress => Some(UserInputEvent::KeyPress(key)),
+                    EventType::KeyRelease => Some(UserInputEvent::KeyRelease(key)),
+                    _ => None
+                }
+            }
+            _ => None
+        };
+
+        if let Some(user_input_event) = user_input_event {
+            app_handle_clone.run_on_main_thread(move || {
+                handle_event_on_main_thread(user_input_event);
+            });
+        }
+
+        Ok(())
     });
 
-    if let Err(e) = result {
-        eprintln!("Failed to start drag detection: {:?}", e);
-    }
+    let event_types = vec![
+        EventType::MouseMove, EventType::MouseDragged, EventType::ButtonPress, EventType::ButtonRelease, 
+        EventType::KeyPress, EventType::KeyRelease,
+    ];
+    // Listen only on our primary window label so clicks in the app
+    // are handled correctly and don't interfere with other apps.
+    let window_labels = vec![PRIMARY_WINDOW_NAME.to_string()];
+    user_input.set_window_labels(window_labels);
+    user_input.set_event_types(event_types.into_iter().collect());
+    user_input.start_listening(channel);
     
     Ok(())
 }
 
-fn handle_event_on_main_thread(event: InputEvent) {    
+fn handle_event_on_main_thread(event: UserInputEvent) {    
     // Handle the event
     match event {
-        InputEvent::MouseMove { x, y } => {
+        UserInputEvent::MouseMove { x, y } => {
             let mut pos = LAST_MOUSE_POS.lock().unwrap();
             *pos = Some((x, y));
             drop(pos);
             handle_mouse_move(x, y);
         }
-        InputEvent::ButtonDown => {
+        UserInputEvent::ButtonDown(button) => {
+            if button != monio::Button::Left {
+                return;
+            }
             handle_left_button_down();
         }
-        InputEvent::ButtonUp => {
+        UserInputEvent::ButtonUp(button) => {
+            if button != monio::Button::Left {
+                return;
+            }
             handle_left_button_up();
         }
-        InputEvent::KeyPress(key) | InputEvent::KeyRelease(key) => {
-            let mut state = MODIFIER_STATE.lock().unwrap();
-            match key {
-                Key::ControlLeft | Key::ControlRight => state.control = event == InputEvent::KeyPress(key),
-                Key::Alt | Key::AltGr => state.alt = event == InputEvent::KeyPress(key),
-                Key::ShiftLeft | Key::ShiftRight => state.shift = event == InputEvent::KeyPress(key),
-                Key::MetaLeft | Key::MetaRight => state.super_key = event == InputEvent::KeyPress(key),
-                _ => {}
+        UserInputEvent::KeyPress(key) => {
+            {
+                let mut state = MODIFIER_STATE.lock().unwrap();
+                match key {
+                    Key::ControlLeft | Key::ControlRight => state.control = true,
+                    Key::AltLeft | Key::AltRight => state.alt = true,
+                    Key::ShiftLeft | Key::ShiftRight => state.shift = true,
+                    Key::MetaLeft | Key::MetaRight => state.super_key = true,
+                    _ => {}
+                }
             }
 
-            // Key events already updated modifier state above
+            // If we're dragging, check and update overlay state based on new modifier state
+            let dragging = DRAGGING.lock().unwrap();
+            if *dragging {
+                drop(dragging);
+                
+                // Get the frontmost window and update overlay based on current modifier state
+                let app_handle_guard = APP_HANDLE.lock().unwrap();
+                if let Some(app_handle) = app_handle_guard.as_ref() {
+                    if let Ok(window) = get_frontmost_window() {
+                        check_and_update_modifier_state(app_handle, &window);
+                    }
+                }
+            }
+        }
+        UserInputEvent::KeyRelease(key) => {
+            {
+                let mut state = MODIFIER_STATE.lock().unwrap();
+                match key {
+                    Key::ControlLeft | Key::ControlRight => state.control = false,
+                    Key::AltLeft | Key::AltRight => state.alt = false,
+                    Key::ShiftLeft | Key::ShiftRight => state.shift = false,
+                    Key::MetaLeft | Key::MetaRight => state.super_key = false,
+                    _ => {}
+                }
+            }
+
             // If we're dragging, check and update overlay state based on new modifier state
             let dragging = DRAGGING.lock().unwrap();
             if *dragging {

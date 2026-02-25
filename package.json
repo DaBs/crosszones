@@ -31,6 +31,7 @@
     "tailwind-rounded-out": "^2.0.0",
     "tailwindcss": "^4.1.7",
     "tauri-plugin-macos-permissions-api": "^2.3.0",
+    "tauri-plugin-user-input-api": "^0.1.1",
     "wouter": "^3.9.0"
   },
   "devDependencies": {

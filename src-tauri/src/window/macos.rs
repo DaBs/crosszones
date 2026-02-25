@@ -9,12 +9,10 @@ use crate::snapping::common::ScreenDimensions;
 
 /// Get the frontmost window on macOS
 pub fn get_frontmost_window() -> Result<AXUIElement, String> {
-    let workspace = unsafe { NSWorkspace::sharedWorkspace() };
-    let frontmost_application = unsafe { 
-        workspace.frontmostApplication().ok_or("No frontmost application")? 
-    };
+    let workspace = NSWorkspace::sharedWorkspace();
+    let frontmost_application = workspace.frontmostApplication().ok_or("No frontmost application")?;
 
-    let frontmost_application_pid = unsafe { frontmost_application.processIdentifier() };
+    let frontmost_application_pid = frontmost_application.processIdentifier();
 
     let app = AXUIElement::application(frontmost_application_pid);
 

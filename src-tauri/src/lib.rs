@@ -16,6 +16,7 @@ pub fn run() {
         .plugin(tauri_plugin_persisted_scope::init())
         .plugin(tauri_plugin_macos_permissions::init())
         .plugin(tauri_plugin_opener::init())
+        .plugin(tauri_plugin_user_input::init())
         .invoke_handler(tauri::generate_handler![
             hotkeys::register_hotkey_action,
             hotkeys::unregister_hotkey_action,
@@ -45,7 +46,7 @@ pub fn run() {
             autostart::setup_autostart(app.handle());
 
             // Start drag detection
-            if let Err(e) = drag_drop::start_drag_detection(app.handle().clone()) {
+            if let Err(e) = drag_drop::start_drag_detection(app.handle()) {
                 eprintln!("Failed to start drag detection: {}", e);
             }
 
