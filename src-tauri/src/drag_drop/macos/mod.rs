@@ -311,29 +311,27 @@ fn handle_left_button_up() {
     
     // Only snap if modifier was pressed at some point during the drag
     if modifier_was_pressed {
-        println!("Dropping window at mouse position: ({}, {})", x, y);
-        
-            let app_handle_guard = APP_HANDLE.lock().unwrap();
-            if let Some(app_handle) = app_handle_guard.as_ref() {
-                let app_handle_clone = app_handle.clone();
-                drop(app_handle_guard);
-                
-                // Handle the drop - use Tauri's run_on_main_thread since we're in a background thread
-                let app_handle_clone2 = app_handle_clone.clone();
-                let x_clone = x;
-                let y_clone = y;
-                if let Err(e) = app_handle_clone.run_on_main_thread(move || {
-                    thread::sleep(std::time::Duration::from_millis(10));
-                    // Get the frontmost window again
-                    if let Ok(drop_window) = get_frontmost_window() {
-                        if let Err(e) = handle_drop(&app_handle_clone2, &drop_window, x_clone as i32, y_clone as i32) {
-                            eprintln!("Failed to handle drop: {}", e);
-                        }
+        let app_handle_guard = APP_HANDLE.lock().unwrap();
+        if let Some(app_handle) = app_handle_guard.as_ref() {
+            let app_handle_clone = app_handle.clone();
+            drop(app_handle_guard);
+            
+            // Handle the drop - use Tauri's run_on_main_thread since we're in a background thread
+            let app_handle_clone2 = app_handle_clone.clone();
+            let x_clone = x;
+            let y_clone = y;
+            if let Err(e) = app_handle_clone.run_on_main_thread(move || {
+                thread::sleep(std::time::Duration::from_millis(10));
+                // Get the frontmost window again
+                if let Ok(drop_window) = get_frontmost_window() {
+                    if let Err(e) = handle_drop(&app_handle_clone2, &drop_window, x_clone as i32, y_clone as i32) {
+                        eprintln!("Failed to handle drop: {}", e);
                     }
-                }) {
-                    eprintln!("Failed to dispatch drop handler to main thread: {}", e);
                 }
+            }) {
+                eprintln!("Failed to dispatch drop handler to main thread: {}", e);
             }
+        }
     }
     
     // Clear dragging state
