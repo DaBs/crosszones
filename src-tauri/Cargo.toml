@@ -37,7 +37,9 @@ ts-rs = "11.0.1"
 display-info = "0.5.4"
 tauri-plugin-notification = "2"
 tauri-plugin-decorum = "1.1.1"
+tauri-plugin-user-input = "0.1"
 rdev = { git = "https://github.com/Narsil/rdev.git", rev = "c14f2dc" }
+monio = "0.1.1"
 
 [target.'cfg(any(target_os = "windows"))'.dependencies]
 windows = { version = "0.61.1", features = ["Graphics", "Win32_Graphics_Gdi", "Win32_Graphics_Dwm", "Win32_UI_WindowsAndMessaging", "Win32_UI_Input_KeyboardAndMouse"] }
@@ -45,11 +47,11 @@ willhook = "0.6.3"
 
 [target.'cfg(target_os = "macos")'.dependencies]
 core-graphics-types = "0.1.3"
-objc2 = "0.6.1"
-objc2-foundation = "0.3.1"
-objc2-app-kit = "0.3.1"
-objc2-core-graphics = "0.3.1"
-objc2-core-foundation = "0.3.1"
+objc2 = "0.6.3"
+objc2-foundation = "0.3.2"
+objc2-app-kit = "0.3.2"
+objc2-core-graphics = "0.3.2"
+objc2-core-foundation = "0.3.2"
 accessibility = { git = "https://github.com/eiz/accessibility", branch = "master" }
 accessibility-sys = { git = "https://github.com/eiz/accessibility", branch = "master" }
 
