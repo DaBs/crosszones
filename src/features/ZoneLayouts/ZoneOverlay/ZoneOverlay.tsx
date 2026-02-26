@@ -12,15 +12,20 @@ interface OverlayData {
     width: number;
     height: number;
   };
+  /** Zone overlay opacity 0–1. Default 0.25 when unset. */
+  opacity?: number;
 }
 
 interface ZoneOverlayProps {
   zone: Zone;
   hoveredZone: string | null;
   zIndex?: number;
+  opacity?: number;
 }
 
-function ZoneOverlayComponent({ zone, hoveredZone, zIndex = 1 }: ZoneOverlayProps) {
+const DEFAULT_OVERLAY_OPACITY = 0.25;
+
+function ZoneOverlayComponent({ zone, hoveredZone, zIndex = 1, opacity = DEFAULT_OVERLAY_OPACITY }: ZoneOverlayProps) {
   const isHovered = hoveredZone === zone.id;
 
   const getZoneStyle = (): React.CSSProperties => {
@@ -30,6 +35,7 @@ function ZoneOverlayComponent({ zone, hoveredZone, zIndex = 1 }: ZoneOverlayProp
       width: `${zone.width}%`,
       height: `${zone.height}%`,
       zIndex: zIndex,
+      opacity,
     };
   };
 
@@ -173,6 +179,7 @@ export function ZoneOverlay() {
           zone={zone}
           hoveredZone={hoveredZone}
           zIndex={zoneZIndices.get(zone.id) || 1}
+          opacity={overlayData.opacity ?? DEFAULT_OVERLAY_OPACITY}
         />
       ))}
     </div>

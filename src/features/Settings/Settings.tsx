@@ -13,7 +13,7 @@ interface SettingDefinition {
   label: string;
   description: string;
   category: string;
-  type: 'boolean' | 'string';
+  type: 'boolean' | 'string' | 'number';
 }
 
 enum SettingCategory {
@@ -62,6 +62,13 @@ const SETTINGS_SCHEMA: SettingDefinition[] = [
     type: 'boolean',
     category: SettingCategory.Zones
   },
+  {
+    key: 'zone_overlay_opacity',
+    label: 'Zone overlay opacity',
+    description: 'Opacity of the zone overlay when dragging (0% = transparent, 100% = solid). Default 25%.',
+    type: 'number',
+    category: SettingCategory.Zones
+  },
 ];
 
 export const Settings: React.FC = () => {
@@ -91,7 +98,7 @@ export const Settings: React.FC = () => {
       });
   }, []);
 
-  const handleToggle = async (key: SettingsKey, value: boolean | string) => {
+  const handleChange = async (key: SettingsKey, value: boolean | string | number) => {
     try {
       await setSetting(key, value);
       setSettings(prev => ({ ...prev, [key]: value }) as SettingsType);
@@ -122,8 +129,8 @@ export const Settings: React.FC = () => {
             </CardHeader>
             <CardContent className="space-y-4">
               {categorySettings.map(setting => (
-                <div key={setting.key} className="flex items-center justify-between">
-                  <div className="space-y-0.5">
+                <div key={setting.key} className="flex items-center justify-between gap-4">
+                  <div className="space-y-0.5 flex-1 min-w-0">
                     <label className="text-sm font-medium leading-none">
                       {setting.label}
                     </label>
@@ -131,10 +138,27 @@ export const Settings: React.FC = () => {
                       {setting.description}
                     </p>
                   </div>
-                  <Checkbox
-                    checked={(setting.key === 'show_zone_drag_overlay' ? (settings[setting.key] ?? true) : settings[setting.key]) as boolean}
-                    onCheckedChange={(checked) => handleToggle(setting.key, setting.type === 'boolean' ? checked as boolean : checked as string)}
-                  />
+                  {setting.type === 'number' ? (
+                    <div className="flex items-center gap-2 shrink-0">
+                      <input
+                        type="range"
+                        min={0}
+                        max={1}
+                        step={0.05}
+                        value={Number(settings[setting.key]) ?? 0.25}
+                        onChange={(e) => handleChange(setting.key, e.target.valueAsNumber)}
+                        className="w-24 h-2 rounded-lg appearance-none cursor-pointer bg-secondary accent-primary"
+                      />
+                      <span className="text-sm tabular-nums w-8">
+                        {Math.round(((Number(settings[setting.key]) ?? 0.25) * 100))}%
+                      </span>
+                    </div>
+                  ) : (
+                    <Checkbox
+                      checked={(setting.key === 'show_zone_drag_overlay' ? (settings[setting.key] ?? true) : settings[setting.key]) as boolean}
+                      onCheckedChange={(checked) => handleChange(setting.key, setting.type === 'boolean' ? checked as boolean : checked as string)}
+                    />
+                  )}
                 </div>
               ))}
             </CardContent>

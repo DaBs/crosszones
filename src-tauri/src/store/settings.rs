@@ -24,6 +24,13 @@ pub struct Settings {
     /// When true, show the zone overlay during drag-and-drop (when modifier is held). When false, zones still apply on drop but no visual indicator is shown.
     #[serde(default)]
     pub show_zone_drag_overlay: bool,
+    /// Opacity of the zone overlay during drag (0.0–1.0). Default 0.25 when unset.
+    #[serde(default = "default_zone_overlay_opacity")]
+    pub zone_overlay_opacity: f32,
+}
+
+fn default_zone_overlay_opacity() -> f32 {
+    0.25
 }
 
 /// The main settings store
@@ -56,6 +63,7 @@ impl SettingsStore {
         store.set("show_layout_activation_notification", settings.show_layout_activation_notification);
         store.set("zone_drag_modifier_key", serde_json::to_value(&settings.zone_drag_modifier_key)?);
         store.set("show_zone_drag_overlay", settings.show_zone_drag_overlay);
+        store.set("zone_overlay_opacity", settings.zone_overlay_opacity);
         store.save()?;
         Ok(())
     }
@@ -129,5 +137,14 @@ impl SettingsStore {
 
     pub fn set_show_zone_drag_overlay(&self, value: bool) -> Result<(), SettingsError> {
         self.set("show_zone_drag_overlay", value)
+    }
+
+    /// Zone overlay opacity (0.0–1.0). Defaults to 0.25 when unset.
+    pub fn get_zone_overlay_opacity(&self) -> Result<f32, SettingsError> {
+        self.get("zone_overlay_opacity").map(|v| v.unwrap_or(0.25))
+    }
+
+    pub fn set_zone_overlay_opacity(&self, value: f32) -> Result<(), SettingsError> {
+        self.set("zone_overlay_opacity", value)
     }
 }

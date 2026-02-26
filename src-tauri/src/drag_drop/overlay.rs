@@ -1,3 +1,4 @@
+use crate::store::settings::SettingsStore;
 use crate::store::zone_layouts::ZoneLayout;
 use crate::snapping::common::ScreenDimensions;
 use display_info::DisplayInfo;
@@ -38,6 +39,12 @@ impl ZoneOverlay {
 
         let window_label = format!("zone-overlay-{}", screen_idx);
 
+        // Zone overlay opacity from settings (0.0–1.0), default 0.25
+        let opacity = SettingsStore::new(app_handle)
+            .ok()
+            .and_then(|s| s.get_zone_overlay_opacity().ok())
+            .unwrap_or(0.25);
+
         // Prepare overlay data for URL params and events
         let overlay_data = serde_json::json!({
             "layout": layout,
@@ -46,7 +53,8 @@ impl ZoneOverlay {
                 "y": screen.y,
                 "width": screen.width,
                 "height": screen.height,
-            }
+            },
+            "opacity": opacity,
         });
 
         let mut windows = OVERLAY_WINDOWS.lock().unwrap();

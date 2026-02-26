@@ -37,16 +37,17 @@ static OVERLAY_OPERATION_LOCK: Mutex<()> = Mutex::new(());
 static OVERLAY: LazyLock<ZoneOverlay> = LazyLock::new(|| ZoneOverlay::new());
 static RUNNING: AtomicBool = AtomicBool::new(false);
 
-pub fn start_drag_detection(app_handle: AppHandle) -> Result<(), String> {
-    let mut app_handle_guard = APP_HANDLE.lock().unwrap();
-    
-    // If already running, don't start again
+pub fn start_drag_detection(app_handle: &AppHandle) -> Result<(), String> {
+    {
+        let mut app_handle_guard = APP_HANDLE.lock().unwrap();
+        *app_handle_guard = Some(app_handle.clone());
+    }
+
+    // Avoid starting drag detection more than once
     if RUNNING.load(Ordering::SeqCst) {
         return Ok(());
     }
-    
-    *app_handle_guard = Some(app_handle.clone());
-    drop(app_handle_guard);
+    RUNNING.store(true, Ordering::SeqCst);
 
     // Create the mouse hook using willhook
     let hook = match mouse_hook() {
